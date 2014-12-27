@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/cmd"
+	"os"
 )
 
 const (
@@ -54,6 +55,6 @@ func main() {
 
 	app.Before = BeforeHandler
 
-	app.Run([]string{"bearded", "run"})
-	//	app.Run(os.Args)
+//	app.Run([]string{"bearded", "run"})
+	app.Run(os.Args)
 }
