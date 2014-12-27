@@ -4,7 +4,7 @@ import (
 	"github.com/bearded-web/bearded/models/task"
 	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/modules/docker"
-	"github.com/bearded-web/agent/models/report"
+	"github.com/bearded-web/bearded/models/report"
 )
 
 type WorkerOpts struct {

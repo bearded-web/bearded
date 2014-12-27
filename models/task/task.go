@@ -1,6 +1,6 @@
 package task
 
-import "github.com/bearded-web/agent/models/report"
+import "github.com/bearded-web/bearded/models/report"
 
 type TaskType string
 
