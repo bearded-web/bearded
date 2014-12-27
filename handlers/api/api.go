@@ -9,6 +9,7 @@ import (
 	"github.com/bearded-web/bearded/modules/worker"
 	"encoding/json"
 	"bytes"
+	"io/ioutil"
 )
 
 const CallbackHeader = "X-Callback-Addr"
@@ -34,7 +35,7 @@ func (a *DispatcherApi) TaskCreate(ctx *gin.Context) {
 	if callbackUrl := ctx.Request.Header.Get(CallbackHeader); callbackUrl != "" {
 		// TODO(m0sth8): rewrite this hack
 		t.OnStateChange(func(t *task.Task){
-			println("callback", t.State.Status)
+			println("callback, task.status:", t.State.Status)
 			data, err := json.Marshal(t)
 			if err != nil {
 				println(err)
@@ -44,7 +45,9 @@ func (a *DispatcherApi) TaskCreate(ctx *gin.Context) {
 				println(err)
 				return
 			}
-			println(resp.StatusCode)
+			println("callback: ", callbackUrl, resp.StatusCode)
+			responseData, _ := ioutil.ReadAll(resp.Body)
+			println("response: ", string(responseData))
 		})
 
 	}
