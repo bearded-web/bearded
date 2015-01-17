@@ -18,3 +18,7 @@ In `../frontend/` exec `npm run dev` to start frontend static server
 
 
 Swagger `http://127.0.0.1:3003/apidocs/`
+
+# local dev
+Make changes, then
+`go get github.com/bearded-web/bearded`

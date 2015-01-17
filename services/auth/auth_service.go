@@ -51,7 +51,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	ws.Route(ws.DELETE("").To(s.logout).
 		// docs
 		Doc("Logout").
-		Operation("login").
+		Operation("logout").
 		Do(
 		services.Returns(http.StatusNoContent),
 		services.ReturnsE(http.StatusInternalServerError, http.StatusBadRequest),
