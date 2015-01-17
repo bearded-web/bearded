@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type Container struct {
@@ -31,6 +32,9 @@ type Plugin struct {
 	Weight      PluginWeight  `json:"weight" description:"one of: light|middle|heavy"`
 	Description *Description  `json:"description" description:"human readable description"`
 	Container   *Container    `json:"container,omitempty" description:"information about container"`
+	Created     time.Time     `json:"created,omitempty" description:"when plugin is created"`
+	Updated     time.Time     `json:"created,omitempty" description:"when plugin is updated"`
+
 	//	Requirements []*Required   `json:"requirements,omitempty" description:"other plugins required for running"`
 	Enabled bool `json:"enabled" description:"is plugin enabled for running"`
 	// experimental

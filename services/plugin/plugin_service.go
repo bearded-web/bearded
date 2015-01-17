@@ -6,111 +6,100 @@ import (
 	restful "github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/plugin"
-	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
 )
 
 type PluginService struct {
-	pluginCol *mgo.Collection
+	*services.BaseService
 }
 
-func New(pluginCol *mgo.Collection) *PluginService {
+func New(base *services.BaseService) *PluginService {
 	return &PluginService{
-		pluginCol: pluginCol,
+		BaseService: base,
 	}
-}
-
-func (s *PluginService) Init() error {
-	logrus.Infof("Initialize plugin indexes")
-	s.pluginCol.EnsureIndex(mgo.Index{
-		Key:        []string{"name", "version"},
-		Unique:     true,
-		Background: false,
-	})
-	return nil
 }
 
 func (s *PluginService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
-	ws.
-		Path("/api/v1/plugins").
-		Doc("Manage Plugins").
-		Consumes(restful.MIME_JSON).
-		Produces(restful.MIME_JSON)
+	ws.Path("/api/v1/plugins")
+	ws.Doc("Manage Plugins")
+	ws.Consumes(restful.MIME_JSON)
+	ws.Produces(restful.MIME_JSON)
 
-	ws.Route(ws.GET("").To(s.list).
-		// docs
-		Doc("List plugins").
-		Operation("list").
-		Writes(plugin.PluginList{}). // on the response
-		Do(
-		services.Returns(http.StatusOK),
-		services.ReturnsE(http.StatusInternalServerError),
-	))
+	r := ws.GET("").To(s.list)
+	// docs
+	r.Doc("List plugins")
+	r.Operation("list")
+	r.Writes(plugin.PluginList{})
+	r.Do(services.Returns(http.StatusOK))
+	r.Do(services.ReturnsE(http.StatusInternalServerError))
+	ws.Route(r)
 
-	ws.Route(ws.POST("").To(s.create).
-		// docs
-		Doc("Create plugin").
-		Operation("create").
-		Writes(plugin.Plugin{}). // on the response
-		Reads(plugin.Plugin{}).
-		Do(
-		services.Returns(http.StatusCreated),
-		services.ReturnsE(http.StatusConflict, http.StatusInternalServerError),
-	))
+	r = ws.POST("").To(s.create)
+	// docs
+	r.Doc("Create plugin")
+	r.Operation("create")
+	r.Writes(plugin.Plugin{})
+	r.Reads(plugin.Plugin{})
+	r.Do(services.Returns(http.StatusCreated))
+	r.Do(services.ReturnsE(
+		http.StatusConflict,
+		http.StatusInternalServerError))
+	ws.Route(r)
 
-	ws.Route(ws.GET("{plugin-id}").To(s.get).
-		// docs
-		Doc("Get plugin").
-		Operation("get").
-		Param(ws.PathParameter("plugin-id", "")).
-		Writes(plugin.Plugin{}). // on the response
-		Do(
-		services.Returns(http.StatusOK, http.StatusNotFound),
-		services.ReturnsE(http.StatusBadRequest, http.StatusInternalServerError),
-	))
+	r = ws.GET("{plugin-id}").To(s.get)
+	// docs
+	r.Doc("Get plugin")
+	r.Operation("get")
+	r.Param(ws.PathParameter("plugin-id", ""))
+	r.Writes(plugin.Plugin{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusInternalServerError))
+	ws.Route(r)
 
-	ws.Route(ws.PUT("{plugin-id}").To(s.update).
-		// docs
-		Doc("Update plugin").
-		Operation("update").
-		Param(ws.PathParameter("plugin-id", "")).
-		Writes(plugin.Plugin{}). // on the response
-		Reads(plugin.Plugin{}).
-		Do(
-		services.Returns(http.StatusOK, http.StatusNotFound),
-		services.ReturnsE(http.StatusBadRequest, http.StatusInternalServerError),
-	))
+	r = ws.PUT("{plugin-id}").To(s.update)
+	// docs
+	r.Doc("Update plugin")
+	r.Operation("update")
+	r.Param(ws.PathParameter("plugin-id", ""))
+	r.Writes(plugin.Plugin{})
+	r.Reads(plugin.Plugin{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusInternalServerError))
+	ws.Route(r)
 
 	container.Add(ws)
-}
-
-// Get plugins collection with mongo session
-func (s *PluginService) plugins(session *mgo.Session) *mgo.Collection {
-	return s.pluginCol.With(session)
 }
 
 // ====== service operations
 
 func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
-	plugins := s.plugins(filters.GetMongo(req))
+	// TODO (m0sth8): Check permissions
+	raw := &plugin.Plugin{}
 
-	pl := &plugin.Plugin{}
-
-	if err := req.ReadEntity(pl); err != nil {
+	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	// TODO: add validation
-	pl.Id = bson.NewObjectId()
-	if err := plugins.Insert(pl); err != nil {
-		if mgo.IsDup(err) {
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	obj, err := mgr.Plugins.Create(raw)
+	if err != nil {
+		if mgr.IsDup(err) {
 			resp.WriteServiceError(
 				http.StatusConflict,
 				services.NewError(services.CodeDuplicate, "plugin with this name and version is existed"))
@@ -122,22 +111,14 @@ func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteHeader(http.StatusCreated)
-	resp.WriteEntity(pl)
+	resp.WriteEntity(obj)
 }
 
-func (s *PluginService) list(req *restful.Request, resp *restful.Response) {
-	plugins := s.plugins(filters.GetMongo(req))
+func (s *PluginService) list(_ *restful.Request, resp *restful.Response) {
+	mgr := s.Manager()
+	defer mgr.Close()
 
-	results := []*plugin.Plugin{}
-
-	query := &bson.M{}
-	q := plugins.Find(query)
-	if err := q.All(&results); err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-	count, err := q.Count()
+	results, count, err := mgr.Plugins.All()
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
@@ -152,18 +133,18 @@ func (s *PluginService) list(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *PluginService) get(req *restful.Request, resp *restful.Response) {
-	plugins := s.plugins(filters.GetMongo(req))
-
-	pl := &plugin.Plugin{}
-
 	pluginId := req.PathParameter("plugin-id")
-	if !bson.IsObjectIdHex(pluginId) {
+	if !s.IsId(pluginId) {
 		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
 		return
 	}
 
-	if err := plugins.FindId(bson.ObjectIdHex(pluginId)).One(pl); err != nil {
-		if err == mgo.ErrNotFound {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	u, err := mgr.Plugins.GetById(pluginId)
+	if err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
 		}
@@ -172,31 +153,38 @@ func (s *PluginService) get(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(pl)
+	resp.WriteEntity(u)
 }
 
 func (s *PluginService) update(req *restful.Request, resp *restful.Response) {
-	plugins := s.plugins(filters.GetMongo(req))
-
+	// TODO (m0sth8): Check permissions
 	pluginId := req.PathParameter("plugin-id")
-	if !bson.IsObjectIdHex(pluginId) {
+	if !s.IsId(pluginId) {
 		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
 		return
 	}
 
-	pl := &plugin.Plugin{}
+	raw := &plugin.Plugin{}
 
-	if err := req.ReadEntity(pl); err != nil {
+	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	// TODO: add validation
-	pl.Id = bson.ObjectIdHex(pluginId)
+	mgr := s.Manager()
+	defer mgr.Close()
 
-	if err := plugins.UpdateId(pl.Id, pl); err != nil {
-		if err == mgo.ErrNotFound {
+	raw.Id = mgr.ToId(pluginId)
+
+	if err := mgr.Plugins.Update(raw); err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
+			return
+		}
+		if mgr.IsDup(err) {
+			resp.WriteServiceError(
+				http.StatusConflict,
+				services.NewError(services.CodeDuplicate, "plugin with this name and version is existed"))
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
@@ -205,5 +193,5 @@ func (s *PluginService) update(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteHeader(http.StatusOK)
-	resp.WriteEntity(pl)
+	resp.WriteEntity(raw)
 }

@@ -4,26 +4,20 @@ import (
 	"net/http"
 
 	restful "github.com/emicklei/go-restful"
-	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-
-	"github.com/bearded-web/bearded/models/user"
-	"github.com/bearded-web/bearded/pkg/filters"
-	"github.com/bearded-web/bearded/pkg/passlib"
-	"github.com/bearded-web/bearded/services"
 	"github.com/facebookgo/stackerr"
+	"github.com/sirupsen/logrus"
+
+	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/services"
 )
 
 type AuthService struct {
-	userCol *mgo.Collection
-	passCtx *passlib.Context
+	*services.BaseService
 }
 
-func New(col *mgo.Collection, passCtx *passlib.Context) *AuthService {
+func New(base *services.BaseService) *AuthService {
 	return &AuthService{
-		userCol: col,
-		passCtx: passCtx,
+		BaseService: base,
 	}
 }
 
@@ -33,47 +27,45 @@ func (s *AuthService) Init() error {
 
 func (s *AuthService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
-	ws.
-		Path("/api/v1/auth").
-		Doc("Authorization management").
-		Consumes(restful.MIME_JSON).
-		Produces(restful.MIME_JSON)
+	ws.Path("/api/v1/auth")
+	ws.Doc("Authorization management")
+	ws.Consumes(restful.MIME_JSON)
+	ws.Produces(restful.MIME_JSON)
 
-	ws.Route(ws.POST("").To(s.login).
-		// docs
-		Doc("Login").
-		Operation("login").
-		Reads(authEntity{}).
-		Returns(http.StatusCreated, "Session created", sessionEntity{}).
-		Do(
-		services.ReturnsE(http.StatusInternalServerError, http.StatusUnauthorized, http.StatusBadRequest),
-	))
-	ws.Route(ws.DELETE("").To(s.logout).
-		// docs
-		Doc("Logout").
-		Operation("logout").
-		Do(
-		services.Returns(http.StatusNoContent),
-		services.ReturnsE(http.StatusInternalServerError, http.StatusBadRequest),
-	))
-	ws.Route(ws.GET("").To(s.status).
-		// docs
-		Doc("Status").
-		Operation("status").
-		Do(
-		services.Returns(http.StatusOK),
-		services.ReturnsE(http.StatusInternalServerError, http.StatusUnauthorized, http.StatusBadRequest),
-	))
+	r := ws.POST("").To(s.login)
+	r.Doc("Login")
+	r.Operation("login")
+	r.Reads(authEntity{})
+	r.Returns(http.StatusCreated, "Session created", sessionEntity{})
+	r.Do(services.ReturnsE(
+		http.StatusInternalServerError,
+		http.StatusUnauthorized,
+		http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.DELETE("").To(s.logout)
+	r.Doc("Logout")
+	r.Operation("logout")
+	r.Do(services.Returns(http.StatusNoContent))
+	r.Do(services.ReturnsE(
+		http.StatusInternalServerError,
+		http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.GET("").To(s.status)
+	r.Doc("Status")
+	r.Operation("status")
+	r.Do(services.Returns(http.StatusOK))
+	r.Do(services.ReturnsE(
+		http.StatusInternalServerError,
+		http.StatusUnauthorized,
+		http.StatusBadRequest))
+	ws.Route(r)
+
 	container.Add(ws)
 }
 
-// Get user collection with mongo session
-func (s *AuthService) users(session *mgo.Session) *mgo.Collection {
-	return s.userCol.With(session)
-}
-
 func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
-	users := s.users(filters.GetMongo(req))
 	session := filters.GetSession(req)
 
 	raw := &authEntity{}
@@ -83,6 +75,7 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
+	// TODO (m0sth8): extract user login and logout, this helps to login in other services
 	// TODO (m0sth8): validate password and email, type, max length etc
 	if raw.Email == "" {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("password shouldn't be empty"))
@@ -93,10 +86,14 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	u := &user.User{}
-	if err := users.Find(bson.D{{"email", raw.Email}}).One(u); err != nil {
-		if err == mgo.ErrNotFound {
-			// TODO (m0sth8) add captcha to protect against bruteforce
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	// get user
+	u, err := mgr.Users.GetByEmail(raw.Email)
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			// TODO (m0sth8): add captcha to protect against bruteforce
 			resp.WriteServiceError(http.StatusUnauthorized, services.AuthFailedErr)
 			return
 		}
@@ -104,7 +101,9 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
-	verified, err := s.passCtx.Verify(raw.Password, u.Password)
+
+	// verify password
+	verified, err := s.PassCtx().Verify(raw.Password, u.Password)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
@@ -114,6 +113,8 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusUnauthorized, services.AuthFailedErr)
 		return
 	}
+
+	// set userId to session
 	session.Set("userId", u.Id.Hex())
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(sessionEntity{Token: "not ready"})

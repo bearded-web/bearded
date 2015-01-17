@@ -8,12 +8,12 @@ import (
 )
 
 type User struct {
-	Id       bson.ObjectId `json:"id" bson:"_id"`
+	Id       bson.ObjectId `json:"id,omitempty" bson:"_id"`
 	Email    string        `json:"email"`
 	Password string        `json:"-"` // password hash in passlib format: $hashAlgo[$values]$hexdigest_hash$
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Created time.Time `json:"created,omitempty"`
+	Updated time.Time `json:"updated,omitempty"`
 }
 
 func (u *User) String() string {

@@ -2,114 +2,93 @@ package user
 
 import (
 	"net/http"
-	"time"
 
 	restful "github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/user"
-	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/pagination"
-	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
 )
 
 type UserService struct {
-	userCol *mgo.Collection
-	passCtx *passlib.Context
+	*services.BaseService
 }
 
-func New(col *mgo.Collection, passCtx *passlib.Context) *UserService {
+func New(base *services.BaseService) *UserService {
 	return &UserService{
-		userCol: col,
-		passCtx: passCtx,
+		BaseService: base,
 	}
-}
-
-func (s *UserService) Init() error {
-	logrus.Infof("Initialize user indexes")
-	s.userCol.EnsureIndex(mgo.Index{
-		Key:        []string{"email"},
-		Unique:     true,
-		Background: false,
-	})
-	return nil
 }
 
 func (s *UserService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
-	ws.
-		Path("/api/v1/users").
-		Doc("User management").
-		Consumes(restful.MIME_JSON).
-		Produces(restful.MIME_JSON)
+	ws.Path("/api/v1/users")
+	ws.Doc("User management")
+	ws.Consumes(restful.MIME_JSON)
+	ws.Produces(restful.MIME_JSON)
 
-	ws.Route(ws.GET("").To(s.list).
-		// docs
-		Doc("List users").
-		Operation("list").
-		Writes(user.UserList{}). // on the response
-		Do(
-		services.Returns(http.StatusOK),
-		services.ReturnsE(http.StatusInternalServerError, http.StatusBadRequest),
-	))
-	ws.Route(ws.POST("").To(s.create).
-		// docs
-		Doc("Create user").
-		Operation("create").
-		Writes(user.User{}). // on the response
-		Reads(user.User{}).
-		Do(
-		services.Returns(http.StatusCreated),
-		services.ReturnsE(http.StatusConflict, http.StatusInternalServerError),
-	))
-	ws.Route(ws.GET("{user-id}").To(s.get).
-		// docs
-		Doc("Get user").
-		Operation("get").
-		Param(ws.PathParameter("user-id", "")).
-		Writes(user.User{}). // on the response
-		Do(
-		services.Returns(http.StatusOK, http.StatusNotFound),
-		services.ReturnsE(http.StatusBadRequest, http.StatusInternalServerError),
-	))
-	ws.Route(ws.POST("{user-id}/password").To(s.setPassword).
-		// docs
-		Doc("Set password, only for administrator").
-		Operation("setPassword").
-		Reads(Password{}).
-		Param(ws.PathParameter("user-id", "")).
-		Do(
-		services.Returns(http.StatusCreated, http.StatusNotFound, http.StatusUnauthorized, http.StatusForbidden),
-		services.ReturnsE(http.StatusBadRequest, http.StatusInternalServerError),
-	))
+	r := ws.GET("").To(s.list)
+	r.Doc("List users")
+	r.Operation("list")
+	r.Writes(user.UserList{})
+	r.Do(services.Returns(http.StatusOK))
+	r.Do(services.ReturnsE(
+		http.StatusInternalServerError,
+		http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.POST("").To(s.create)
+	r.Doc("Create user")
+	r.Operation("create")
+	r.Writes(user.User{}) // on the response
+	r.Reads(user.User{})
+	r.Do(services.Returns(
+		http.StatusCreated))
+	r.Do(services.ReturnsE(
+		http.StatusConflict,
+		http.StatusInternalServerError))
+	ws.Route(r)
+
+	r = ws.GET("{user-id}").To(s.get)
+	r.Doc("Get user")
+	r.Operation("get")
+	r.Param(ws.PathParameter("user-id", ""))
+	r.Writes(user.User{}) // on the response
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusInternalServerError))
+	ws.Route(r)
+
+	r = ws.POST("{user-id}/password").To(s.setPassword)
+	r.Doc("Set password, only for administrator")
+	r.Operation("setPassword")
+	r.Reads(passwordEntity{})
+	r.Param(ws.PathParameter("user-id", ""))
+	r.Do(services.Returns(
+		http.StatusCreated,
+		http.StatusNotFound,
+		http.StatusUnauthorized,
+		http.StatusForbidden))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusInternalServerError))
+	ws.Route(r)
 
 	container.Add(ws)
 }
 
-// Get user collection with mongo session
-func (s *UserService) users(session *mgo.Session) *mgo.Collection {
-	return s.userCol.With(session)
-}
-
 // ====== service operations
 
-func (s *UserService) list(req *restful.Request, resp *restful.Response) {
-	plugins := s.users(filters.GetMongo(req))
+func (s *UserService) list(_ *restful.Request, resp *restful.Response) {
+	mgr := s.Manager()
+	defer mgr.Close()
 
-	results := []*user.User{}
-
-	query := &bson.M{}
-	q := plugins.Find(query)
-	if err := q.All(&results); err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-	count, err := q.Count()
+	results, count, err := mgr.Users.All()
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
@@ -124,8 +103,7 @@ func (s *UserService) list(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *UserService) create(req *restful.Request, resp *restful.Response) {
-	users := s.users(filters.GetMongo(req))
-
+	// TODO (m0sth8): Check permissions
 	raw := &user.User{}
 
 	if err := req.ReadEntity(raw); err != nil {
@@ -133,13 +111,13 @@ func (s *UserService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	// TODO: add validation
-	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
-	raw.Updated = raw.Created
-	if err := users.Insert(raw); err != nil {
-		if mgo.IsDup(err) {
-			logrus.Debug(stackerr.Wrap(err))
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	obj, err := mgr.Users.Create(raw)
+	if err != nil {
+		if mgr.IsDup(err) {
 			resp.WriteServiceError(
 				http.StatusConflict,
 				services.NewError(services.CodeDuplicate, "user with this email is existed"))
@@ -151,22 +129,23 @@ func (s *UserService) create(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteHeader(http.StatusCreated)
-	resp.WriteEntity(raw)
+	resp.WriteEntity(obj)
 }
 
 func (s *UserService) get(req *restful.Request, resp *restful.Response) {
-	users := s.users(filters.GetMongo(req))
-
-	u := &user.User{}
-
+	// TODO (m0sth8): Check permissions
 	userId := req.PathParameter("user-id")
-	if !bson.IsObjectIdHex(userId) {
+	if !s.IsId(userId) {
 		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
 		return
 	}
 
-	if err := users.FindId(bson.ObjectIdHex(userId)).One(u); err != nil {
-		if err == mgo.ErrNotFound {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	u, err := mgr.Users.GetById(userId)
+	if err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
 		}
@@ -178,32 +157,27 @@ func (s *UserService) get(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(u)
 }
 
-type Password struct {
-	Password string `json:"password"`
-}
-
 func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) {
+	// TODO (m0sth8): Check permissions
+	userId := req.PathParameter("user-id")
+	if !s.IsId(userId) {
+		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
+		return
+	}
 
-	raw := &Password{}
-
+	raw := &passwordEntity{}
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
 
-	users := s.users(filters.GetMongo(req))
+	mgr := s.Manager()
+	defer mgr.Close()
 
-	obj := &user.User{}
-
-	userId := req.PathParameter("user-id")
-	if !bson.IsObjectIdHex(userId) {
-		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
-		return
-	}
-
-	if err := users.FindId(bson.ObjectIdHex(userId)).One(obj); err != nil {
-		if err == mgo.ErrNotFound {
+	u, err := mgr.Users.GetById(userId)
+	if err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
 		}
@@ -212,16 +186,16 @@ func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) 
 		return
 	}
 
-	pass, err := s.passCtx.Encrypt(raw.Password)
+	pass, err := s.PassCtx().Encrypt(raw.Password)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
 		return
 	}
-	obj.Password = pass
+	u.Password = pass
 
-	if err := users.UpdateId(obj.Id, obj); err != nil {
-		if err == mgo.ErrNotFound {
+	if err := mgr.Users.Update(u); err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
 		}
@@ -229,6 +203,7 @@ func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) 
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
+
 	// resp.WriteHeader(http.StatusCreated) - this method doesn't work if body isn't written
 	resp.ResponseWriter.WriteHeader(http.StatusCreated)
 }

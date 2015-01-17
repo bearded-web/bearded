@@ -12,6 +12,7 @@ import (
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/auth"
@@ -62,20 +63,23 @@ func init() {
 }
 
 func initServices(wsContainer *restful.Container, db *mgo.Database) error {
-	// collections
-	users := db.C("users")
-	plugins := db.C("plugins")
+	// manager
+	mgr := manager.New(db)
+	if err := mgr.Init(); err != nil {
+		return err
+	}
 
 	// password manager for generation and verification passwords
 	passCtx := passlib.NewContext()
 
 	// services
-	authService := auth.New(users, passCtx)
-	pluginService := plugin.New(plugins)
-	userService := user.New(users, passCtx)
-	meService := me.New(users, passCtx)
+	base := services.New(mgr, passCtx)
+	authService := auth.New(base)
+	pluginService := plugin.New(base)
+	userService := user.New(base)
+	meService := me.New(base)
 
-	// initialize services: set up indexes
+	// initialize services
 	authService.Init()
 	userService.Init()
 	pluginService.Init()

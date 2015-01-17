@@ -6,25 +6,19 @@ import (
 	restful "github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 	"github.com/sirupsen/logrus"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/me"
-	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
-	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
 )
 
 type MeService struct {
-	userCol *mgo.Collection
-	passCtx *passlib.Context
+	*services.BaseService
 }
 
-func New(col *mgo.Collection, passCtx *passlib.Context) *MeService {
+func New(base *services.BaseService) *MeService {
 	return &MeService{
-		userCol: col,
-		passCtx: passCtx,
+		BaseService: base,
 	}
 }
 
@@ -34,29 +28,26 @@ func (s *MeService) Init() error {
 
 func (s *MeService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
-	ws.
-		Path("/api/v1/me").
-		Doc("Current user management").
-		Consumes(restful.MIME_JSON).
-		Produces(restful.MIME_JSON)
+	ws.Path("/api/v1/me")
+	ws.Doc("Current user management")
+	ws.Consumes(restful.MIME_JSON)
+	ws.Produces(restful.MIME_JSON)
 
-	ws.Route(ws.GET("").To(s.info).
-		// docs
-		Doc("Information").
-		Operation("info").
-		Writes(me.Info{}). // on the response
-		Do(services.Returns(http.StatusOK), services.ReturnsE(http.StatusInternalServerError, http.StatusUnauthorized)))
+	r := ws.GET("").To(s.info)
+	// docs
+	r.Doc("Information")
+	r.Operation("info")
+	r.Writes(me.Info{}) // on the response
+	r.Do(services.Returns(http.StatusOK))
+	r.Do(services.ReturnsE(
+		http.StatusInternalServerError,
+		http.StatusUnauthorized))
+	ws.Route(r)
 
 	container.Add(ws)
 }
 
-// Get user collection with mongo session
-func (s *MeService) users(session *mgo.Session) *mgo.Collection {
-	return s.userCol.With(session)
-}
-
 func (s *MeService) info(req *restful.Request, resp *restful.Response) {
-	users := s.users(filters.GetMongo(req))
 	session := filters.GetSession(req)
 
 	userId, existed := session.Get("userId")
@@ -64,15 +55,18 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
 		return
 	}
-	if !bson.IsObjectIdHex(userId) {
+	if !s.IsId(userId) {
 		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
 		// TODO (m0sth8): logout here
 		return
 	}
 
-	u := &user.User{}
-	if err := users.FindId(bson.ObjectIdHex(userId)).One(u); err != nil {
-		if err == mgo.ErrNotFound {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	u, err := mgr.Users.GetById(userId)
+	if err != nil {
+		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
 		}
