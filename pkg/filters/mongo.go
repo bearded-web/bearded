@@ -1,16 +1,15 @@
 package filters
 
-
 import (
+	"fmt"
 	restful "github.com/emicklei/go-restful"
 	mgo "gopkg.in/mgo.v2"
-	"fmt"
 )
 
 var MongoKey = "__mongo"
 
-func MongoFilter(session *mgo.Session) restful.FilterFunction{
-	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain){
+func MongoFilter(session *mgo.Session) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 		newSession := session.Copy()
 		defer newSession.Close()
 		req.SetAttribute(MongoKey, newSession)

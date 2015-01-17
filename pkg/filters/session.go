@@ -17,10 +17,10 @@ var SessionKey = "__session"
 type Session struct {
 	store    map[string]string
 	modified bool
-	m		 sync.RWMutex
+	m        sync.RWMutex
 }
 
-func NewSession() *Session{
+func NewSession() *Session {
 	return &Session{
 		store: map[string]string{},
 	}

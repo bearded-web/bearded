@@ -6,5 +6,5 @@ type authEntity struct {
 }
 
 type sessionEntity struct {
-	Token	string `json:"token" description:"isn't implemented yet"`
+	Token string `json:"token" description:"isn't implemented yet"`
 }

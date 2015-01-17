@@ -1,10 +1,9 @@
 package client
 
 import (
-	"github.com/bearded-web/bearded/models/plugin"
 	"fmt"
+	"github.com/bearded-web/bearded/models/plugin"
 )
-
 
 const pluginsUrl = "plugins"
 
@@ -17,7 +16,6 @@ func (s *PluginsService) String() string {
 }
 
 type PluginsListOpts struct {
-
 }
 
 // List plugins.

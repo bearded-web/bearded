@@ -1,19 +1,16 @@
 package cmd
 
 import (
-//	"github.com/codegangsta/cli"
+	//	"github.com/codegangsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
-
 )
-
-
 
 func swaggerFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.BoolFlag{
-			Name: "swagger-disable",
+			Name:   "swagger-disable",
 			EnvVar: "BEARDED_SWAGGER_DISABLE",
-			Usage: "Set to disable swagger api",
+			Usage:  "Set to disable swagger api",
 		},
 		cli.StringFlag{
 			Name:   "swagger-api-path",

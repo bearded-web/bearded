@@ -2,7 +2,7 @@ package plugin
 
 type PluginType string
 
-func (a PluginType) String() string{
+func (a PluginType) String() string {
 	return string(a)
 }
 

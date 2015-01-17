@@ -5,7 +5,6 @@
 //
 // source file is https://github.com/google/go-github/blob/master/github/strings_test.go
 
-
 package client
 
 import (
@@ -32,15 +31,15 @@ func TestStringify(t *testing.T) {
 		},
 		{
 			struct {
-					A []string
-				}{nil},
+				A []string
+			}{nil},
 			// nil slice is skipped
 			`{}`,
 		},
 		{
 			struct {
-					A string
-				}{"foo"},
+				A string
+			}{"foo"},
 			// structs not of a named type get no prefix
 			`{A:"foo"}`,
 		},

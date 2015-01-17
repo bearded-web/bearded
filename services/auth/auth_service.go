@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	restful "github.com/emicklei/go-restful"
+	"github.com/sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/sirupsen/logrus"
 
+	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
 	"github.com/facebookgo/stackerr"
-	"github.com/bearded-web/bearded/pkg/filters"
-	"github.com/bearded-web/bearded/models/user"
 )
 
 type AuthService struct {
@@ -75,7 +75,6 @@ func (s *AuthService) users(session *mgo.Session) *mgo.Collection {
 func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 	users := s.users(filters.GetMongo(req))
 	session := filters.GetSession(req)
-
 
 	raw := &authEntity{}
 

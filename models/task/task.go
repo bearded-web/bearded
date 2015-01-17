@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 type TaskType string
 
 const (
@@ -39,9 +38,8 @@ type Task struct {
 }
 
 type State struct {
-	Status StatusType `json:"status"`
+	Status  StatusType `json:"status"`
 	Created time.Time
-
 }
 
 func New() *Task {

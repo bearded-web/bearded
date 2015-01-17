@@ -2,8 +2,8 @@ package plugin
 
 import (
 	"fmt"
-	"gopkg.in/mgo.v2/bson"
 	"github.com/bearded-web/bearded/pkg/pagination"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Container struct {

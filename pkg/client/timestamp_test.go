@@ -5,7 +5,6 @@
 //
 // source file is https://github.com/google/go-github/blob/master/github/timestamp_test.go
 
-
 package client
 
 import (

@@ -4,17 +4,16 @@ import (
 	"net/http"
 
 	restful "github.com/emicklei/go-restful"
-	mgo "gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"github.com/facebookgo/stackerr"
 	"github.com/sirupsen/logrus"
+	mgo "gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 
-	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/models/me"
 	"github.com/bearded-web/bearded/models/user"
-	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/pkg/filters"
-
+	"github.com/bearded-web/bearded/pkg/passlib"
+	"github.com/bearded-web/bearded/services"
 )
 
 type MeService struct {
@@ -60,7 +59,7 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 	users := s.users(filters.GetMongo(req))
 	session := filters.GetSession(req)
 
-	userId, existed := session.Get("userId");
+	userId, existed := session.Get("userId")
 	if !existed {
 		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
 		return

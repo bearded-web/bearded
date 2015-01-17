@@ -56,7 +56,7 @@ func main() {
 			Usage: "Logger level output [debug|info|warning|error|fatal], debug is default",
 		},
 		cli.BoolFlag{
-			Name: "debug",
+			Name:  "debug",
 			Usage: "Enable some debugging features, such as: disable https checking, trace requests etc",
 		},
 	}...)

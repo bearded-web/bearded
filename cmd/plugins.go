@@ -1,18 +1,17 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/mgo.v2/bson"
-//	"github.com/codegangsta/cli"
+	//	"github.com/codegangsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
-
-	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/pkg/client"
 )
 
 var Plugins = cli.Command{
@@ -43,7 +42,7 @@ var Plugins = cli.Command{
 			Action: takeApi(pluginsLoadAction),
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "update",
+					Name:  "update",
 					Usage: "Update plugin if existed",
 				},
 			},
@@ -142,9 +141,7 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 			}
 		}
 		fmt.Println("Successful")
-//		fmt.Printf("%s\n", created)
+		//		fmt.Printf("%s\n", created)
 	}
 
 }
-
-

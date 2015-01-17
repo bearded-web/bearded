@@ -7,6 +7,6 @@ const (
 )
 
 type Report struct {
-	Type Type `json:"type"`
-	Raw string `json:"raw"`
+	Type Type   `json:"type"`
+	Raw  string `json:"raw"`
 }

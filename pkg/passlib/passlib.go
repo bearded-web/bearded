@@ -1,4 +1,5 @@
 package passlib
+
 // passlib is a password hashing library for golang, which provides cross-platform implementations
 // of over 3 password hashing algorithms, as well as a framework for managing existing password hashes.
 // It’s designed to be useful for a wide range of tasks, from verifying a hash found in /etc/shadow,
@@ -10,7 +11,6 @@ import (
 	"fmt"
 	"strings"
 )
-
 
 const (
 	Divider  string = "$"
@@ -28,7 +28,7 @@ type Context struct {
 	Default Algo
 }
 
-func NewContext() *Context{
+func NewContext() *Context {
 	return &Context{
 		Default: NewBcrypt(0),
 	}

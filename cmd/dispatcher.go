@@ -5,19 +5,19 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 	"github.com/codegangsta/negroni"
 	restful "github.com/emicklei/go-restful"
+	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 	"github.com/sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/auth"
+	"github.com/bearded-web/bearded/services/me"
 	"github.com/bearded-web/bearded/services/plugin"
 	"github.com/bearded-web/bearded/services/user"
-	"github.com/bearded-web/bearded/pkg/passlib"
-	"github.com/bearded-web/bearded/services/me"
 )
 
 var Dispatcher = cli.Command{
@@ -44,15 +44,15 @@ var Dispatcher = cli.Command{
 			Usage:  "Mongodb database",
 		},
 		cli.StringFlag{
-			Name:	"frontend",
+			Name:   "frontend",
 			Value:  "../frontend/dist/",
 			EnvVar: "BEARDED_FRONTEND",
 			Usage:  "path to frontend to serve static",
 		},
 		cli.BoolFlag{
-			Name:	"frontend-off",
+			Name:   "frontend-off",
 			EnvVar: "BEARDED_FRONTEND_OFF",
-			Usage:	"do not serve frontend files",
+			Usage:  "do not serve frontend files",
 		},
 	},
 }
@@ -113,19 +113,18 @@ func dispatcherAction(ctx *cli.Context) {
 
 	// Create container and initialize services
 	wsContainer := restful.NewContainer()
-	wsContainer.Router(restful.CurlyRouter{})        // CurlyRouter is the faster routing alternative for restful
+	wsContainer.Router(restful.CurlyRouter{}) // CurlyRouter is the faster routing alternative for restful
 
 	// setup session
 	cookieOpts := &filters.CookieOpts{
-		Path: "/api/",
+		Path:     "/api/",
 		HttpOnly: true,
-//		Secure: true,
+		//		Secure: true,
 	}
 	// TODO (m0sth8): extract keys to configuration file
 	hashKey := []byte("12345678901234567890123456789012")
 	encKey := []byte("12345678901234567890123456789012")
 	wsContainer.Filter(filters.SessionCookieFilter("bearded-sss", cookieOpts, hashKey, encKey))
-
 
 	wsContainer.Filter(filters.MongoFilter(session)) // Add mongo session copy to context on every request
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni

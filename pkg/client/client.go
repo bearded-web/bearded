@@ -1,17 +1,17 @@
 package client
+
 // Client package inspired by google github client https://github.com/google/go-github
 
-
 import (
-	"net/url"
 	"net/http"
+	"net/url"
 	"reflect"
 
-	"github.com/google/go-querystring/query"
-	"encoding/json"
 	"bytes"
-	"io"
+	"encoding/json"
 	"fmt"
+	"github.com/google/go-querystring/query"
+	"io"
 	"io/ioutil"
 )
 
@@ -20,9 +20,8 @@ const (
 	userAgent      = "go-bearded-client/" + libraryVersion
 	defaultBaseURL = "http://127.0.0.1:3003/api/"
 	mediaTypeV1    = "application/json"
-	apiVersion	   = 1
+	apiVersion     = 1
 )
-
 
 // A Client manages communication with the Bearded API.
 type Client struct {
@@ -37,8 +36,7 @@ type Client struct {
 	UserAgent string
 
 	// Services used for talking to different parts of the Bearded API.
-	Plugins      *PluginsService
-
+	Plugins *PluginsService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -90,7 +88,6 @@ func (c *Client) SetBaseUrl(u string) error {
 	return nil
 }
 
-
 // NewRequest creates an API request. A relative URL can be provided in urlStr,
 // in which case it is resolved relative to the BaseURL of the Client.
 // Relative URLs should always be specified without a preceding slash.  If
@@ -104,7 +101,7 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	}
 
 	u := c.BaseURL.ResolveReference(rel)
-//	println("url", u.String())
+	//	println("url", u.String())
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -143,7 +140,6 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 
 	defer resp.Body.Close()
 
-
 	err = CheckResponse(resp)
 	if err != nil {
 		// even though there was an error, we still return the response
@@ -162,7 +158,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 }
 
 // Helper method to get a list of payload objects
-func (c *Client) List(url string, opts interface {}, payload interface {}) error {
+func (c *Client) List(url string, opts interface{}, payload interface{}) error {
 	u, err := addOptions(url, opts)
 	if err != nil {
 		return err
@@ -178,7 +174,7 @@ func (c *Client) List(url string, opts interface {}, payload interface {}) error
 }
 
 // Helper method to get a resource by id
-func (c *Client) Get(url string, id string, payload interface {}) error {
+func (c *Client) Get(url string, id string, payload interface{}) error {
 	url = fmt.Sprintf("%s/%s", url, id)
 	req, err := c.NewRequest("GET", url, nil)
 	if err != nil {
@@ -189,7 +185,7 @@ func (c *Client) Get(url string, id string, payload interface {}) error {
 	return err
 }
 
-func (c *Client) Create(url string, send interface {}, payload interface {}) error {
+func (c *Client) Create(url string, send interface{}, payload interface{}) error {
 	req, err := c.NewRequest("POST", url, send)
 	if err != nil {
 		return err
@@ -198,7 +194,7 @@ func (c *Client) Create(url string, send interface {}, payload interface {}) err
 	return err
 }
 
-func (c *Client) Update(url string, id string, send interface {}, payload interface {}) error {
+func (c *Client) Update(url string, id string, send interface{}, payload interface{}) error {
 	url = fmt.Sprintf("%s/%s", url, id)
 	req, err := c.NewRequest("PUT", url, send)
 	if err != nil {
@@ -229,7 +225,7 @@ func CheckResponse(r *http.Response) error {
 }
 
 type ErrorResponse struct {
-	Response *http.Response
+	Response     *http.Response
 	ServiceError *ServiceError
 }
 

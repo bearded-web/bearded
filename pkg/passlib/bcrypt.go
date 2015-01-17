@@ -2,7 +2,6 @@ package passlib
 
 import "golang.org/x/crypto/bcrypt"
 
-
 const bcryptName = "bcrypt"
 
 type BcryptAlgo struct {
@@ -15,7 +14,6 @@ func NewBcrypt(cost int) *BcryptAlgo {
 	}
 	return &BcryptAlgo{cost}
 }
-
 
 func (a *BcryptAlgo) Name() string {
 	return bcryptName
@@ -39,5 +37,3 @@ func (a *BcryptAlgo) Verify(password, hash string) (bool, error) {
 	}
 	return verified, err
 }
-
-

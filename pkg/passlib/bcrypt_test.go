@@ -1,10 +1,9 @@
 package passlib
 
 import (
-	"testing"
 	"golang.org/x/crypto/bcrypt"
+	"testing"
 )
-
 
 func TestBcrypt(t *testing.T) {
 	p := "password"
@@ -42,7 +41,6 @@ func TestBcryptEncrypt(t *testing.T) {
 	if b == nil {
 		t.Fatal("NewBcrypt returns nil")
 	}
-//	hash, err := b.Encrypt("password")
-
+	//	hash, err := b.Encrypt("password")
 
 }

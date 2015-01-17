@@ -1,10 +1,10 @@
 package user
 
 import (
+	"fmt"
+	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
 	"time"
-	"github.com/bearded-web/bearded/pkg/pagination"
-	"fmt"
 )
 
 type User struct {
@@ -20,8 +20,7 @@ func (u *User) String() string {
 	return fmt.Sprintf("%x %s", u.Id, u.Email)
 }
 
-
 type UserList struct {
 	pagination.Meta `json:",inline"`
-	Results []*User	`json:"results"`
+	Results         []*User `json:"results"`
 }
