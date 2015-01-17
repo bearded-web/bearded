@@ -15,3 +15,6 @@ Run dev server and look to build path
 `bearded dispatcher --frontend ../frontend/build/ -v`
 
 In `../frontend/` exec `npm run dev` to start frontend static server
+
+
+Swagger `http://127.0.0.1:3003/apidocs/`
