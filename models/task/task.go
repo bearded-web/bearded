@@ -1,6 +1,10 @@
 package task
 
-import "github.com/bearded-web/bearded/models/report"
+import (
+	"github.com/bearded-web/bearded/models/report"
+	"time"
+)
+
 
 type TaskType string
 
@@ -12,7 +16,8 @@ type StatusType string
 type Callback func(*Task)
 
 const (
-	StatusWaiting StatusType = "waiting"
+	StatusCreated StatusType = "created"
+	StatusQueued  StatusType = "queued"
 	StatusWorking            = "working"
 	StatusPaused             = "paused"
 	StatusDone               = "done"
@@ -35,12 +40,14 @@ type Task struct {
 
 type State struct {
 	Status StatusType `json:"status"`
+	Created time.Time
+
 }
 
 func New() *Task {
 	return &Task{
 		State: &State{
-			Status: StatusWaiting,
+			Status: StatusCreated,
 		},
 		callbacks: []Callback{},
 	}

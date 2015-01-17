@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
+	"os"
+
+	//	"github.com/codegangsta/cli"
+	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/cmd"
-	"os"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 )
 
 func BeforeHandler(c *cli.Context) error {
+	// set log level
 	level := logrus.DebugLevel
 	switch c.String("log-level") {
 	case "info":
@@ -42,7 +45,8 @@ func main() {
 	app.Email = Email
 	app.Name = Name
 	app.Commands = []cli.Command{
-		cmd.Run,
+		cmd.Dispatcher,
+		cmd.Plugins,
 	}
 
 	app.Flags = append(app.Flags, []cli.Flag{
@@ -51,10 +55,12 @@ func main() {
 			Value: "debug",
 			Usage: "Logger level output [debug|info|warning|error|fatal], debug is default",
 		},
+		cli.BoolFlag{
+			Name: "debug",
+			Usage: "Enable some debugging features, such as: disable https checking, trace requests etc",
+		},
 	}...)
 
 	app.Before = BeforeHandler
-
-//	app.Run([]string{"bearded", "run"})
 	app.Run(os.Args)
 }

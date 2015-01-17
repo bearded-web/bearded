@@ -1,0 +1,16 @@
+[
+    {
+        "name": "barbudo/wappalyzer",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "middle",
+        "description": {
+            "title": "Wappalyzer",
+            "info": "Load target url in phantomjs and analyze different technologies with wappalyzer",
+            "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer/"
+        },
+        "container": {
+            "image": "barbudo/wappalyzer"
+        }
+    }
+]
