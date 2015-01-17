@@ -31,7 +31,7 @@ func (s *PluginService) Register(container *restful.Container) {
 
 	r := ws.GET("").To(s.list)
 	// docs
-	r.Doc("List plugins")
+	r.Doc("list")
 	r.Operation("list")
 	r.Writes(plugin.PluginList{})
 	r.Do(services.Returns(http.StatusOK))
@@ -40,7 +40,7 @@ func (s *PluginService) Register(container *restful.Container) {
 
 	r = ws.POST("").To(s.create)
 	// docs
-	r.Doc("Create plugin")
+	r.Doc("create")
 	r.Operation("create")
 	r.Writes(plugin.Plugin{})
 	r.Reads(plugin.Plugin{})
@@ -52,7 +52,7 @@ func (s *PluginService) Register(container *restful.Container) {
 
 	r = ws.GET("{plugin-id}").To(s.get)
 	// docs
-	r.Doc("Get plugin")
+	r.Doc("get")
 	r.Operation("get")
 	r.Param(ws.PathParameter("plugin-id", ""))
 	r.Writes(plugin.Plugin{})
@@ -66,7 +66,7 @@ func (s *PluginService) Register(container *restful.Container) {
 
 	r = ws.PUT("{plugin-id}").To(s.update)
 	// docs
-	r.Doc("Update plugin")
+	r.Doc("update")
 	r.Operation("update")
 	r.Param(ws.PathParameter("plugin-id", ""))
 	r.Writes(plugin.Plugin{})

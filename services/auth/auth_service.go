@@ -33,7 +33,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	ws.Produces(restful.MIME_JSON)
 
 	r := ws.POST("").To(s.login)
-	r.Doc("Login")
+	r.Doc("login")
 	r.Operation("login")
 	r.Reads(authEntity{})
 	r.Returns(http.StatusCreated, "Session created", sessionEntity{})
@@ -44,7 +44,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.DELETE("").To(s.logout)
-	r.Doc("Logout")
+	r.Doc("logout")
 	r.Operation("logout")
 	r.Do(services.Returns(http.StatusNoContent))
 	r.Do(services.ReturnsE(
@@ -53,7 +53,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.GET("").To(s.status)
-	r.Doc("Status")
+	r.Doc("status")
 	r.Operation("status")
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(

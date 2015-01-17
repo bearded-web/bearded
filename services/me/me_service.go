@@ -35,7 +35,8 @@ func (s *MeService) Register(container *restful.Container) {
 
 	r := ws.GET("").To(s.info)
 	// docs
-	r.Doc("Information")
+	r.Doc("info")
+//	r.Notes("This endpoint is available only for authenticated users")
 	r.Operation("info")
 	r.Writes(me.Info{}) // on the response
 	r.Do(services.Returns(http.StatusOK))

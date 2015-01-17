@@ -30,7 +30,7 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Produces(restful.MIME_JSON)
 
 	r := ws.GET("").To(s.list)
-	r.Doc("List users")
+	r.Doc("list")
 	r.Operation("list")
 	r.Writes(user.UserList{})
 	r.Do(services.Returns(http.StatusOK))
@@ -40,7 +40,7 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.POST("").To(s.create)
-	r.Doc("Create user")
+	r.Doc("create")
 	r.Operation("create")
 	r.Writes(user.User{}) // on the response
 	r.Reads(user.User{})
@@ -52,7 +52,7 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.GET("{user-id}").To(s.get)
-	r.Doc("Get user")
+	r.Doc("get")
 	r.Operation("get")
 	r.Param(ws.PathParameter("user-id", ""))
 	r.Writes(user.User{}) // on the response
@@ -65,7 +65,8 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.POST("{user-id}/password").To(s.setPassword)
-	r.Doc("Set password, only for administrator")
+	r.Doc("setPassword")
+//	r.Notes("This method available only for administrator")
 	r.Operation("setPassword")
 	r.Reads(passwordEntity{})
 	r.Param(ws.PathParameter("user-id", ""))
