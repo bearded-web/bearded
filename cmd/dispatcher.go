@@ -45,7 +45,7 @@ var Dispatcher = cli.Command{
 		},
 		cli.StringFlag{
 			Name:	"frontend",
-			Value:  "../front/dist/",
+			Value:  "../frontend/dist/",
 			EnvVar: "BEARDED_FRONTEND",
 			Usage:  "path to frontend to serve static",
 		},
