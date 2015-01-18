@@ -1,5 +1,7 @@
 package report
 
+import "encoding/json"
+
 type ReportType string
 
 const (
@@ -8,7 +10,7 @@ const (
 
 // It's a hack to show custom type as string in swagger
 func (t ReportType) MarshalJSON() ([]byte, error) {
-	return []byte(t), nil
+	return json.Marshal(string(t))
 }
 
 type Report struct {

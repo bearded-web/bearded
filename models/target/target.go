@@ -2,6 +2,7 @@ package target
 
 import (
 	"time"
+	"encoding/json"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -12,7 +13,7 @@ type TargetType string
 
 // It's a hack to show custom type as string in swagger
 func (t TargetType) MarshalJSON() ([]byte, error) {
-	return []byte(t), nil
+	return json.Marshal(string(t))
 }
 
 const (

@@ -1,5 +1,7 @@
 package plugin
 
+import "encoding/json"
+
 type PluginType string
 
 func (t PluginType) String() string {
@@ -8,7 +10,7 @@ func (t PluginType) String() string {
 
 // It's a hack to show custom type as string in swagger
 func (t PluginType) MarshalJSON() ([]byte, error) {
-	return []byte(t), nil
+	return json.Marshal(string(t))
 }
 
 const (
@@ -22,7 +24,7 @@ type PluginWeight string
 
 // It's a hack to show custom type as string in swagger
 func (t PluginWeight) MarshalJSON() ([]byte, error) {
-	return []byte(t), nil
+	return json.Marshal(string(t))
 }
 
 const (
