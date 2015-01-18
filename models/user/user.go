@@ -22,7 +22,7 @@ func (u *User) String() string {
 
 // Id in hex
 func (u *User) IdStr() string {
-	return fmt.Sprintf("%x", u.Id)
+	return fmt.Sprintf("%x", string(u.Id))
 }
 
 type UserList struct {
