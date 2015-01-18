@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"fmt"
 	"net/http"
 
 	restful "github.com/emicklei/go-restful"
@@ -11,6 +12,8 @@ import (
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
 )
+
+const ParamId = "plugin-id"
 
 type PluginService struct {
 	*services.BaseService
@@ -50,11 +53,11 @@ func (s *PluginService) Register(container *restful.Container) {
 		http.StatusInternalServerError))
 	ws.Route(r)
 
-	r = ws.GET("{plugin-id}").To(s.get)
+	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.get)
 	// docs
 	r.Doc("get")
 	r.Operation("get")
-	r.Param(ws.PathParameter("plugin-id", ""))
+	r.Param(ws.PathParameter(ParamId, ""))
 	r.Writes(plugin.Plugin{})
 	r.Do(services.Returns(
 		http.StatusOK,
@@ -64,11 +67,11 @@ func (s *PluginService) Register(container *restful.Container) {
 		http.StatusInternalServerError))
 	ws.Route(r)
 
-	r = ws.PUT("{plugin-id}").To(s.update)
+	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
 	// docs
 	r.Doc("update")
 	r.Operation("update")
-	r.Param(ws.PathParameter("plugin-id", ""))
+	r.Param(ws.PathParameter(ParamId, ""))
 	r.Writes(plugin.Plugin{})
 	r.Reads(plugin.Plugin{})
 	r.Do(services.Returns(

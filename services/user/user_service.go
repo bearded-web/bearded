@@ -66,7 +66,7 @@ func (s *UserService) Register(container *restful.Container) {
 
 	r = ws.POST("{user-id}/password").To(s.setPassword)
 	r.Doc("setPassword")
-//	r.Notes("This method available only for administrator")
+	//	r.Notes("This method available only for administrator")
 	r.Operation("setPassword")
 	r.Reads(passwordEntity{})
 	r.Param(ws.PathParameter("user-id", ""))

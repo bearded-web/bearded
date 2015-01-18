@@ -5,27 +5,49 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type ManagerInterface interface {
+	Init() error
+}
+
 type Manager struct {
-	db      *mgo.Database
-	Users   *UserManager
-	Plugins *PluginManager
+	db *mgo.Database
+
+	Users    *UserManager
+	Plugins  *PluginManager
+	Projects *ProjectManager
+	Targets  *TargetManager
+
+	managers []ManagerInterface
 }
 
 func New(db *mgo.Database) *Manager {
-	m := &Manager{db: db}
+	m := &Manager{
+		db:       db,
+		managers: []ManagerInterface{},
+	}
 
 	// initialize different managers
 	m.Users = &UserManager{manager: m, col: db.C("users")}
 	m.Plugins = &PluginManager{manager: m, col: db.C("plugins")}
+	m.Projects = &ProjectManager{manager: m, col: db.C("projects")}
+	m.Targets = &TargetManager{manager: m, col: db.C("targets")}
+
+	m.managers = append(m.managers,
+		m.Users,
+		m.Plugins,
+		m.Projects,
+		m.Targets,
+	)
+
 	return m
 }
 
+// Initialize all managers. Ensure indexes.
 func (m *Manager) Init() error {
-	if err := m.Users.Init(); err != nil {
-		return err
-	}
-	if err := m.Plugins.Init(); err != nil {
-		return err
+	for _, manager := range m.managers {
+		if err := manager.Init(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -74,4 +96,8 @@ func (m *Manager) IsId(id string) bool {
 
 func (m *Manager) ToId(id string) bson.ObjectId {
 	return bson.ObjectIdHex(id)
+}
+
+func (m *Manager) FromId(id bson.ObjectId) string {
+	return id.Hex()
 }

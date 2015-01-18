@@ -18,6 +18,7 @@ const (
 	// error codes related to auth
 	CodeAuthReq    = 60
 	CodeAuthFailed = 61
+	CodeAuthForbid = 61
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 	DuplicateErr   = NewError(CodeDuplicate, "object with the same indexes is existed")
 	AuthReqErr     = NewError(CodeAuthReq, "authorization required")
 	AuthFailedErr  = NewError(CodeAuthFailed, "authorization failed")
+	AuthForbidErr  = NewError(CodeAuthForbid, "you have no permission to this resource")
 )
 
 func NewError(c CodeErr, msg string) restful.ServiceError {

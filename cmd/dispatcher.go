@@ -18,6 +18,8 @@ import (
 	"github.com/bearded-web/bearded/services/auth"
 	"github.com/bearded-web/bearded/services/me"
 	"github.com/bearded-web/bearded/services/plugin"
+	"github.com/bearded-web/bearded/services/project"
+	"github.com/bearded-web/bearded/services/target"
 	"github.com/bearded-web/bearded/services/user"
 )
 
@@ -74,22 +76,25 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 
 	// services
 	base := services.New(mgr, passCtx)
-	authService := auth.New(base)
-	pluginService := plugin.New(base)
-	userService := user.New(base)
-	meService := me.New(base)
+	all := []services.ServiceInterface{
+		auth.New(base),
+		plugin.New(base),
+		user.New(base),
+		project.New(base),
+		target.New(base),
+		me.New(base),
+	}
 
 	// initialize services
-	authService.Init()
-	userService.Init()
-	pluginService.Init()
-	meService.Init()
-
+	for _, s := range all {
+		if err := s.Init(); err != nil {
+			return err
+		}
+	}
 	// register services in container
-	authService.Register(wsContainer)
-	userService.Register(wsContainer)
-	pluginService.Register(wsContainer)
-	meService.Register(wsContainer)
+	for _, s := range all {
+		s.Register(wsContainer)
+	}
 
 	return nil
 }

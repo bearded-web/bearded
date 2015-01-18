@@ -9,6 +9,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/me"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -26,6 +27,11 @@ func (s *MeService) Init() error {
 	return nil
 }
 
+// Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
+func (s *MeService) Manager() *manager.Manager {
+	return s.BaseService.Manager()
+}
+
 func (s *MeService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
 	ws.Path("/api/v1/me")
@@ -36,7 +42,7 @@ func (s *MeService) Register(container *restful.Container) {
 	r := ws.GET("").To(s.info)
 	// docs
 	r.Doc("info")
-//	r.Notes("This endpoint is available only for authenticated users")
+	//	r.Notes("This endpoint is available only for authenticated users")
 	r.Operation("info")
 	r.Writes(me.Info{}) // on the response
 	r.Do(services.Returns(http.StatusOK))
@@ -76,8 +82,29 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
+	projects, count, err := mgr.Projects.GetByOwner(userId)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+	} else {
+		// TODO (m0sth8): create default project on user creation.
+		// create one default project
+		if count == 0 {
+			p, err := mgr.Projects.CreateDefault(userId)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				// It might be possible, that default project is already created
+				// So, client should repeat request
+				resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+				return
+			} else {
+				projects = append(projects, p)
+			}
+		}
+	}
+
 	info := me.Info{
-		User: u,
+		User:     u,
+		Projects: projects,
 	}
 
 	resp.WriteEntity(info)

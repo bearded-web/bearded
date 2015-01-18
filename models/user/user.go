@@ -20,6 +20,11 @@ func (u *User) String() string {
 	return fmt.Sprintf("%x %s", u.Id, u.Email)
 }
 
+// Id in hex
+func (u *User) IdStr() string {
+	return fmt.Sprintf("%x", u.Id)
+}
+
 type UserList struct {
 	pagination.Meta `json:",inline"`
 	Results         []*User `json:"results"`

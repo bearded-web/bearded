@@ -42,18 +42,6 @@ type Plugin struct {
 	//	Links []*Link `json:"links,omitempty"`
 }
 
-type Link struct {
-	Type     LinkType `json:"type"`
-	Info     string   `json:"info"`
-	Plugin   string   `json:"plugin"`
-	Versions []string `json:"versions"`
-}
-
-type PluginList struct {
-	pagination.Meta `json:",inline"`
-	Results         []*Plugin `json:"results"`
-}
-
 // Short description of plugin
 func (p *Plugin) String() string {
 	if p.Id != "" {
@@ -61,4 +49,16 @@ func (p *Plugin) String() string {
 	} else {
 		return fmt.Sprintf("%s v.%s", p.Name, p.Version)
 	}
+}
+
+//type Link struct {
+//	Type     LinkType `json:"type"`
+//	Info     string   `json:"info"`
+//	Plugin   string   `json:"plugin"`
+//	Versions []string `json:"versions"`
+//}
+
+type PluginList struct {
+	pagination.Meta `json:",inline"`
+	Results         []*Plugin `json:"results"`
 }
