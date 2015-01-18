@@ -1,12 +1,17 @@
 package report
 
-type Type string
+type ReportType string
 
 const (
-	TypeRaw Type = "raw"
+	TypeRaw ReportType = "raw"
 )
 
+// It's a hack to show custom type as string in swagger
+func (t ReportType) MarshalJSON() ([]byte, error) {
+	return []byte(t), nil
+}
+
 type Report struct {
-	Type Type   `json:"type"`
+	Type ReportType   `json:"type"`
 	Raw  string `json:"raw"`
 }

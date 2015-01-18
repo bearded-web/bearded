@@ -4,6 +4,11 @@ import "gopkg.in/mgo.v2/bson"
 
 type AgentStatus string
 
+// It's a hack to show custom type as string in swagger
+func (t AgentStatus) MarshalJSON() ([]byte, error) {
+	return []byte(t), nil
+}
+
 const CollectionName = "agents"
 
 const (

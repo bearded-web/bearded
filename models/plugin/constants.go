@@ -2,8 +2,13 @@ package plugin
 
 type PluginType string
 
-func (a PluginType) String() string {
-	return string(a)
+func (t PluginType) String() string {
+	return string(t)
+}
+
+// It's a hack to show custom type as string in swagger
+func (t PluginType) MarshalJSON() ([]byte, error) {
+	return []byte(t), nil
 }
 
 const (
@@ -14,6 +19,11 @@ const (
 // =========
 
 type PluginWeight string
+
+// It's a hack to show custom type as string in swagger
+func (t PluginWeight) MarshalJSON() ([]byte, error) {
+	return []byte(t), nil
+}
 
 const (
 	Light  PluginWeight = "light"

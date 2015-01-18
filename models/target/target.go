@@ -10,6 +10,11 @@ import (
 
 type TargetType string
 
+// It's a hack to show custom type as string in swagger
+func (t TargetType) MarshalJSON() ([]byte, error) {
+	return []byte(t), nil
+}
+
 const (
 	Web    TargetType = "web"
 	Mobile            = "mobile"
