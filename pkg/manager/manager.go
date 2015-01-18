@@ -20,6 +20,8 @@ type Manager struct {
 	managers []ManagerInterface
 }
 
+// Manager contains all available managers for different models
+// and hidden all db related operations
 func New(db *mgo.Database) *Manager {
 	m := &Manager{
 		db:       db,
@@ -94,10 +96,39 @@ func (m *Manager) IsId(id string) bool {
 	return bson.IsObjectIdHex(id)
 }
 
+// convert string id to ObjectId
 func (m *Manager) ToId(id string) bson.ObjectId {
 	return bson.ObjectIdHex(id)
 }
 
+// convert ObjectId to string
 func (m *Manager) FromId(id bson.ObjectId) string {
 	return id.Hex()
+}
+
+func (m *Manager) All(col *mgo.Collection, results interface{}) (int, error) {
+	query := &bson.M{}
+	q := col.Find(query)
+	if err := q.All(results); err != nil {
+		return 0, err
+	}
+	count, err := q.Count()
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (m *Manager) GetById(col *mgo.Collection, id string, result interface{}) error {
+	return col.FindId(m.ToId(id)).One(result)
+}
+
+func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}) error {
+	q := col.Find(query)
+	return q.One(result)
+}
+
+func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, result interface{}) error {
+	q := col.Find(query)
+	return q.All(result)
 }

@@ -34,25 +34,13 @@ func (m *ProjectManager) Init() error {
 
 func (m *ProjectManager) All() ([]*project.Project, int, error) {
 	results := []*project.Project{}
-
-	query := &bson.M{}
-	q := m.col.Find(query)
-	if err := q.All(&results); err != nil {
-		return nil, 0, err
-	}
-	count, err := q.Count()
-	if err != nil {
-		return nil, 0, err
-	}
-	return results, count, nil
+	count, err := m.manager.All(m.col, &results)
+	return results, count, err
 }
 
 func (m *ProjectManager) GetById(id string) (*project.Project, error) {
 	u := &project.Project{}
-	if err := m.col.FindId(bson.ObjectIdHex(id)).One(u); err != nil {
-		return nil, err
-	}
-	return u, nil
+	return u, m.manager.GetById(m.col, id, u)
 }
 
 func (m *ProjectManager) GetByOwner(owner string) ([]*project.Project, int, error) {

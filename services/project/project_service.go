@@ -46,7 +46,7 @@ func (s *ProjectService) Register(container *restful.Container) {
 	ws.Doc("Manage Projects")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter())
+	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
@@ -97,9 +97,6 @@ func (s *ProjectService) Register(container *restful.Container) {
 }
 
 func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
-	session := filters.GetSession(req)
-	userId, _ := session.Get("userId")
-
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
 	raw := &project.Project{}
@@ -110,10 +107,12 @@ func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
+	user := filters.GetUser(req)
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	raw.Owner = mgr.ToId(userId)
+	raw.Owner = user.Id
 	obj, err := mgr.Projects.Create(raw)
 	if err != nil {
 		if mgr.IsDup(err) {

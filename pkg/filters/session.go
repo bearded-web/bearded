@@ -12,7 +12,8 @@ import (
 	"sync"
 )
 
-var SessionKey = "__session"
+// name for key in restful attributes
+var AttrSessionKey = "__session"
 
 type Session struct {
 	store    map[string]string
@@ -84,7 +85,7 @@ func SessionCookieFilter(cookieName string, opts *CookieOpts, keyPairs ...[]byte
 				logrus.Warn(err)
 			}
 		}
-		req.SetAttribute(SessionKey, session)
+		req.SetAttribute(AttrSessionKey, session)
 
 		// I don't know how to write cookie in restful, so I use underneath negroni before hook
 		resp.ResponseWriter.(negroni.ResponseWriter).Before(func(rw negroni.ResponseWriter) {
@@ -103,7 +104,7 @@ func SessionCookieFilter(cookieName string, opts *CookieOpts, keyPairs ...[]byte
 
 // Get session from restful.Request attribute or panic
 func GetSession(req *restful.Request) *Session {
-	m := req.Attribute(SessionKey)
+	m := req.Attribute(AttrSessionKey)
 	if m == nil {
 		panic("GetSession attribute is nil")
 	}

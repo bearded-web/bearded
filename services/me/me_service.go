@@ -46,7 +46,7 @@ func (s *MeService) Register(container *restful.Container) {
 	ws.Doc("Current user management")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter())
+	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
 
 	r := ws.GET("").To(s.info)
 	// docs
@@ -62,29 +62,17 @@ func (s *MeService) Register(container *restful.Container) {
 }
 
 func (s *MeService) info(req *restful.Request, resp *restful.Response) {
-	session := filters.GetSession(req)
-
-	userId, _ := session.Get("userId")
-
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	u, err := mgr.Users.GetById(userId)
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			resp.WriteErrorString(http.StatusNotFound, "Not found")
-			return
-		}
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
+	u := filters.GetUser(req)
+	userId := u.IdStr()
 
 	projects, count, err := mgr.Projects.GetByOwner(userId)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 	} else {
-		// TODO (m0sth8): create default project on user creation.
+		// TODO (m0sth8): create default project when user on create is triggered.
 		// create one default project
 		if count == 0 {
 			p, err := mgr.Projects.CreateDefault(userId)

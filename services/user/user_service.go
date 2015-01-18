@@ -8,9 +8,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
-	"github.com/bearded-web/bearded/pkg/filters"
 )
 
 type UserService struct {
@@ -38,7 +38,7 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Doc("User management")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter())
+	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")

@@ -48,7 +48,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	ws.Doc("Manage Targets")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter())
+	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
@@ -106,9 +106,6 @@ func (s *TargetService) Register(container *restful.Container) {
 }
 
 func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
-	session := filters.GetSession(req)
-	userId, _ := session.Get("userId")
-
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
 	raw := &target.Target{}
@@ -126,6 +123,8 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		}
 	}
 
+	user := filters.GetUser(req)
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
@@ -141,7 +140,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	if proj.Owner != mgr.ToId(userId) {
+	if proj.Owner != user.Id {
 		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}

@@ -53,7 +53,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	r = ws.DELETE("").To(s.logout)
 	r.Doc("logout")
 	r.Operation("logout")
-	r.Filter(filters.AuthRequiredFilter())
+	r.Filter(filters.AuthRequiredFilter(s.Manager()))
 	r.Do(services.Returns(http.StatusNoContent))
 	addDefaults(r)
 	ws.Route(r)
@@ -62,7 +62,7 @@ func (s *AuthService) Register(container *restful.Container) {
 	r.Doc("status")
 	r.Operation("status")
 	r.Notes("Returns 200 ok if user is authenticated")
-	r.Filter(filters.AuthRequiredFilter())
+	r.Filter(filters.AuthRequiredFilter(s.Manager()))
 	r.Do(services.Returns(http.StatusOK))
 	addDefaults(r)
 	ws.Route(r)
@@ -119,8 +119,9 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	// set userId to session
-	session.Set("userId", u.Id.Hex())
+	// TODO (m0sth8): extract auth methods, like login or logout.
+	// set user id to session
+	session.Set(filters.SessionUserKey, u.Id.Hex())
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(sessionEntity{Token: "not ready"})
 }
@@ -131,6 +132,6 @@ func (s *AuthService) status(_ *restful.Request, _ *restful.Response) {
 
 func (s *AuthService) logout(req *restful.Request, resp *restful.Response) {
 	session := filters.GetSession(req)
-	session.Del("userId")
+	session.Del(filters.SessionUserKey)
 	resp.WriteHeader(http.StatusNoContent)
 }
