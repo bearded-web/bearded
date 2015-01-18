@@ -32,12 +32,21 @@ func (s *MeService) Manager() *manager.Manager {
 	return s.BaseService.Manager()
 }
 
+func addDefaults(r *restful.RouteBuilder) {
+	r.Notes("Authorization required")
+	r.Do(services.ReturnsE(
+		http.StatusUnauthorized,
+		http.StatusInternalServerError,
+	))
+}
+
 func (s *MeService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
 	ws.Path("/api/v1/me")
 	ws.Doc("Current user management")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthRequiredFilter())
 
 	r := ws.GET("").To(s.info)
 	// docs
@@ -46,9 +55,7 @@ func (s *MeService) Register(container *restful.Container) {
 	r.Operation("info")
 	r.Writes(me.Info{}) // on the response
 	r.Do(services.Returns(http.StatusOK))
-	r.Do(services.ReturnsE(
-		http.StatusInternalServerError,
-		http.StatusUnauthorized))
+	addDefaults(r)
 	ws.Route(r)
 
 	container.Add(ws)
@@ -57,16 +64,7 @@ func (s *MeService) Register(container *restful.Container) {
 func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 	session := filters.GetSession(req)
 
-	userId, existed := session.Get("userId")
-	if !existed {
-		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
-		return
-	}
-	if !s.IsId(userId) {
-		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
-		// TODO (m0sth8): logout here
-		return
-	}
+	userId, _ := session.Get("userId")
 
 	mgr := s.Manager()
 	defer mgr.Close()

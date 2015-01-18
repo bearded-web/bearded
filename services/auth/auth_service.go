@@ -8,8 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/pkg/filters"
-	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/pkg/manager"
+	"github.com/bearded-web/bearded/services"
 )
 
 type AuthService struct {
@@ -20,6 +20,13 @@ func New(base *services.BaseService) *AuthService {
 	return &AuthService{
 		BaseService: base,
 	}
+}
+
+func addDefaults(r *restful.RouteBuilder) {
+	r.Do(services.ReturnsE(
+		http.StatusUnauthorized,
+		http.StatusInternalServerError,
+	))
 }
 
 // Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
@@ -39,29 +46,25 @@ func (s *AuthService) Register(container *restful.Container) {
 	r.Operation("login")
 	r.Reads(authEntity{})
 	r.Returns(http.StatusCreated, "Session created", sessionEntity{})
-	r.Do(services.ReturnsE(
-		http.StatusInternalServerError,
-		http.StatusUnauthorized,
-		http.StatusBadRequest))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.DELETE("").To(s.logout)
 	r.Doc("logout")
 	r.Operation("logout")
+	r.Filter(filters.AuthRequiredFilter())
 	r.Do(services.Returns(http.StatusNoContent))
-	r.Do(services.ReturnsE(
-		http.StatusInternalServerError,
-		http.StatusBadRequest))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.GET("").To(s.status)
 	r.Doc("status")
 	r.Operation("status")
+	r.Notes("Returns 200 ok if user is authenticated")
+	r.Filter(filters.AuthRequiredFilter())
 	r.Do(services.Returns(http.StatusOK))
-	r.Do(services.ReturnsE(
-		http.StatusInternalServerError,
-		http.StatusUnauthorized,
-		http.StatusBadRequest))
+	addDefaults(r)
 	ws.Route(r)
 
 	container.Add(ws)
@@ -122,16 +125,12 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(sessionEntity{Token: "not ready"})
 }
 
-func (s *AuthService) status(req *restful.Request, resp *restful.Response) {
-	session := filters.GetSession(req)
-	if _, ok := session.Get("userId"); !ok {
-		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
-		return
-	}
+func (s *AuthService) status(_ *restful.Request, _ *restful.Response) {
+	// do nothing, just return 200 ok, cause authorization was checked in filter
 }
 
 func (s *AuthService) logout(req *restful.Request, resp *restful.Response) {
 	session := filters.GetSession(req)
 	session.Del("userId")
-	resp.ResponseWriter.WriteHeader(http.StatusNoContent)
+	resp.WriteHeader(http.StatusNoContent)
 }

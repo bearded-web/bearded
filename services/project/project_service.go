@@ -27,6 +27,14 @@ func New(base *services.BaseService) *ProjectService {
 	}
 }
 
+func addDefaults(r *restful.RouteBuilder) {
+	r.Notes("Authorization required")
+	r.Do(services.ReturnsE(
+		http.StatusUnauthorized,
+		http.StatusInternalServerError,
+	))
+}
+
 // Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
 func (s *ProjectService) Manager() *manager.Manager {
 	return s.BaseService.Manager()
@@ -38,13 +46,14 @@ func (s *ProjectService) Register(container *restful.Container) {
 	ws.Doc("Manage Projects")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthRequiredFilter())
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
 	r.Operation("list")
 	r.Writes(project.ProjectList{})
 	r.Do(services.Returns(http.StatusOK))
-	r.Do(services.ReturnsE(http.StatusInternalServerError))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.POST("").To(s.create)
@@ -53,10 +62,8 @@ func (s *ProjectService) Register(container *restful.Container) {
 	r.Writes(project.Project{})
 	r.Reads(project.Project{})
 	r.Do(services.Returns(http.StatusCreated))
-	r.Do(services.ReturnsE(
-		http.StatusConflict,
-		http.StatusUnauthorized,
-		http.StatusInternalServerError))
+	r.Do(services.ReturnsE(http.StatusConflict))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.get)
@@ -67,9 +74,8 @@ func (s *ProjectService) Register(container *restful.Container) {
 	r.Do(services.Returns(
 		http.StatusOK,
 		http.StatusNotFound))
-	r.Do(services.ReturnsE(
-		http.StatusBadRequest,
-		http.StatusInternalServerError))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	addDefaults(r)
 	ws.Route(r)
 
 	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
@@ -92,12 +98,8 @@ func (s *ProjectService) Register(container *restful.Container) {
 
 func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 	session := filters.GetSession(req)
-	// TODO (m0sth8): Extract to filter "AuthRequired"
-	userId, isLogged := session.Get("userId")
-	if !isLogged {
-		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
-		return
-	}
+	userId, _ := session.Get("userId")
+
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
 	raw := &project.Project{}

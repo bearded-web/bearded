@@ -27,6 +27,16 @@ func New(base *services.BaseService) *TargetService {
 	}
 }
 
+func addDefaults(r *restful.RouteBuilder) {
+	r.Notes("Authorization required")
+	r.Do(services.ReturnsE(
+		http.StatusUnauthorized,
+		http.StatusInternalServerError,
+		http.StatusForbidden,
+		http.StatusBadRequest,
+	))
+}
+
 // Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
 func (s *TargetService) Manager() *manager.Manager {
 	return s.BaseService.Manager()
@@ -38,18 +48,15 @@ func (s *TargetService) Register(container *restful.Container) {
 	ws.Doc("Manage Targets")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthRequiredFilter())
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
 	r.Operation("list")
 	r.Writes(target.TargetList{})
-	r.Param(ws.QueryParameter("project", "filter by project"))
+	r.Param(ws.QueryParameter("project", "filter by project id"))
 	r.Do(services.Returns(http.StatusOK))
-	r.Do(services.ReturnsE(
-		http.StatusUnauthorized,
-		http.StatusBadRequest,
-		http.StatusForbidden,
-		http.StatusInternalServerError))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.POST("").To(s.create)
@@ -58,11 +65,8 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Writes(target.Target{})
 	r.Reads(target.Target{})
 	r.Do(services.Returns(http.StatusCreated))
-	r.Do(services.ReturnsE(
-		http.StatusConflict,
-		http.StatusUnauthorized,
-		http.StatusForbidden,
-		http.StatusInternalServerError))
+	r.Do(services.ReturnsE(http.StatusConflict))
+	addDefaults(r)
 	ws.Route(r)
 
 	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.get)
@@ -73,10 +77,6 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Do(services.Returns(
 		http.StatusOK,
 		http.StatusNotFound))
-	r.Do(services.ReturnsE(
-		http.StatusUnauthorized,
-		http.StatusBadRequest,
-		http.StatusInternalServerError))
 	ws.Route(r)
 
 	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.delete)
@@ -84,11 +84,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Operation("delete")
 	r.Param(ws.PathParameter(ParamId, ""))
 	r.Do(services.Returns(http.StatusNoContent))
-	r.Do(services.ReturnsE(
-		http.StatusUnauthorized,
-		http.StatusForbidden,
-		http.StatusInternalServerError,
-		http.StatusBadRequest))
+	addDefaults(r)
 	ws.Route(r)
 
 	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
@@ -111,12 +107,8 @@ func (s *TargetService) Register(container *restful.Container) {
 
 func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	session := filters.GetSession(req)
-	// TODO (m0sth8): Extract to filter "AuthRequired"
-	userId, isLogged := session.Get("userId")
-	if !isLogged {
-		resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
-		return
-	}
+	userId, _ := session.Get("userId")
+
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
 	raw := &target.Target{}
