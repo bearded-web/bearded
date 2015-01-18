@@ -9,6 +9,7 @@ import (
 
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/services"
+	"github.com/bearded-web/bearded/pkg/manager"
 )
 
 type AuthService struct {
@@ -21,8 +22,9 @@ func New(base *services.BaseService) *AuthService {
 	}
 }
 
-func (s *AuthService) Init() error {
-	return nil
+// Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
+func (s *AuthService) Manager() *manager.Manager {
+	return s.BaseService.Manager()
 }
 
 func (s *AuthService) Register(container *restful.Container) {
