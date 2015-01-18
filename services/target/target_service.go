@@ -48,7 +48,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	ws.Doc("Manage Targets")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
+	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")

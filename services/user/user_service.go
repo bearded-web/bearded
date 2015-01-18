@@ -38,7 +38,7 @@ func (s *UserService) Register(container *restful.Container) {
 	ws.Doc("User management")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
-	ws.Filter(filters.AuthRequiredFilter(s.Manager()))
+	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
 	r.Doc("list")

@@ -18,9 +18,14 @@ func New(mgr *manager.Manager, passCtx *passlib.Context) *BaseService {
 	}
 }
 
-// Get copy of manager, please don't forget to close the manager
+// Get copy of the manager, don't forget to close it
 func (s *BaseService) Manager() *manager.Manager {
 	return s.manager.Copy()
+}
+
+// Get the original manager, don't close it
+func (s *BaseService) BaseManager() *manager.Manager {
+	return s.manager
 }
 
 func (s *BaseService) PassCtx() *passlib.Context {
