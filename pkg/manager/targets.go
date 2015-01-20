@@ -37,12 +37,9 @@ func (m *TargetManager) All() ([]*target.Target, int, error) {
 	return results, count, nil
 }
 
-func (m *TargetManager) GetById(id string) (*target.Target, error) {
+func (m *TargetManager) GetById(id bson.ObjectId) (*target.Target, error) {
 	u := &target.Target{}
-	if err := m.col.FindId(bson.ObjectIdHex(id)).One(u); err != nil {
-		return nil, err
-	}
-	return u, nil
+	return u, m.manager.GetById(m.col, id, &u)
 }
 
 func (m *TargetManager) GetByProject(project string) ([]*target.Target, int, error) {

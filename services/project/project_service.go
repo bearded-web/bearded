@@ -159,7 +159,7 @@ func (s *ProjectService) get(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	// TODO (m0sth8): check permissions for the user
-	u, err := mgr.Projects.GetById(projectId)
+	u, err := mgr.Projects.GetById(mgr.ToId(projectId))
 	if err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")

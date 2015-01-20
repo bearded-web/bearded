@@ -14,6 +14,6 @@ func (t ReportType) MarshalJSON() ([]byte, error) {
 }
 
 type Report struct {
-	Type ReportType   `json:"type"`
-	Raw  string `json:"raw"`
+	Type ReportType `json:"type" description:"one of [raw]"`
+	Raw  string     `json:"raw"`
 }

@@ -12,7 +12,7 @@ type Container struct {
 	Image    string `json:"image"`
 }
 
-type Description struct {
+type Desc struct {
 	Title string `json:"title"` // human readable name
 	Info  string `json:"info"`
 	Url   string `json:"url"`
@@ -24,16 +24,20 @@ type Required struct {
 	Dependence Dependence `json:"dependence" description:"one of blocking|important|optional"` // with blocking dependency plugin will not run
 }
 
+type Conf struct {
+	CommandArgs string `json:"commandArgs,omitempty" description:"passed to command line for plugins with type:util"`
+}
+
 type Plugin struct {
-	Id          bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Name        string        `json:"name" description:"unique plugin id, ex: barbudo/wpscan"` // TODO: do we need aliases or tags?
-	Version     string        `json:"version"`
-	Type        PluginType    `json:"type" description:"one of: util|script"`
-	Weight      PluginWeight  `json:"weight" description:"one of: light|middle|heavy"`
-	Description *Description  `json:"description" description:"human readable description"`
-	Container   *Container    `json:"container,omitempty" description:"information about container"`
-	Created     time.Time     `json:"created,omitempty" description:"when plugin is created"`
-	Updated     time.Time     `json:"created,omitempty" description:"when plugin is updated"`
+	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Name      string        `json:"name" description:"unique plugin id, ex: barbudo/wpscan"` // TODO: do we need aliases or tags?
+	Version   string        `json:"version"`
+	Type      PluginType    `json:"type" description:"one of: util|script"`
+	Weight    PluginWeight  `json:"weight" description:"one of: light|middle|heavy"`
+	Desc      *Desc         `json:"desc" description:"human readable description"`
+	Container *Container    `json:"container,omitempty" description:"information about container"`
+	Created   time.Time     `json:"created,omitempty" description:"when plugin is created"`
+	Updated   time.Time     `json:"created,omitempty" description:"when plugin is updated"`
 
 	//	Requirements []*Required   `json:"requirements,omitempty" description:"other plugins required for running"`
 	Enabled bool `json:"enabled" description:"is plugin enabled for running"`
@@ -44,11 +48,16 @@ type Plugin struct {
 
 // Short description of plugin
 func (p *Plugin) String() string {
+	var str string
 	if p.Id != "" {
-		return fmt.Sprintf("%x - %s v.%s", string(p.Id), p.Name, p.Version)
+		str = fmt.Sprintf("%x - %s v.%s", string(p.Id), p.Name, p.Version)
 	} else {
-		return fmt.Sprintf("%s v.%s", p.Name, p.Version)
+		str = fmt.Sprintf("%s v.%s", p.Name, p.Version)
 	}
+	if p.Id != "" && !p.Enabled {
+		str = fmt.Sprintf("%s DISABLED", str)
+	}
+	return str
 }
 
 //type Link struct {

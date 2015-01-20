@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type AgentStatus string

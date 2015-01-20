@@ -16,6 +16,9 @@ func (s *PluginsService) String() string {
 }
 
 type PluginsListOpts struct {
+	Name    string
+	Version string
+	Type    string
 }
 
 // List plugins.

@@ -1,8 +1,8 @@
 package target
 
 import (
-	"time"
 	"encoding/json"
+	"time"
 
 	"gopkg.in/mgo.v2/bson"
 
@@ -37,4 +37,11 @@ type WebTarget struct {
 type TargetList struct {
 	pagination.Meta `json:",inline"`
 	Results         []*Target `json:"results"`
+}
+
+func (t *Target) Addr() string {
+	if t.Type == "web" {
+		return t.Web.Domain
+	}
+	return ""
 }

@@ -47,6 +47,7 @@ func main() {
 	app.Commands = []cli.Command{
 		cmd.Dispatcher,
 		cmd.Plugins,
+		cmd.Plans,
 	}
 
 	app.Flags = append(app.Flags, []cli.Flag{

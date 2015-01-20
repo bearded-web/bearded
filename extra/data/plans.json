@@ -1,0 +1,16 @@
+[
+    {
+        "name": "detectWeb",
+        "desc": "Detect web technologies used by the site with wappalyzer and nmap",
+        "targetType": "web",
+        "workflow": [
+            {
+                "plugin": "barbudo/wappalyzer:0.0.2",
+                "desc": "Use wappalyzer in phantomjs to detect web technologies used by the site",
+                "conf": {
+                    "commandArgs": "{{ .Target }}"
+                }
+            }
+        ]
+    }
+]

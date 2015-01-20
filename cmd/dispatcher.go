@@ -17,8 +17,10 @@ import (
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/auth"
 	"github.com/bearded-web/bearded/services/me"
+	"github.com/bearded-web/bearded/services/plan"
 	"github.com/bearded-web/bearded/services/plugin"
 	"github.com/bearded-web/bearded/services/project"
+	"github.com/bearded-web/bearded/services/scan"
 	"github.com/bearded-web/bearded/services/target"
 	"github.com/bearded-web/bearded/services/user"
 )
@@ -79,9 +81,11 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 	all := []services.ServiceInterface{
 		auth.New(base),
 		plugin.New(base),
+		plan.New(base),
 		user.New(base),
 		project.New(base),
 		target.New(base),
+		scan.New(base),
 		me.New(base),
 	}
 
@@ -99,7 +103,18 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 	return nil
 }
 
+//type MgoLogger struct {
+//}
+//
+//func (m *MgoLogger) Output(calldepth int, s string) error {
+//	logrus.Debug(s)
+//	return nil
+//}
+
 func dispatcherAction(ctx *cli.Context) {
+	if ctx.GlobalBool("debug") {
+		logrus.Info("Debug mode is enabled")
+	}
 
 	// initialize mongodb session
 	mongoAddr := ctx.String("mongo-addr")
@@ -114,6 +129,9 @@ func dispatcherAction(ctx *cli.Context) {
 	logrus.Infof("Set mongo database %s", dbName)
 
 	if ctx.GlobalBool("debug") {
+		//		mgo.SetLogger(&MgoLogger{)
+		//		mgo.SetDebug(true)
+
 		// see what happens inside the package restful
 		// TODO (m0sth8): set output to logrus
 		restful.TraceLogger(log.New(os.Stdout, "[restful] ", log.LstdFlags|log.Lshortfile))

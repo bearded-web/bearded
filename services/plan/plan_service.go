@@ -1,4 +1,4 @@
-package plugin
+package plan
 
 import (
 	"fmt"
@@ -8,20 +8,20 @@ import (
 	"github.com/facebookgo/stackerr"
 	"github.com/sirupsen/logrus"
 
-	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
 )
 
-const ParamId = "plugin-id"
+const ParamId = "plan-id"
 
-type PluginService struct {
+type PlanService struct {
 	*services.BaseService
 }
 
-func New(base *services.BaseService) *PluginService {
-	return &PluginService{
+func New(base *services.BaseService) *PlanService {
+	return &PlanService{
 		BaseService: base,
 	}
 }
@@ -35,14 +35,14 @@ func addDefaults(r *restful.RouteBuilder) {
 }
 
 // Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
-func (s *PluginService) Manager() *manager.Manager {
+func (s *PlanService) Manager() *manager.Manager {
 	return s.BaseService.Manager()
 }
 
-func (s *PluginService) Register(container *restful.Container) {
+func (s *PlanService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
-	ws.Path("/api/v1/plugins")
-	ws.Doc("Manage Plugins")
+	ws.Path("/api/v1/plans")
+	ws.Doc("Manage Plans")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
 
@@ -50,10 +50,7 @@ func (s *PluginService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
-	r.Param(ws.QueryParameter("name", "Filter by name"))
-	r.Param(ws.QueryParameter("version", "Filter by version"))
-	r.Param(ws.QueryParameter("type", "Filter by type"))
-	r.Writes(plugin.PluginList{})
+	r.Writes(plan.PlanList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
 
@@ -61,8 +58,8 @@ func (s *PluginService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("create")
 	r.Operation("create")
-	r.Writes(plugin.Plugin{})
-	r.Reads(plugin.Plugin{})
+	r.Writes(plan.Plan{})
+	r.Reads(plan.Plan{})
 	r.Do(services.Returns(http.StatusCreated))
 	r.Do(services.ReturnsE(
 		http.StatusBadRequest,
@@ -70,27 +67,38 @@ func (s *PluginService) Register(container *restful.Container) {
 	))
 	ws.Route(r)
 
-	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakePlugin(s.get))
+	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakePlan(s.get))
 	addDefaults(r)
 	r.Doc("get")
 	r.Operation("get")
 	r.Param(ws.PathParameter(ParamId, ""))
-	r.Writes(plugin.Plugin{})
+	r.Writes(plan.Plan{})
 	r.Do(services.Returns(
 		http.StatusOK,
 		http.StatusNotFound))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
 
-	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.TakePlugin(s.update))
+	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.TakePlan(s.update))
 	// docs
 	r.Doc("update")
 	r.Operation("update")
 	r.Param(ws.PathParameter(ParamId, ""))
-	r.Writes(plugin.Plugin{})
-	r.Reads(plugin.Plugin{})
+	r.Writes(plan.Plan{})
+	r.Reads(plan.Plan{})
 	r.Do(services.Returns(
 		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.TakePlan(s.delete))
+	// docs
+	r.Doc("delete")
+	r.Operation("delete")
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Do(services.Returns(
+		http.StatusNoContent,
 		http.StatusNotFound))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
@@ -100,9 +108,9 @@ func (s *PluginService) Register(container *restful.Container) {
 
 // ====== service operations
 
-func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
+func (s *PlanService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions
-	raw := &plugin.Plugin{}
+	raw := &plan.Plan{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
@@ -113,12 +121,12 @@ func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	obj, err := mgr.Plugins.Create(raw)
+	obj, err := mgr.Plans.Create(raw)
 	if err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
 				http.StatusConflict,
-				services.NewError(services.CodeDuplicate, "plugin with this name and version is existed"))
+				services.DuplicateErr)
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
@@ -130,43 +138,33 @@ func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(obj)
 }
 
-func (s *PluginService) list(req *restful.Request, resp *restful.Response) {
+func (s *PlanService) list(_ *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
-	fltr := mgr.Plugins.Fltr()
+	fltr := mgr.Plans.Fltr()
 
-	if p := req.QueryParameter("name"); p != "" {
-		fltr.Name = p
-	}
-	if p := req.QueryParameter("version"); p != "" {
-		fltr.Version = p
-	}
-	if p := req.QueryParameter("type"); p != "" {
-		fltr.Type = plugin.PluginType(p)
-	}
-
-	results, count, err := mgr.Plugins.FilterBy(fltr)
+	results, count, err := mgr.Plans.FilterBy(fltr)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
 
-	result := &plugin.PluginList{
+	result := &plan.PlanList{
 		Meta:    pagination.Meta{count, "", ""},
 		Results: results,
 	}
 	resp.WriteEntity(result)
 }
 
-func (s *PluginService) get(_ *restful.Request, resp *restful.Response, pl *plugin.Plugin) {
+func (s *PlanService) get(_ *restful.Request, resp *restful.Response, pl *plan.Plan) {
 	resp.WriteEntity(pl)
 }
 
-func (s *PluginService) update(req *restful.Request, resp *restful.Response, pl *plugin.Plugin) {
+func (s *PlanService) update(req *restful.Request, resp *restful.Response, pl *plan.Plan) {
 	// TODO (m0sth8): Check permissions
 
-	raw := &plugin.Plugin{}
+	raw := &plan.Plan{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
@@ -178,7 +176,7 @@ func (s *PluginService) update(req *restful.Request, resp *restful.Response, pl 
 
 	raw.Id = pl.Id
 
-	if err := mgr.Plugins.Update(raw); err != nil {
+	if err := mgr.Plans.Update(raw); err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
@@ -186,7 +184,7 @@ func (s *PluginService) update(req *restful.Request, resp *restful.Response, pl 
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
 				http.StatusConflict,
-				services.NewError(services.CodeDuplicate, "plugin with this name and version is existed"))
+				services.NewError(services.CodeDuplicate, "plan with this name and version is existed"))
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
@@ -198,11 +196,19 @@ func (s *PluginService) update(req *restful.Request, resp *restful.Response, pl 
 	resp.WriteEntity(raw)
 }
 
-func (s *PluginService) TakePlugin(fn func(*restful.Request,
-	*restful.Response, *plugin.Plugin)) restful.RouteFunction {
+func (s *PlanService) delete(_ *restful.Request, resp *restful.Response, obj *plan.Plan) {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	mgr.Plans.Remove(obj)
+	resp.WriteHeader(http.StatusNoContent)
+}
+
+func (s *PlanService) TakePlan(fn func(*restful.Request,
+	*restful.Response, *plan.Plan)) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
-		pluginId := req.PathParameter(ParamId)
-		if !s.IsId(pluginId) {
+		id := req.PathParameter(ParamId)
+		if !s.IsId(id) {
 			resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
 			return
 		}
@@ -210,7 +216,7 @@ func (s *PluginService) TakePlugin(fn func(*restful.Request,
 		mgr := s.Manager()
 		defer mgr.Close()
 
-		pl, err := mgr.Plugins.GetById(pluginId)
+		obj, err := mgr.Plans.GetById(mgr.ToId(id))
 		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
@@ -221,6 +227,6 @@ func (s *PluginService) TakePlugin(fn func(*restful.Request,
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
-		fn(req, resp, pl)
+		fn(req, resp, obj)
 	}
 }

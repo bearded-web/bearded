@@ -4,9 +4,9 @@
         "version": "0.0.2",
         "type": "util",
         "weight": "middle",
-        "description": {
+        "desc": {
             "title": "Wappalyzer",
-            "info": "Load target url in phantomjs and analyze different technologies with wappalyzer",
+            "info": "Wappalyzer is a library that uncovers the technologies used on websites. It detects content management systems, eCommerce platforms, web servers, JavaScript frameworks, analytics tools and many more.",
             "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer/"
         },
         "container": {

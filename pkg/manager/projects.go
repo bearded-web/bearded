@@ -38,14 +38,14 @@ func (m *ProjectManager) All() ([]*project.Project, int, error) {
 	return results, count, err
 }
 
-func (m *ProjectManager) GetById(id string) (*project.Project, error) {
+func (m *ProjectManager) GetById(id bson.ObjectId) (*project.Project, error) {
 	u := &project.Project{}
 	return u, m.manager.GetById(m.col, id, u)
 }
 
 func (m *ProjectManager) GetByOwner(owner string) ([]*project.Project, int, error) {
 	results := []*project.Project{}
-	q := m.col.Find(bson.D{{"owner", bson.ObjectIdHex(owner)}})
+	q := m.col.Find(bson.D{{"owner", m.manager.ToId(owner)}})
 	if err := q.All(&results); err != nil {
 		return results, 0, err
 	}
@@ -69,7 +69,7 @@ func (m *ProjectManager) Create(raw *project.Project) (*project.Project, error) 
 
 func (m *ProjectManager) CreateDefault(owner string) (*project.Project, error) {
 	p := &project.Project{
-		Owner: bson.ObjectIdHex(owner),
+		Owner: m.manager.ToId(owner),
 		Name:  defaultProject,
 	}
 	return m.Create(p)

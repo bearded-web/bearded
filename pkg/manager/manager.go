@@ -3,6 +3,7 @@ package manager
 import (
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type ManagerInterface interface {
@@ -16,6 +17,8 @@ type Manager struct {
 	Plugins  *PluginManager
 	Projects *ProjectManager
 	Targets  *TargetManager
+	Plans    *PlanManager
+	Scans    *ScanManager
 
 	managers []ManagerInterface
 }
@@ -33,12 +36,16 @@ func New(db *mgo.Database) *Manager {
 	m.Plugins = &PluginManager{manager: m, col: db.C("plugins")}
 	m.Projects = &ProjectManager{manager: m, col: db.C("projects")}
 	m.Targets = &TargetManager{manager: m, col: db.C("targets")}
+	m.Plans = &PlanManager{manager: m, col: db.C("plans")}
+	m.Scans = &ScanManager{manager: m, col: db.C("scans")}
 
 	m.managers = append(m.managers,
 		m.Users,
 		m.Plugins,
 		m.Projects,
 		m.Targets,
+		m.Plans,
+		m.Scans,
 	)
 
 	return m
@@ -107,7 +114,23 @@ func (m *Manager) FromId(id bson.ObjectId) string {
 }
 
 func (m *Manager) All(col *mgo.Collection, results interface{}) (int, error) {
-	query := &bson.M{}
+	return m.FilterBy(col, &bson.M{}, results)
+}
+
+func (m *Manager) GetById(col *mgo.Collection, id bson.ObjectId, result interface{}) error {
+	return col.FindId(id).One(result)
+}
+
+func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}) error {
+	q := col.Find(query)
+	return q.One(result)
+}
+
+func (m *Manager) NewId() bson.ObjectId {
+	return bson.NewObjectId()
+}
+
+func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface{}) (int, error) {
 	q := col.Find(query)
 	if err := q.All(results); err != nil {
 		return 0, err
@@ -119,16 +142,8 @@ func (m *Manager) All(col *mgo.Collection, results interface{}) (int, error) {
 	return count, nil
 }
 
-func (m *Manager) GetById(col *mgo.Collection, id string, result interface{}) error {
-	return col.FindId(m.ToId(id)).One(result)
-}
+// helpers
 
-func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}) error {
-	q := col.Find(query)
-	return q.One(result)
-}
-
-func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, result interface{}) error {
-	q := col.Find(query)
-	return q.All(result)
+func TimeP(t time.Time) *time.Time {
+	return &t
 }

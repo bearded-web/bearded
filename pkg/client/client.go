@@ -37,6 +37,7 @@ type Client struct {
 
 	// Services used for talking to different parts of the Bearded API.
 	Plugins *PluginsService
+	Plans   *PlansService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -54,6 +55,7 @@ func NewClient(baseUrl string, httpClient *http.Client) *Client {
 
 	c := &Client{client: httpClient, BaseURL: baseURL, UserAgent: userAgent}
 	c.Plugins = &PluginsService{client: c}
+	c.Plans = &PlansService{client: c}
 	return c
 }
 

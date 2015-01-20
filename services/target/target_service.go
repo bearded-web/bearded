@@ -69,7 +69,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	addDefaults(r)
 	ws.Route(r)
 
-	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.get)
+	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakeTarget(s.get))
 	r.Doc("get")
 	r.Operation("get")
 	r.Param(ws.PathParameter(ParamId, ""))
@@ -79,7 +79,7 @@ func (s *TargetService) Register(container *restful.Container) {
 		http.StatusNotFound))
 	ws.Route(r)
 
-	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.delete)
+	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.TakeTarget(s.delete))
 	r.Doc("delete")
 	r.Operation("delete")
 	r.Param(ws.PathParameter(ParamId, ""))
@@ -129,7 +129,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	// TODO (m0sth8): check if the user has permission to add a target to the project
-	proj, err := mgr.Projects.GetById(mgr.FromId(raw.Project))
+	proj, err := mgr.Projects.GetById(raw.Project)
 	if err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteServiceError(http.StatusForbidden, services.NewError(services.CodeAuthForbid, "project doesn't exist"))
@@ -198,54 +198,43 @@ func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(result)
 }
 
-func (s *TargetService) get(req *restful.Request, resp *restful.Response) {
-	targetId := req.PathParameter(ParamId)
-	if !s.IsId(targetId) {
-		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
-		return
-	}
-
-	mgr := s.Manager()
-	defer mgr.Close()
-
-	// TODO (m0sth8): check permissions for the user for the project of this target
-	u, err := mgr.Targets.GetById(targetId)
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			resp.WriteErrorString(http.StatusNotFound, "Not found")
-			return
-		}
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-
-	resp.WriteEntity(u)
+func (s *TargetService) get(_ *restful.Request, resp *restful.Response, obj *target.Target) {
+	resp.WriteEntity(obj)
 }
 
-func (s *TargetService) delete(req *restful.Request, resp *restful.Response) {
-	targetId := req.PathParameter(ParamId)
-	if !s.IsId(targetId) {
-		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
-		return
-	}
-
+func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *target.Target) {
 	mgr := s.Manager()
 	defer mgr.Close()
-
-	// TODO (m0sth8): check permissions for the user for the project of this target
-	obj, err := mgr.Targets.GetById(targetId)
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			resp.WriteErrorString(http.StatusNotFound, "Not found")
-			return
-		}
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
 
 	mgr.Targets.Remove(obj)
 
 	resp.WriteHeader(http.StatusNoContent)
+}
+
+func (s *TargetService) TakeTarget(fn func(*restful.Request,
+	*restful.Response, *target.Target)) restful.RouteFunction {
+	return func(req *restful.Request, resp *restful.Response) {
+		// TODO (m0sth8): check permissions for the user for the project of this target
+		id := req.PathParameter(ParamId)
+		if !s.IsId(id) {
+			resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
+			return
+		}
+
+		mgr := s.Manager()
+		defer mgr.Close()
+
+		obj, err := mgr.Targets.GetById(mgr.ToId(id))
+		mgr.Close()
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				resp.WriteErrorString(http.StatusNotFound, "Not found")
+				return
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+			return
+		}
+		fn(req, resp, obj)
+	}
 }

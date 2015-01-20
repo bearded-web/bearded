@@ -6,8 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"gopkg.in/mgo.v2/bson"
-	//	"github.com/codegangsta/cli"
+	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
 	"github.com/bearded-web/bearded/models/plugin"
@@ -45,16 +44,13 @@ var Plugins = cli.Command{
 					Name:  "update",
 					Usage: "Update plugin if existed",
 				},
+				cli.BoolFlag{
+					Name:  "disable",
+					Usage: "Set plugin as disabled",
+				},
 			},
 		},
 	},
-}
-
-func takeApi(fn func(*cli.Context, *client.Client)) func(*cli.Context) {
-	return func(ctx *cli.Context) {
-		api := client.NewClient(ctx.String("api-addr"), nil)
-		fn(ctx, api)
-	}
 }
 
 // ========= Actions
@@ -96,7 +92,7 @@ func pluginsShowAction(ctx *cli.Context, api *client.Client) {
 
 func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 	if len(ctx.Args()) == 0 {
-		fmt.Printf("You should set filename argument: f.e plugins load ./extra/plugins/base.json\n")
+		fmt.Printf("You should set filename argument: f.e plugins load ./extra/data/plugins.json\n")
 		os.Exit(1)
 	}
 	filename := ctx.Args()[0]
@@ -120,13 +116,27 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 	for i, p := range plugins {
 		fmt.Printf("%d) %s\n", i, p)
 		fmt.Printf("Creating..\n")
+		if !ctx.Bool("disable") {
+			p.Enabled = true
+		}
 		_, err := api.Plugins.Create(p)
 		if err != nil {
 			if client.IsConflicted(err) {
-				fmt.Println("Plugin is already existed")
+				fmt.Println("Plugin with this version is already existed")
 				if update {
 					fmt.Println("Updating..")
-					p.Id = bson.ObjectIdHex("54b6561ec2806c7576000001")
+					// retreive existed version
+					pluginList, err := api.Plugins.List(&client.PluginsListOpts{Name: p.Name, Version: p.Version})
+					if err != nil {
+						panic(err)
+					}
+					if pluginList.Count != 1 {
+						err := fmt.Errorf("Expected 1 plugin, but actual is %d", pluginList.Count)
+						panic(err)
+					}
+
+					// update it
+					p.Id = pluginList.Results[0].Id
 					_, err = api.Plugins.Update(p)
 					if err != nil {
 						fmt.Printf("Plugin updating failed, because: %v", err)
