@@ -1,4 +1,4 @@
-package cmd
+package dispatcher
 
 import (
 	//	"github.com/codegangsta/cli"

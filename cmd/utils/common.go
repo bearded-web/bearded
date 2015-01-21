@@ -1,4 +1,4 @@
-package cmd
+package utils
 
 import (
 	//	"github.com/codegangpsta/cli"

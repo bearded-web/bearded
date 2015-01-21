@@ -51,17 +51,17 @@ func (s *ScanService) Register(container *restful.Container) {
 	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
-	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
+	addDefaults(r)
 	r.Writes(scan.ScanList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
 
 	r = ws.POST("").To(s.create)
-	addDefaults(r)
 	r.Doc("create")
 	r.Operation("create")
+	addDefaults(r)
 	r.Writes(scan.Scan{})
 	r.Reads(scan.Scan{})
 	r.Do(services.Returns(http.StatusCreated))
@@ -72,9 +72,9 @@ func (s *ScanService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakeScan(s.get))
-	addDefaults(r)
 	r.Doc("get")
 	r.Operation("get")
+	addDefaults(r)
 	r.Param(ws.PathParameter(ParamId, ""))
 	r.Writes(scan.Scan{})
 	r.Do(services.Returns(
@@ -98,6 +98,7 @@ func (s *ScanService) Register(container *restful.Container) {
 	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.TakeScan(s.delete))
 	r.Doc("delete")
 	r.Operation("delete")
+	addDefaults(r)
 	r.Param(ws.PathParameter(ParamId, ""))
 	r.Do(services.Returns(
 		http.StatusNoContent,
@@ -205,6 +206,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
+	// put scan to queue
 
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(obj)
