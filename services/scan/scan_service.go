@@ -189,13 +189,13 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 
 		sess := scan.Session{
 			Id:     mgr.NewId(),
+			Step:   step,
 			Plugin: plugin.Id,
 			Status: scan.StatusCreated,
 			Dates: scan.Dates{
 				Created: &now,
 				Updated: &now,
 			},
-			Conf: step.Conf,
 		}
 		sc.Sessions = append(sc.Sessions, &sess)
 	}

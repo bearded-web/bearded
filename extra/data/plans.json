@@ -6,6 +6,7 @@
         "workflow": [
             {
                 "plugin": "barbudo/wappalyzer:0.0.2",
+                "name": "Detect technologies",
                 "desc": "Use wappalyzer in phantomjs to detect web technologies used by the site",
                 "conf": {
                     "commandArgs": "{{ .Target }}"

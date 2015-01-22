@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"fmt"
-	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
 
@@ -19,11 +19,10 @@ type Dates struct {
 }
 
 type Session struct {
-	Id     bson.ObjectId `json:"id"`
-	Plugin bson.ObjectId `json:"plugin"`
-	Status ScanStatus    `json:"status" description:"one of [created|queued|working|paused|finished|failed]"`
-	Conf   *plugin.Conf  `json:"conf,omitempty"`
-
+	Id     bson.ObjectId      `json:"id"`
+	Status ScanStatus         `json:"status" description:"one of [created|queued|working|paused|finished|failed]"`
+	Step   *plan.WorkflowStep `json:"step"`
+	Plugin bson.ObjectId      `json:"plugin" description:"plugin id"`
 	// dates
 	Dates `json:",inline"`
 }

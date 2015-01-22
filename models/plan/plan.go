@@ -12,9 +12,10 @@ import (
 )
 
 type WorkflowStep struct {
-	Plugin string       `json:"plugin"`
-	Desc   string       `json:"desc"`
-	Conf   *plugin.Conf `json:"conf"`
+	Plugin string       `json:"plugin" description:"plugin name"`
+	Name   string       `json:"name" description:"step name"`
+	Desc   string       `json:"desc,omitempty" description:"step description"`
+	Conf   *plugin.Conf `json:"conf,omitempty"`
 }
 
 type Plan struct {
