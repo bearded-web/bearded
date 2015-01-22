@@ -16,14 +16,7 @@ import (
 var Plugins = cli.Command{
 	Name:  "plugins",
 	Usage: "Helper to work with plugins",
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:   "api-addr",
-			Value:  "http://127.0.0.1:3003/api/",
-			EnvVar: "BEARDED_API_ADDR",
-			Usage:  "http address for connection to the api server",
-		},
-	},
+	Flags: ApiFlags,
 	Subcommands: []cli.Command{
 		cli.Command{
 			Name:   "list",
@@ -55,8 +48,8 @@ var Plugins = cli.Command{
 
 // ========= Actions
 
-func pluginsListAction(ctx *cli.Context, api *client.Client) {
-	plugins, err := api.Plugins.List(nil)
+func pluginsListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+	plugins, err := api.Plugins.List(timeout(), nil)
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
@@ -67,12 +60,12 @@ func pluginsListAction(ctx *cli.Context, api *client.Client) {
 	}
 }
 
-func pluginsShowAction(ctx *cli.Context, api *client.Client) {
+func pluginsShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set plugin id argument: plugins show [id]\n")
 		os.Exit(1)
 	}
-	plugin, err := api.Plugins.Get(ctx.Args()[0])
+	plugin, err := api.Plugins.Get(timeout(), ctx.Args()[0])
 	if err != nil {
 		if client.IsNotFound(err) {
 			fmt.Println("Plugin not found")
@@ -90,7 +83,7 @@ func pluginsShowAction(ctx *cli.Context, api *client.Client) {
 	return
 }
 
-func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
+func pluginsLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set filename argument: f.e plugins load ./extra/data/plugins.json\n")
 		os.Exit(1)
@@ -112,6 +105,7 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 	if update {
 		fmt.Println("Autoupdate is enabled")
 	}
+
 	fmt.Printf("Found %d plugins\n", len(plugins))
 	for i, p := range plugins {
 		fmt.Printf("%d) %s\n", i, p)
@@ -119,14 +113,15 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 		if !ctx.Bool("disable") {
 			p.Enabled = true
 		}
-		_, err := api.Plugins.Create(p)
+		_, err := api.Plugins.Create(timeout(), p)
 		if err != nil {
 			if client.IsConflicted(err) {
 				fmt.Println("Plugin with this version is already existed")
 				if update {
 					fmt.Println("Updating..")
 					// retrieve existed version
-					pluginList, err := api.Plugins.List(&client.PluginsListOpts{Name: p.Name, Version: p.Version})
+					opts := client.PluginsListOpts{Name: p.Name, Version: p.Version}
+					pluginList, err := api.Plugins.List(timeout(), &opts)
 					if err != nil {
 						panic(err)
 					}
@@ -137,7 +132,7 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 
 					// update it
 					p.Id = pluginList.Results[0].Id
-					_, err = api.Plugins.Update(p)
+					_, err = api.Plugins.Update(timeout(), p)
 					if err != nil {
 						fmt.Printf("Plugin updating failed, because: %v", err)
 						continue

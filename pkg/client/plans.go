@@ -1,6 +1,7 @@
 package client
 
 import (
+	"code.google.com/p/go.net/context"
 	"fmt"
 	"github.com/bearded-web/bearded/models/plan"
 )
@@ -22,23 +23,23 @@ type PlansListOpts struct {
 // List plans.
 //
 //
-func (s *PlansService) List(opt *PlansListOpts) (*plan.PlanList, error) {
+func (s *PlansService) List(ctx context.Context, opt *PlansListOpts) (*plan.PlanList, error) {
 	planList := &plan.PlanList{}
-	return planList, s.client.List(plansUrl, opt, planList)
+	return planList, s.client.List(ctx, plansUrl, opt, planList)
 }
 
-func (s *PlansService) Get(id string) (*plan.Plan, error) {
+func (s *PlansService) Get(ctx context.Context, id string) (*plan.Plan, error) {
 	plan := &plan.Plan{}
-	return plan, s.client.Get(plansUrl, id, plan)
+	return plan, s.client.Get(ctx, plansUrl, id, plan)
 }
 
-func (s *PlansService) Create(src *plan.Plan) (*plan.Plan, error) {
+func (s *PlansService) Create(ctx context.Context, src *plan.Plan) (*plan.Plan, error) {
 	pl := &plan.Plan{}
-	return pl, s.client.Create(plansUrl, src, pl)
+	return pl, s.client.Create(ctx, plansUrl, src, pl)
 }
 
-func (s *PlansService) Update(src *plan.Plan) (*plan.Plan, error) {
+func (s *PlansService) Update(ctx context.Context, src *plan.Plan) (*plan.Plan, error) {
 	pl := &plan.Plan{}
 	id := fmt.Sprintf("%x", string(src.Id))
-	return pl, s.client.Update(plansUrl, id, src, pl)
+	return pl, s.client.Update(ctx, plansUrl, id, src, pl)
 }

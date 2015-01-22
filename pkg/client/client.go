@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"reflect"
 
+	"code.google.com/p/go.net/context"
+	"github.com/facebookgo/stackerr"
 	"github.com/google/go-querystring/query"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
@@ -110,7 +112,6 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	}
 
 	u := c.BaseURL.ResolveReference(rel)
-	//	println("url", u.String())
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -143,15 +144,40 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 // error if an API error has occurred.  If v implements the io.Writer
 // interface, the raw response body will be written to v, without attempting to
 // first decode it.
-func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return nil, err
-	}
+func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*http.Response, error) {
+	var resp *http.Response
+	ret := make(chan error, 1)
+	go func() {
+		var err error
+		resp, err = c.client.Do(req)
+		ret <- err
+	}()
+	select {
+	case <-ctx.Done():
+		type canceler interface {
+			CancelRequest(*http.Request)
+		}
+		transport := c.client.Transport
+		if transport == nil {
+			// default transport is used
+			transport = http.DefaultTransport
 
+		}
+		tr, ok := transport.(canceler)
+		if !ok {
+			return nil, fmt.Errorf("client Transport of type %T doesn't support CancelRequest; Timeout not supported", transport)
+		}
+		tr.CancelRequest(req)
+		<-ret // Wait goroutine to return after cancellation.
+		return nil, stackerr.Wrap(ctx.Err())
+	case err := <-ret:
+		if err != nil {
+			return nil, err
+		}
+	}
 	defer resp.Body.Close()
 
-	err = CheckResponse(resp)
+	err := CheckResponse(resp)
 	if err != nil {
 		// even though there was an error, we still return the response
 		// in case the caller wants to inspect it further
@@ -169,7 +195,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 }
 
 // Helper method to get a list of payload objects
-func (c *Client) List(url string, opts interface{}, payload interface{}) error {
+func (c *Client) List(ctx context.Context, url string, opts interface{}, payload interface{}) error {
 	u, err := addOptions(url, opts)
 	if err != nil {
 		return err
@@ -180,38 +206,38 @@ func (c *Client) List(url string, opts interface{}, payload interface{}) error {
 		return err
 	}
 
-	_, err = c.Do(req, payload)
+	_, err = c.Do(ctx, req, payload)
 	return err
 }
 
 // Helper method to get a resource by id
-func (c *Client) Get(url string, id string, payload interface{}) error {
+func (c *Client) Get(ctx context.Context, url string, id string, payload interface{}) error {
 	url = fmt.Sprintf("%s/%s", url, id)
 	req, err := c.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
 
-	_, err = c.Do(req, payload)
+	_, err = c.Do(ctx, req, payload)
 	return err
 }
 
-func (c *Client) Create(url string, send interface{}, payload interface{}) error {
+func (c *Client) Create(ctx context.Context, url string, send interface{}, payload interface{}) error {
 	req, err := c.NewRequest("POST", url, send)
 	if err != nil {
 		return err
 	}
-	_, err = c.Do(req, payload)
+	_, err = c.Do(ctx, req, payload)
 	return err
 }
 
-func (c *Client) Update(url string, id string, send interface{}, payload interface{}) error {
+func (c *Client) Update(ctx context.Context, url string, id string, send interface{}, payload interface{}) error {
 	url = fmt.Sprintf("%s/%s", url, id)
 	req, err := c.NewRequest("PUT", url, send)
 	if err != nil {
 		return err
 	}
-	_, err = c.Do(req, payload)
+	_, err = c.Do(ctx, req, payload)
 	return err
 }
 

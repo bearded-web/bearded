@@ -1,6 +1,7 @@
 package client
 
 import (
+	"code.google.com/p/go.net/context"
 	"fmt"
 	"github.com/bearded-web/bearded/models/agent"
 )
@@ -23,23 +24,23 @@ type AgentsListOpts struct {
 // List agents.
 //
 //
-func (s *AgentsService) List(opt *AgentsListOpts) (*agent.AgentList, error) {
+func (s *AgentsService) List(ctx context.Context, opt *AgentsListOpts) (*agent.AgentList, error) {
 	agentList := &agent.AgentList{}
-	return agentList, s.client.List(agentsUrl, opt, agentList)
+	return agentList, s.client.List(ctx, agentsUrl, opt, agentList)
 }
 
-func (s *AgentsService) Get(id string) (*agent.Agent, error) {
+func (s *AgentsService) Get(ctx context.Context, id string) (*agent.Agent, error) {
 	agent := &agent.Agent{}
-	return agent, s.client.Get(agentsUrl, id, agent)
+	return agent, s.client.Get(ctx, agentsUrl, id, agent)
 }
 
-func (s *AgentsService) Create(src *agent.Agent) (*agent.Agent, error) {
+func (s *AgentsService) Create(ctx context.Context, src *agent.Agent) (*agent.Agent, error) {
 	pl := &agent.Agent{}
-	return pl, s.client.Create(agentsUrl, src, pl)
+	return pl, s.client.Create(ctx, agentsUrl, src, pl)
 }
 
-func (s *AgentsService) Update(src *agent.Agent) (*agent.Agent, error) {
+func (s *AgentsService) Update(ctx context.Context, src *agent.Agent) (*agent.Agent, error) {
 	pl := &agent.Agent{}
 	id := fmt.Sprintf("%x", string(src.Id))
-	return pl, s.client.Update(agentsUrl, id, src, pl)
+	return pl, s.client.Update(ctx, agentsUrl, id, src, pl)
 }

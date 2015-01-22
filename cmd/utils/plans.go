@@ -16,14 +16,7 @@ import (
 var Plans = cli.Command{
 	Name:  "plans",
 	Usage: "Helper to work with plans",
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:   "api-addr",
-			Value:  "http://127.0.0.1:3003/api/",
-			EnvVar: "BEARDED_API_ADDR",
-			Usage:  "http address for connection to the api server",
-		},
-	},
+	Flags: ApiFlags,
 	Subcommands: []cli.Command{
 		cli.Command{
 			Name:   "list",
@@ -51,8 +44,9 @@ var Plans = cli.Command{
 
 // ========= Actions
 
-func plansListAction(ctx *cli.Context, api *client.Client) {
-	plans, err := api.Plans.List(nil)
+func plansListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+
+	plans, err := api.Plans.List(timeout(), nil)
 	if err != nil {
 		fmt.Printf("%s", err)
 		os.Exit(1)
@@ -63,12 +57,12 @@ func plansListAction(ctx *cli.Context, api *client.Client) {
 	}
 }
 
-func plansShowAction(ctx *cli.Context, api *client.Client) {
+func plansShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set plan id argument: plans show [id]\n")
 		os.Exit(1)
 	}
-	plan, err := api.Plans.Get(ctx.Args()[0])
+	plan, err := api.Plans.Get(timeout(), ctx.Args()[0])
 	if err != nil {
 		if client.IsNotFound(err) {
 			fmt.Println("Plan not found")
@@ -86,7 +80,7 @@ func plansShowAction(ctx *cli.Context, api *client.Client) {
 	return
 }
 
-func plansLoadAction(ctx *cli.Context, api *client.Client) {
+func plansLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set filename argument: f.e plans load ./extra/data/plans.json\n")
 		os.Exit(1)
@@ -113,14 +107,14 @@ func plansLoadAction(ctx *cli.Context, api *client.Client) {
 		fmt.Printf("%d) %s\n", i, p)
 		fmt.Printf("Creating..\n")
 
-		_, err := api.Plans.Create(p)
+		_, err := api.Plans.Create(timeout(), p)
 		if err != nil {
 			if client.IsConflicted(err) {
 				fmt.Println("Plan with this name is already existed")
 				if update {
 					fmt.Println("Updating..")
 					// retreive existed plan
-					planList, err := api.Plans.List(&client.PlansListOpts{Name: p.Name})
+					planList, err := api.Plans.List(timeout(), &client.PlansListOpts{Name: p.Name})
 					if err != nil {
 						panic(err)
 					}
@@ -131,7 +125,7 @@ func plansLoadAction(ctx *cli.Context, api *client.Client) {
 
 					// update it
 					p.Id = planList.Results[0].Id
-					_, err = api.Plans.Update(p)
+					_, err = api.Plans.Update(timeout(), p)
 					if err != nil {
 						fmt.Printf("Plugin updating failed, because: %v", err)
 						continue
