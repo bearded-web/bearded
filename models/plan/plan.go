@@ -24,7 +24,7 @@ type Plan struct {
 	//	Conf     string          `json:"conf"` // global plan configuration in json format
 	Workflow   []*WorkflowStep   `json:"workflow"`
 	Created    time.Time         `json:"created,omitempty" description:"when plan is created"`
-	Updated    time.Time         `json:"created,omitempty" description:"when plan is updated"`
+	Updated    time.Time         `json:"updated,omitempty" description:"when plan is updated"`
 	TargetType target.TargetType `json:"targetType" description:"what target type is supported"`
 }
 

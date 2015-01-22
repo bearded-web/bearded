@@ -37,7 +37,7 @@ type Plugin struct {
 	Desc      *Desc         `json:"desc" description:"human readable description"`
 	Container *Container    `json:"container,omitempty" description:"information about container"`
 	Created   time.Time     `json:"created,omitempty" description:"when plugin is created"`
-	Updated   time.Time     `json:"created,omitempty" description:"when plugin is updated"`
+	Updated   time.Time     `json:"updated,omitempty" description:"when plugin is updated"`
 
 	//	Requirements []*Required   `json:"requirements,omitempty" description:"other plugins required for running"`
 	Enabled bool `json:"enabled" description:"is plugin enabled for running"`

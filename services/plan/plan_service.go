@@ -184,7 +184,7 @@ func (s *PlanService) update(req *restful.Request, resp *restful.Response, pl *p
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
 				http.StatusConflict,
-				services.NewError(services.CodeDuplicate, "plan with this name and version is existed"))
+				services.DuplicateErr)
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))

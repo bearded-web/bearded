@@ -125,7 +125,7 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client) {
 				fmt.Println("Plugin with this version is already existed")
 				if update {
 					fmt.Println("Updating..")
-					// retreive existed version
+					// retrieve existed version
 					pluginList, err := api.Plugins.List(&client.PluginsListOpts{Name: p.Name, Version: p.Version})
 					if err != nil {
 						panic(err)

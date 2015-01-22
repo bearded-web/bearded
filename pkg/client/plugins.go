@@ -1,9 +1,6 @@
 package client
 
-import (
-	"fmt"
-	"github.com/bearded-web/bearded/models/plugin"
-)
+import "github.com/bearded-web/bearded/models/plugin"
 
 const pluginsUrl = "plugins"
 
@@ -16,9 +13,9 @@ func (s *PluginsService) String() string {
 }
 
 type PluginsListOpts struct {
-	Name    string
-	Version string
-	Type    string
+	Name    string `url:"name"`
+	Version string `url:"version"`
+	Type    string `url:"type"`
 }
 
 // List plugins.
@@ -45,7 +42,7 @@ func (s *PluginsService) Create(src *plugin.Plugin) (*plugin.Plugin, error) {
 
 func (s *PluginsService) Update(src *plugin.Plugin) (*plugin.Plugin, error) {
 	pl := &plugin.Plugin{}
-	id := fmt.Sprintf("%x", string(src.Id))
+	id := FromId(src.Id)
 	err := s.client.Update(pluginsUrl, id, src, pl)
 	if err != nil {
 		return nil, err

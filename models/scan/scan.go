@@ -21,7 +21,7 @@ type Dates struct {
 type Session struct {
 	Id     bson.ObjectId `json:"id"`
 	Plugin bson.ObjectId `json:"plugin"`
-	Status ScanStatus    `json:"status" description:"one of [created|queued|working|pause|finished|error]"`
+	Status ScanStatus    `json:"status" description:"one of [created|queued|working|paused|finished|failed]"`
 	Conf   *plugin.Conf  `json:"conf,omitempty"`
 
 	// dates

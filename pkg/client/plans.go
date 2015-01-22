@@ -16,7 +16,7 @@ func (s *PlansService) String() string {
 }
 
 type PlansListOpts struct {
-	Name string
+	Name string `url:"name"`
 }
 
 // List plans.

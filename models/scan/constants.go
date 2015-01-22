@@ -8,9 +8,9 @@ const (
 	StatusCreated  ScanStatus = "created"
 	StatusQueued              = "queued"
 	StatusWorking             = "working"
-	StatusPause               = "paused"
+	StatusPaused              = "paused"
 	StatusFinished            = "finished"
-	StatusError               = "error"
+	StatusFailed              = "failed"
 )
 
 // It's a hack to show custom type as string in swagger
