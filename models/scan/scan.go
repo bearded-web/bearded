@@ -39,7 +39,7 @@ type Scan struct {
 	Conf   ScanConf      `json:"conf,omitempty"`
 
 	//	Report    *report.Report `json:"report,omitempty" form:"-"`
-	Sessions []*Session `json:"session,omitempty"`
+	Sessions []*Session `json:"sessions,omitempty"`
 
 	Plan    bson.ObjectId `json:"plan"`
 	Owner   bson.ObjectId `json:"owner,omitempty"`

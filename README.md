@@ -16,6 +16,11 @@ Run dev server and look to build path
 
 In `../frontend/` exec `npm run dev` to start frontend static server
 
+Load data:
+
+`bearded plugins load ./extra/data/plugins.json`
+
+`bearded plans load ./extra/data/plans.json`
 
 Swagger `http://127.0.0.1:3003/apidocs/`
 
