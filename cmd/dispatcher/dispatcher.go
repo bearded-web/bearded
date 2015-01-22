@@ -15,6 +15,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/services"
+	"github.com/bearded-web/bearded/services/agent"
 	"github.com/bearded-web/bearded/services/auth"
 	"github.com/bearded-web/bearded/services/me"
 	"github.com/bearded-web/bearded/services/plan"
@@ -87,6 +88,7 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 		target.New(base),
 		scan.New(base),
 		me.New(base),
+		agent.New(base),
 	}
 
 	// initialize services

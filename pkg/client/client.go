@@ -3,16 +3,18 @@ package client
 // Client package inspired by google github client https://github.com/google/go-github
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
 
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/google/go-querystring/query"
-	"io"
-	"io/ioutil"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/mgo.v2/bson"
 )
 
 const (
@@ -35,9 +37,13 @@ type Client struct {
 	// User agent used when communicating with the Bearded API.
 	UserAgent string
 
+	// Show different debug information
+	Debug bool
+
 	// Services used for talking to different parts of the Bearded API.
 	Plugins *PluginsService
 	Plans   *PlansService
+	Agents  *AgentsService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -56,6 +62,7 @@ func NewClient(baseUrl string, httpClient *http.Client) *Client {
 	c := &Client{client: httpClient, BaseURL: baseURL, UserAgent: userAgent}
 	c.Plugins = &PluginsService{client: c}
 	c.Plans = &PlansService{client: c}
+	c.Agents = &AgentsService{client: c}
 	return c
 }
 
@@ -113,7 +120,9 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 			return nil, err
 		}
 	}
-
+	if c.Debug {
+		logrus.Debugf("%s %s", method, u.String())
+	}
 	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
@@ -204,6 +213,16 @@ func (c *Client) Update(url string, id string, send interface{}, payload interfa
 	}
 	_, err = c.Do(req, payload)
 	return err
+}
+
+// convert string id to ObjectId
+func ToId(id string) bson.ObjectId {
+	return bson.ObjectIdHex(id)
+}
+
+// convert ObjectId to string
+func FromId(id bson.ObjectId) string {
+	return id.Hex()
 }
 
 // CheckResponse checks the API response for errors, and returns them if

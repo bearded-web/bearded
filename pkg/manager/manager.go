@@ -19,6 +19,7 @@ type Manager struct {
 	Targets  *TargetManager
 	Plans    *PlanManager
 	Scans    *ScanManager
+	Agents   *AgentManager
 
 	managers []ManagerInterface
 }
@@ -38,6 +39,7 @@ func New(db *mgo.Database) *Manager {
 	m.Targets = &TargetManager{manager: m, col: db.C("targets")}
 	m.Plans = &PlanManager{manager: m, col: db.C("plans")}
 	m.Scans = &ScanManager{manager: m, col: db.C("scans")}
+	m.Agents = &AgentManager{manager: m, col: db.C("agents")}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -46,6 +48,7 @@ func New(db *mgo.Database) *Manager {
 		m.Targets,
 		m.Plans,
 		m.Scans,
+		m.Agents,
 	)
 
 	return m
