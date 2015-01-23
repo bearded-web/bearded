@@ -16,11 +16,13 @@ type ScanManager struct {
 }
 
 type ScanFltr struct {
+	Status scan.ScanStatus
+	Target bson.ObjectId
 }
 
 func (s *ScanManager) Init() error {
 	logrus.Infof("Initialize scan indexes")
-	for _, index := range []string{"owner"} {
+	for _, index := range []string{"owner", "status"} {
 		err := s.col.EnsureIndex(mgo.Index{
 			Key:        []string{index},
 			Background: true,
@@ -55,7 +57,12 @@ func (m *ScanManager) FilterBy(fltr *ScanFltr) ([]*scan.Scan, int, error) {
 	query := bson.M{}
 
 	if fltr != nil {
-
+		if p := fltr.Status; p != "" {
+			query["status"] = p
+		}
+		if p := fltr.Target; p != "" {
+			query["target"] = p
+		}
 	}
 
 	results := []*scan.Scan{}
