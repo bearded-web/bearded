@@ -1,5 +1,7 @@
 # Bearded WIP
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bearded-web/bearded?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 Work in progress, do not use this
 
