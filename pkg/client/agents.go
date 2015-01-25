@@ -6,7 +6,10 @@ import (
 	"github.com/bearded-web/bearded/models/agent"
 )
 
-const agentsUrl = "agents"
+const (
+	agentsUrl     = "agents"
+	agentsJobsUrl = "jobs"
+)
 
 type AgentsService struct {
 	client *Client
@@ -43,4 +46,10 @@ func (s *AgentsService) Update(ctx context.Context, src *agent.Agent) (*agent.Ag
 	pl := &agent.Agent{}
 	id := fmt.Sprintf("%x", string(src.Id))
 	return pl, s.client.Update(ctx, agentsUrl, id, src, pl)
+}
+
+func (s *AgentsService) GetJobs(ctx context.Context, src *agent.Agent) ([]*agent.Job, error) {
+	jobs := []*agent.Job{}
+	url := fmt.Sprintf("%s/%s/%s", agentsUrl, FromId(src.Id), agentsJobsUrl)
+	return jobs, s.client.List(ctx, url, nil, &jobs)
 }

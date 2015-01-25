@@ -39,6 +39,9 @@ type Client struct {
 	// User agent used when communicating with the Bearded API.
 	UserAgent string
 
+	// Token sent in header to authenticate
+	Token string
+
 	// Show different debug information
 	Debug bool
 
@@ -46,6 +49,7 @@ type Client struct {
 	Plugins *PluginsService
 	Plans   *PlansService
 	Agents  *AgentsService
+	Scans   *ScansService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -65,12 +69,16 @@ func NewClient(baseUrl string, httpClient *http.Client) *Client {
 	c.Plugins = &PluginsService{client: c}
 	c.Plans = &PlansService{client: c}
 	c.Agents = &AgentsService{client: c}
+	c.Scans = &ScansService{client: c}
 	return c
 }
 
 // addOptions adds the parameters in opt as URL query parameters to s.  opt
 // must be a struct whose fields may contain "url" tags.
 func addOptions(s string, opt interface{}) (string, error) {
+	if opt == nil {
+		return s, nil
+	}
 	v := reflect.ValueOf(opt)
 	if v.Kind() == reflect.Ptr && v.IsNil() {
 		return s, nil
@@ -136,6 +144,10 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "PATCH" {
 		req.Header.Add("Content-Type", "application/json")
 	}
+	if c.Token != "" {
+		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.Token))
+	}
+
 	return req, nil
 }
 

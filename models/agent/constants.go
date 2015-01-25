@@ -10,12 +10,13 @@ func (t Status) MarshalJSON() ([]byte, error) {
 }
 
 const (
-	Registered  Status = "registered" // Agent created, but doesn't approved
-	Approved           = "approved"
-	Waiting            = "waiting"
-	Unavailable        = "unavailable"
-	Paused             = "paused"
-	Blocked            = "blocked" // agent was blocked by some reasons
+	Undefined  Status = ""           // Agent has undefined state if it isn't registered yet in system
+	Registered        = "registered" // Agent registered in system, but doesn't approved
+	Approved          = "approved"
+	//	Waiting            = "waiting"
+	//	Unavailable        = "unavailable"
+	//	Paused             = "paused"
+	Blocked = "blocked" // agent was blocked by some reasons
 )
 
 type Type string

@@ -1,9 +1,11 @@
 package scan
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -17,7 +19,10 @@ import (
 	"github.com/bearded-web/bearded/services"
 )
 
-const ParamId = "scan-id"
+const (
+	ParamId        = "scan-id"
+	SessionParamId = "session-id"
+)
 
 type ScanService struct {
 	*services.BaseService
@@ -109,6 +114,35 @@ func (s *ScanService) Register(container *restful.Container) {
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
 
+	// sessions
+
+	r = ws.GET(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionGet)))
+	r.Doc("sessionGet")
+	r.Operation("sessionGet")
+	//	addDefaults(r)
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Param(ws.PathParameter(SessionParamId, ""))
+	r.Writes(scan.Session{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.PUT(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionUpdate)))
+	r.Doc("sessionUpdate")
+	r.Operation("sessionUpdate")
+	//	addDefaults(r)
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Param(ws.PathParameter(SessionParamId, ""))
+	r.Reads(SessionUpdateEntity{})
+	r.Writes(scan.Session{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
+
 	container.Add(ws)
 }
 
@@ -189,6 +223,25 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
+		// TODO (m0sth8): extract template execution
+		if step.Conf != nil {
+			if command := step.Conf.CommandArgs; command != "" {
+				t, err := template.New("").Parse(command)
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					resp.WriteServiceError(http.StatusInternalServerError, services.NewAppErr("Wrong command args template"))
+					return
+				}
+				buf := bytes.NewBuffer(nil)
+				err = t.Execute(buf, sc.Conf)
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					resp.WriteServiceError(http.StatusInternalServerError, services.NewAppErr("Wrong command args template"))
+					return
+				}
+				step.Conf.CommandArgs = buf.String()
+			}
+		}
 
 		sess := scan.Session{
 			Id:     mgr.NewId(),
@@ -210,6 +263,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	// put scan to queue
+	s.Scheduler().AddScan(obj)
 
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(obj)
@@ -294,8 +348,73 @@ func (s *ScanService) delete(_ *restful.Request, resp *restful.Response, obj *sc
 	resp.WriteHeader(http.StatusNoContent)
 }
 
-func (s *ScanService) TakeScan(fn func(*restful.Request,
-	*restful.Response, *scan.Scan)) restful.RouteFunction {
+// Sessions
+
+func (s *ScanService) sessionGet(_ *restful.Request, resp *restful.Response, _ *scan.Scan, sess *scan.Session) {
+	resp.WriteHeader(http.StatusOK)
+	resp.WriteEntity(sess)
+}
+
+func (s *ScanService) sessionUpdate(req *restful.Request, resp *restful.Response, sc *scan.Scan, sess *scan.Session) {
+	// TODO (m0sth8): Check permissions
+
+	raw := &SessionUpdateEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Warn(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+	if !(raw.Status == scan.StatusWorking || raw.Status == scan.StatusFinished || raw.Status == scan.StatusFailed) {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("status should be one of [working|finished|failed]"))
+		return
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	sess.Status = raw.Status
+	if err := mgr.Scans.UpdateSession(sc, sess); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+	s.Scheduler().UpdateScan(sc)
+
+	resp.WriteEntity(sess)
+}
+
+// Helpers
+
+type ScanFunction func(*restful.Request, *restful.Response, *scan.Scan)
+type SessionFunction func(*restful.Request, *restful.Response, *scan.Scan, *scan.Session)
+
+// Decorate ScanFunction. Look for session in scan by SessionParamId
+// and add session object in the end. If session is not found then return Not Found.
+func (s *ScanService) TakeSession(fn SessionFunction) ScanFunction {
+	return func(req *restful.Request, resp *restful.Response, sc *scan.Scan) {
+		id := req.PathParameter(SessionParamId)
+		if !s.IsId(id) {
+			resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
+			return
+		}
+
+		objId := manager.ToId(id)
+
+		for _, sess := range sc.Sessions {
+			if sess.Id == objId {
+				fn(req, resp, sc, sess)
+				return
+			}
+		}
+		resp.WriteErrorString(http.StatusNotFound, "Not found")
+		return
+	}
+}
+
+// Decorate restful.RouteFunction. Look for scan by ParamId
+// and add scan object in the end. If scan is not found then return Not Found.
+func (s *ScanService) TakeScan(fn ScanFunction) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		id := req.PathParameter(ParamId)
 		if !s.IsId(id) {

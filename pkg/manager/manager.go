@@ -107,13 +107,14 @@ func (m *Manager) IsId(id string) bool {
 }
 
 // convert string id to ObjectId
+
 func (m *Manager) ToId(id string) bson.ObjectId {
-	return bson.ObjectIdHex(id)
+	return ToId(id)
 }
 
 // convert ObjectId to string
 func (m *Manager) FromId(id bson.ObjectId) string {
-	return id.Hex()
+	return FromId(id)
 }
 
 func (m *Manager) All(col *mgo.Collection, results interface{}) (int, error) {
@@ -149,4 +150,12 @@ func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface
 
 func TimeP(t time.Time) *time.Time {
 	return &t
+}
+
+func ToId(id string) bson.ObjectId {
+	return bson.ObjectIdHex(id)
+}
+
+func FromId(id bson.ObjectId) string {
+	return id.Hex()
 }

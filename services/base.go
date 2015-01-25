@@ -3,18 +3,21 @@ package services
 import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
+	"github.com/bearded-web/bearded/pkg/scheduler"
 	restful "github.com/emicklei/go-restful"
 )
 
 type BaseService struct {
-	manager *manager.Manager
-	passCtx *passlib.Context
+	manager   *manager.Manager
+	passCtx   *passlib.Context
+	scheduler scheduler.Scheduler
 }
 
-func New(mgr *manager.Manager, passCtx *passlib.Context) *BaseService {
+func New(mgr *manager.Manager, passCtx *passlib.Context, sch scheduler.Scheduler) *BaseService {
 	return &BaseService{
-		manager: mgr,
-		passCtx: passCtx,
+		manager:   mgr,
+		passCtx:   passCtx,
+		scheduler: sch,
 	}
 }
 
@@ -30,6 +33,10 @@ func (s *BaseService) BaseManager() *manager.Manager {
 
 func (s *BaseService) PassCtx() *passlib.Context {
 	return s.passCtx
+}
+
+func (s *BaseService) Scheduler() scheduler.Scheduler {
+	return s.scheduler
 }
 
 func (s *BaseService) Init() error {

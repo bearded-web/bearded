@@ -106,6 +106,11 @@ func (s *AuthService) login(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
+	// users without password can't login
+	if u.Password == "" {
+		resp.WriteServiceError(http.StatusUnauthorized, services.AuthFailedErr)
+		return
+	}
 
 	// verify password
 	verified, err := s.PassCtx().Verify(raw.Password, u.Password)

@@ -3,6 +3,7 @@ package agent
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	restful "github.com/emicklei/go-restful"
@@ -106,11 +107,23 @@ func (s *AgentService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	// actions
+
 	r = ws.POST(fmt.Sprintf("{%s}/approve", ParamId)).To(s.TakeAgent(s.approve))
 	addDefaults(r)
 	r.Doc("approve")
 	r.Operation("approve")
 	r.Param(ws.PathParameter(ParamId, ""))
+	r.Do(services.Returns(http.StatusOK))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.GET(fmt.Sprintf("{%s}/jobs", ParamId)).To(s.TakeAgent(s.jobs))
+	addDefaults(r)
+	r.Doc("jobs")
+	r.Operation("jobs")
+	r.Notes("Get jobs for the agent")
+	r.Param(ws.PathParameter(ParamId, ""))
+	//	r.Param(ws.HeaderParameter("X-Client-Timeout", "time for request to wait"))
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
@@ -224,6 +237,31 @@ func (s *AgentService) approve(_ *restful.Request, resp *restful.Response, ag *a
 		s.updateAgent(resp, ag)
 	}
 	return
+}
+
+func (s *AgentService) jobs(_ *restful.Request, resp *restful.Response, ag *agent.Agent) {
+	jobs := []*agent.Job{}
+
+	sess, err := s.Scheduler().GetSession()
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+		return
+	}
+	if sess == nil {
+		time.Sleep(5 * time.Second)
+		sess, err = s.Scheduler().GetSession()
+
+	}
+	if sess != nil {
+		job := agent.Job{
+			Cmd:  agent.CmdScan,
+			Scan: sess,
+		}
+		jobs = append(jobs, &job)
+	}
+
+	resp.WriteEntity(jobs)
 }
 
 // helpers

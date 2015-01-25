@@ -39,3 +39,7 @@ func NewError(c CodeErr, msg string) restful.ServiceError {
 func NewBadReq(msg string) restful.ServiceError {
 	return NewError(CodeWrongData, msg)
 }
+
+func NewAppErr(msg string) restful.ServiceError {
+	return NewError(CodeApp, msg)
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
+	"github.com/bearded-web/bearded/cmd/agent"
 	"github.com/bearded-web/bearded/cmd/dispatcher"
 	"github.com/bearded-web/bearded/cmd/utils"
 )
@@ -49,6 +50,7 @@ func main() {
 		dispatcher.Dispatcher,
 		utils.Plugins,
 		utils.Plans,
+		agent.Agent,
 	}
 
 	app.Flags = append(app.Flags, []cli.Flag{

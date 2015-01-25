@@ -1,11 +1,13 @@
 package manager
 
 import (
-	"github.com/bearded-web/bearded/models/user"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
+
+	"github.com/bearded-web/bearded/models/user"
 )
 
 type UserManager struct {
@@ -20,6 +22,21 @@ func (m *UserManager) Init() error {
 		Unique:     true,
 		Background: false,
 	})
+	if err != nil {
+		return err
+	}
+
+	// TODO (m0sth8): extract system users creation to project initialization
+	agent := &user.User{
+		Email:    "agent@barbudo.net",
+		Password: "",
+	}
+	if _, err := m.Create(agent); err != nil {
+		if !m.manager.IsDup(err) {
+			return err
+		}
+	}
+
 	return err
 }
 

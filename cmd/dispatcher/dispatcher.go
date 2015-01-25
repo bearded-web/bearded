@@ -14,6 +14,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
+	"github.com/bearded-web/bearded/pkg/scheduler"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/agent"
 	"github.com/bearded-web/bearded/services/auth"
@@ -77,8 +78,10 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 	// password manager for generation and verification passwords
 	passCtx := passlib.NewContext()
 
+	sch := scheduler.NewMemoryScheduler(mgr.Copy())
+
 	// services
-	base := services.New(mgr, passCtx)
+	base := services.New(mgr, passCtx, sch)
 	all := []services.ServiceInterface{
 		auth.New(base),
 		plugin.New(base),

@@ -23,6 +23,7 @@ type Session struct {
 	Status ScanStatus         `json:"status" description:"one of [created|queued|working|paused|finished|failed]"`
 	Step   *plan.WorkflowStep `json:"step"`
 	Plugin bson.ObjectId      `json:"plugin" description:"plugin id"`
+	Scan   bson.ObjectId      `json:"scan" description:"scan id"`
 	// dates
 	Dates `json:",inline"`
 }

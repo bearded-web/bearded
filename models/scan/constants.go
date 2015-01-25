@@ -6,8 +6,8 @@ type ScanStatus string
 
 const (
 	StatusCreated  ScanStatus = "created"
-	StatusQueued              = "queued"
-	StatusWorking             = "working"
+	StatusQueued              = "queued"  // put scan to queue
+	StatusWorking             = "working" // scan was taken by agent
 	StatusPaused              = "paused"
 	StatusFinished            = "finished"
 	StatusFailed              = "failed"
