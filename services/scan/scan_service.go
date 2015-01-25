@@ -122,7 +122,7 @@ func (s *ScanService) Register(container *restful.Container) {
 	r.Operation("reports")
 	r.Param(ws.PathParameter(ParamId, ""))
 	addDefaults(r)
-	r.Writes([]report.Report{})
+	r.Writes(report.ReportList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
 
@@ -392,7 +392,7 @@ func (s *ScanService) reports(_ *restful.Request, resp *restful.Response, sc *sc
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	reports := []*report.Report{}
+	results := []*report.Report{}
 
 	for _, sess := range sc.Sessions {
 		rep, err := mgr.Reports.GetBySession(sess.Id)
@@ -403,10 +403,15 @@ func (s *ScanService) reports(_ *restful.Request, resp *restful.Response, sc *sc
 			logrus.Error(stackerr.Wrap(err))
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		}
-		reports = append(reports, rep)
+		results = append(results, rep)
 	}
 
-	resp.WriteEntity(reports)
+	reportList := report.ReportList{
+		Meta:    pagination.Meta{len(results), "", ""},
+		Results: results,
+	}
+
+	resp.WriteEntity(reportList)
 }
 
 // Sessions

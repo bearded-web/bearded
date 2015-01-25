@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+
+	"github.com/bearded-web/bearded/pkg/pagination"
 )
 
 type ReportType string
@@ -26,4 +28,9 @@ type Report struct {
 	ScanSession bson.ObjectId `json:"scanSession,omitempty" bson:"scanSession" description:"scan session id"`
 
 	Raw string `json:"raw"`
+}
+
+type ReportList struct {
+	pagination.Meta `json:",inline"`
+	Results         []*Report `json:"results"`
 }
