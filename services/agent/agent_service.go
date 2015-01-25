@@ -113,6 +113,7 @@ func (s *AgentService) Register(container *restful.Container) {
 	r.Doc("approve")
 	r.Operation("approve")
 	r.Param(ws.PathParameter(ParamId, ""))
+	r.Writes(agent.Agent{})
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
@@ -236,7 +237,7 @@ func (s *AgentService) approve(_ *restful.Request, resp *restful.Response, ag *a
 		ag.Status = agent.Approved
 		s.updateAgent(resp, ag)
 	}
-	return
+	resp.WriteEntity(ag)
 }
 
 func (s *AgentService) jobs(_ *restful.Request, resp *restful.Response, ag *agent.Agent) {
