@@ -117,6 +117,17 @@ func (s *ScanService) Register(container *restful.Container) {
 
 	// sessions
 
+	r = ws.GET(fmt.Sprintf("{%s}/reports", ParamId)).To(s.TakeScan(s.reports))
+	r.Doc("reports")
+	r.Operation("reports")
+	r.Param(ws.PathParameter(ParamId, ""))
+	addDefaults(r)
+	r.Writes([]report.Report{})
+	r.Do(services.Returns(http.StatusOK))
+	ws.Route(r)
+
+	//
+
 	r = ws.GET(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionGet)))
 	r.Doc("sessionGet")
 	r.Operation("sessionGet")
@@ -374,6 +385,28 @@ func (s *ScanService) delete(_ *restful.Request, resp *restful.Response, obj *sc
 
 	mgr.Scans.Remove(obj)
 	resp.WriteHeader(http.StatusNoContent)
+}
+
+func (s *ScanService) reports(_ *restful.Request, resp *restful.Response, sc *scan.Scan) {
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	reports := []*report.Report{}
+
+	for _, sess := range sc.Sessions {
+		rep, err := mgr.Reports.GetBySession(sess.Id)
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				continue
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		}
+		reports = append(reports, rep)
+	}
+
+	resp.WriteEntity(reports)
 }
 
 // Sessions
