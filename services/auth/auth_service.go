@@ -3,9 +3,9 @@ package auth
 import (
 	"net/http"
 
+	"github.com/Sirupsen/logrus"
 	restful "github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
-	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"

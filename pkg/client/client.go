@@ -13,9 +13,9 @@ import (
 	"reflect"
 
 	"code.google.com/p/go.net/context"
+	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
 	"github.com/google/go-querystring/query"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 )
 

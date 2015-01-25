@@ -1,9 +1,9 @@
 package services
 
 import (
+	"github.com/Sirupsen/logrus"
 	restful "github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful/swagger"
-	"github.com/sirupsen/logrus"
 )
 
 func init() {

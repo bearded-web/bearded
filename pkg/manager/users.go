@@ -2,7 +2,7 @@ package manager
 
 import (
 	"github.com/bearded-web/bearded/models/user"
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"

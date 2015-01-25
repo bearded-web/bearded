@@ -4,8 +4,8 @@ import (
 	"os"
 
 	//	"github.com/codegangsta/cli"
+	"github.com/Sirupsen/logrus"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
-	"github.com/sirupsen/logrus"
 
 	"github.com/bearded-web/bearded/cmd/dispatcher"
 	"github.com/bearded-web/bearded/cmd/utils"

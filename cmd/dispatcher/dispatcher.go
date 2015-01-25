@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	restful "github.com/emicklei/go-restful"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
-	"github.com/sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"
 
 	"github.com/bearded-web/bearded/pkg/filters"

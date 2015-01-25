@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	restful "github.com/emicklei/go-restful"
 	"github.com/gorilla/securecookie"
-	"github.com/sirupsen/logrus"
 	"sync"
 )
 
