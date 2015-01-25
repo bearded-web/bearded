@@ -1,15 +1,17 @@
 package dispatcher
 
 import (
-	"net/http/httptest"
-	"net/http"
-	"github.com/bearded-web/bearded/cmd/agent"
-	"github.com/bearded-web/bearded/pkg/utils"
-	"github.com/bearded-web/bearded/pkg/client"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+
+	"github.com/bearded-web/bearded/cmd/agent"
+	"github.com/bearded-web/bearded/pkg/client"
+	"github.com/bearded-web/bearded/pkg/utils"
 )
 
-
+// Run agent inside current process
+// Start httptest local server
 func RunInternalAgent(app http.Handler) error {
 	ts := httptest.NewServer(app)
 	hostname, err := utils.GetHostname()

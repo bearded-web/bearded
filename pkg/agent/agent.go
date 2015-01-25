@@ -11,6 +11,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/agent"
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/docker"
@@ -196,10 +197,15 @@ func (a *Agent) HandleScan(ctx context.Context, sc *scan.Session) error {
 				logrus.Error(res.Err)
 				return setFailed()
 			}
-			//			t.Report = &report.Report{
-			//				Type: report.TypeRaw,
-			//				Raw: string(res.Log),
-			//			}
+			rep := &report.Report{
+				Type: report.TypeRaw,
+				Raw:  string(res.Log),
+			}
+			_, err := a.api.Scans.SessionReportCreate(ctx, sc, rep)
+			if err != nil {
+				logrus.Error(err)
+				return setFailed()
+			}
 		}
 
 	}

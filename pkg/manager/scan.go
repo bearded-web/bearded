@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	mgo "gopkg.in/mgo.v2"

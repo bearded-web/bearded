@@ -11,7 +11,7 @@ type User struct {
 	Id       bson.ObjectId `json:"id,omitempty" bson:"_id"`
 	Email    string        `json:"email"`
 	Password string        `json:"-"` // password hash in passlib format: $hashAlgo[$values]$hexdigest_hash$
-	Avatar	 string		   `json:"avatar"`
+	Avatar   string        `json:"avatar"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`

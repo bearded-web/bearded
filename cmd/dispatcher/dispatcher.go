@@ -62,8 +62,8 @@ var Dispatcher = cli.Command{
 			Usage:  "do not serve frontend files",
 		},
 		cli.BoolFlag{
-			Name:	"with-agent",
-			Usage:	"Run agent inside the dispatcher",
+			Name:  "with-agent",
+			Usage: "Run agent inside the dispatcher",
 		},
 	},
 }

@@ -39,7 +39,6 @@ var Agent = cli.Command{
 
 func agentAction(ctx *cli.Context, api *client.Client) {
 
-
 	var agentName string
 	if agentName = ctx.String("name"); agentName == "" {
 		hostname, err := utils.GetHostname()

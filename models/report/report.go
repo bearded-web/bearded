@@ -1,6 +1,10 @@
 package report
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
+	"time"
+)
 
 type ReportType string
 
@@ -14,6 +18,12 @@ func (t ReportType) MarshalJSON() ([]byte, error) {
 }
 
 type Report struct {
-	Type ReportType `json:"type" description:"one of [raw]"`
-	Raw  string     `json:"raw"`
+	Id          bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	Type        ReportType    `json:"type" description:"one of [raw]"`
+	Created     time.Time     `json:"created,omitempty" description:"when report is created"`
+	Updated     time.Time     `json:"updated,omitempty" description:"when report is updated"`
+	Scan        bson.ObjectId `json:"scan,omitempty" description:"scan id"`
+	ScanSession bson.ObjectId `json:"scanSession,omitempty" bson:"scanSession" description:"scan session id"`
+
+	Raw string `json:"raw"`
 }

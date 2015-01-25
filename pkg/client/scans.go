@@ -5,6 +5,7 @@ import (
 
 	"code.google.com/p/go.net/context"
 
+	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 )
 
@@ -47,4 +48,15 @@ func (s *ScansService) SessionUpdate(ctx context.Context, src *scan.Session) (*s
 	id := FromId(src.Id)
 	sessUrl := fmt.Sprintf("%s/%s/sessions", scansUrl, scanId)
 	return obj, s.client.Update(ctx, sessUrl, id, src, obj)
+}
+
+func (s *ScansService) SessionReportCreate(ctx context.Context,
+	src *scan.Session, rep *report.Report) (*report.Report, error) {
+
+	obj := &report.Report{}
+	scanId := FromId(src.Scan)
+	id := FromId(src.Id)
+	reportUrl := fmt.Sprintf("%s/%s/sessions/%s/report", scansUrl, scanId, id)
+	return obj, s.client.Create(ctx, reportUrl, rep, obj)
+
 }
