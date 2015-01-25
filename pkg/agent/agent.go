@@ -203,8 +203,6 @@ func (a *Agent) HandleScan(ctx context.Context, sc *scan.Session) error {
 		}
 
 	}
-
-	time.Sleep(time.Second * 20)
 	logrus.Info("finished")
 	sc.Status = scan.StatusFinished
 	if sc, err = a.api.Scans.SessionUpdate(ctx, sc); err != nil {

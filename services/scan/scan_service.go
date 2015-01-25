@@ -370,8 +370,11 @@ func (s *ScanService) sessionUpdate(req *restful.Request, resp *restful.Response
 		return
 	}
 
+
 	mgr := s.Manager()
 	defer mgr.Close()
+
+	logrus.Debugf("Update session %s status from %s to %s", mgr.FromId(sess.Id), sess.Status, raw.Status)
 
 	sess.Status = raw.Status
 	if err := mgr.Scans.UpdateSession(sc, sess); err != nil {
