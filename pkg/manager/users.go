@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/utils"
 )
 
 type UserManager struct {
@@ -41,11 +42,14 @@ func (m *UserManager) Init() error {
 }
 
 func (m *UserManager) GetById(id string) (*user.User, error) {
-	u := &user.User{}
-	if err := m.col.FindId(bson.ObjectIdHex(id)).One(u); err != nil {
+	obj := &user.User{}
+	if err := m.col.FindId(bson.ObjectIdHex(id)).One(obj); err != nil {
 		return nil, err
 	}
-	return u, nil
+	if obj.Avatar == "" {
+		obj.Avatar = utils.GetGravatar(obj.Email, 38, utils.AvatarRetro)
+	}
+	return obj, nil
 }
 
 func (m *UserManager) GetByEmail(email string) (*user.User, error) {
@@ -76,6 +80,7 @@ func (m *UserManager) Create(raw *user.User) (*user.User, error) {
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now()
 	raw.Updated = raw.Created
+	raw.Avatar = utils.GetGravatar(raw.Email, 38, utils.AvatarRetro)
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}
@@ -84,5 +89,8 @@ func (m *UserManager) Create(raw *user.User) (*user.User, error) {
 
 func (m *UserManager) Update(obj *user.User) error {
 	obj.Updated = time.Now()
+	if obj.Avatar == "" {
+		obj.Avatar = utils.GetGravatar(obj.Email, 38, utils.AvatarRetro)
+	}
 	return m.col.UpdateId(obj.Id, obj)
 }
