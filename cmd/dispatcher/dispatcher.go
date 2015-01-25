@@ -159,7 +159,10 @@ func dispatcherAction(ctx *cli.Context) {
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni
 
 	// Initialize and register services in container
-	initServices(wsContainer, session.DB(dbName))
+	err = initServices(wsContainer, session.DB(dbName))
+	if err != nil {
+		panic(err)
+	}
 
 	// Swagger should be initialized after services registration
 	if !ctx.Bool("swagger-disabled") {

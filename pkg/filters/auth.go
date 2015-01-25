@@ -21,6 +21,11 @@ const (
 func AuthRequiredFilter(mgr *manager.Manager) restful.FilterFunction {
 	// TODO (m0sth8): It's not a good solution to make db request on every http request. Fix it.
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		if req.Attribute(AttrUserKey) != nil {
+			// user is already set in attributes
+			chain.ProcessFilter(req, resp)
+			return
+		}
 		session := GetSession(req)
 		userId, existed := session.Get(SessionUserKey)
 		if !existed {
