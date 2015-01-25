@@ -12,5 +12,19 @@
         "container": {
             "image": "barbudo/wappalyzer"
         }
+    },
+    {
+        "name": "barbudo/retirejs",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "middle",
+        "desc": {
+            "title": "Retirejs",
+            "info": "Detect usage of JavaScript libraries with known vulnerabilities",
+            "url": "https://registry.hub.docker.com/u/barbudo/retirejs/"
+        },
+        "container": {
+            "image": "barbudo/retirejs"
+        }
     }
 ]

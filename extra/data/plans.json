@@ -11,6 +11,14 @@
                 "conf": {
                     "commandArgs": "{{ .Target }}"
                 }
+            },
+            {
+                "plugin": "barbudo/retirejs:0.0.2",
+                "name": "Detect vulnerable js",
+                "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
+                "conf": {
+                    "commandArgs": "{{ .Target }}"
+                }
             }
         ]
     }
