@@ -44,30 +44,30 @@ func (a *Agent) Serve(ctx context.Context) error {
 loop:
 	for {
 		timeout := 0
-		logrus.Infof("Agent status: %s", agnt.Status)
+		logrus.Debugf("Agent status: %s", agnt.Status)
 		switch agnt.Status {
 		case agent.Undefined:
 			err := a.Register(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("Registration error: %v", err)
-				timeout = 10
+				timeout = 5
 			}
 			logrus.Infof("Agent Id: %s", client.FromId(agnt.Id))
 		case agent.Registered:
 			err := a.Retrieve(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("Retrieve error: %v", err)
-				timeout = 10
+				timeout = 5
 			}
 			if agnt.Status == agent.Registered {
-				timeout = 10
+				timeout = 5
 			}
 		case agent.Approved:
 			err := a.GetJobs(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("GetJobs error: %v", err)
 			}
-			timeout = 10
+			timeout = 5
 		case agent.Blocked:
 			resultErr = fmt.Errorf("Agent is blocked")
 			break loop
@@ -76,7 +76,7 @@ loop:
 			break loop
 		}
 		if timeout != 0 {
-			logrus.Infof("Timeout: %d", timeout)
+			logrus.Debugf("Timeout: %d", timeout)
 		}
 		select {
 		case <-ctx.Done():
@@ -132,12 +132,12 @@ func (a *Agent) Retrieve(ctx context.Context, agnt *agent.Agent) error {
 }
 
 func (a *Agent) GetJobs(ctx context.Context, agnt *agent.Agent) error {
-	logrus.Info("Request jobs")
+	logrus.Debug("Request jobs")
 	jobs, err := a.api.Agents.GetJobs(ctx, agnt)
 	if err != nil {
 		return err
 	}
-	logrus.Infof("Got %d jobs", len(jobs))
+	logrus.Debugf("Got %d jobs", len(jobs))
 	for _, job := range jobs {
 		if err := a.HandleJob(ctx, job); err != nil {
 			// TODO (m0sth8): return scan failed status
@@ -149,7 +149,7 @@ func (a *Agent) GetJobs(ctx context.Context, agnt *agent.Agent) error {
 }
 
 func (a *Agent) HandleJob(ctx context.Context, job *agent.Job) error {
-	logrus.Infof("Job: %s", job)
+	logrus.Debugf("Job: %s", job)
 	if job.Cmd == agent.CmdScan {
 		if err := a.HandleScan(ctx, job.Scan); err != nil {
 			return stackerr.Wrap(err)

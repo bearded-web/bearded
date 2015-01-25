@@ -61,7 +61,7 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 	go func(ch chan<- ContainerResponse, docker *dockerclient.Client, config *ContainerConfig) {
 		resp := ContainerResponse{}
 		// Create a container
-		logrus.Infof("Create container %s \n", config)
+		logrus.Infof("Create container %s", config)
 		cfg := dockerclient.Config(*config)
 		opts := dockerclient.CreateContainerOptions{
 			Config: &cfg,
@@ -74,7 +74,7 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 			return
 		}
 		cprint := func(format string, opt ...interface{}) {
-			logrus.Infof("[%s] %s\n", container.ID[:6], fmt.Sprintf(format, opt...))
+			logrus.Infof("[%s] %s", container.ID[:6], fmt.Sprintf(format, opt...))
 		}
 		cprint("Created with config: %s", config)
 

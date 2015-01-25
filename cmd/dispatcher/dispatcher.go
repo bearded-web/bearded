@@ -61,6 +61,10 @@ var Dispatcher = cli.Command{
 			EnvVar: "BEARDED_FRONTEND_OFF",
 			Usage:  "do not serve frontend files",
 		},
+		cli.BoolFlag{
+			Name:	"with-agent",
+			Usage:	"Run agent inside the dispatcher",
+		},
 	},
 }
 
@@ -197,10 +201,15 @@ func dispatcherAction(ctx *cli.Context) {
 
 	app.UseHandler(wsContainer) // set wsContainer as main handler
 
+	if ctx.Bool("with-agent") {
+		if err := RunInternalAgent(app); err != nil {
+			logrus.Error(err)
+		}
+	}
+
 	// Start negroini middleware with our restful container
 	bindAddr := ctx.String("bind-addr")
 	server := &http.Server{Addr: bindAddr, Handler: app}
 	logrus.Infof("Listening on %s", bindAddr)
 	logrus.Fatal(server.ListenAndServe())
-
 }

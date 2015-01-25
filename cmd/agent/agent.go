@@ -38,11 +38,7 @@ var Agent = cli.Command{
 }
 
 func agentAction(ctx *cli.Context, api *client.Client) {
-	dclient, err := docker.NewDocker()
-	if err != nil {
-		panic(err)
-	}
-	//	var dclient *docker.Docker
+
 
 	var agentName string
 	if agentName = ctx.String("name"); agentName == "" {
@@ -52,12 +48,21 @@ func agentAction(ctx *cli.Context, api *client.Client) {
 		}
 		agentName = hostname
 	}
+	err := ServeAgent(agentName, api)
+	logrus.Error(err)
+}
+
+func ServeAgent(agentName string, api *client.Client) error {
+	dclient, err := docker.NewDocker()
+	if err != nil {
+		panic(err)
+	}
 	logrus.Infof("Agent name: %s", agentName)
 	server, err := agentServer.New(api, dclient, agentName)
 	if err != nil {
 		panic(err)
 	}
-	server.Serve(context.Background())
+	return server.Serve(context.Background())
 }
 
 func takeApi(fn func(*cli.Context, *client.Client)) func(*cli.Context) {

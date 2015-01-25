@@ -56,7 +56,7 @@ func main() {
 	app.Flags = append(app.Flags, []cli.Flag{
 		cli.StringFlag{
 			Name:  "log-level",
-			Value: "debug",
+			Value: "info",
 			Usage: "Logger level output [debug|info|warning|error|fatal], debug is default",
 		},
 		cli.BoolFlag{
