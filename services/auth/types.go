@@ -12,3 +12,8 @@ type sessionEntity struct {
 type passwordEntity struct {
 	Password string `json:"password"`
 }
+
+type registerEntity struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
