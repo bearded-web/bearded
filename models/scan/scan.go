@@ -34,7 +34,7 @@ type ScanConf struct {
 }
 
 type Scan struct {
-	Id     bson.ObjectId `json:"id" bson:"_id"`
+	Id     bson.ObjectId `json:"id,omitempty" bson:"_id"`
 	Status ScanStatus    `json:"status,omitempty" description:"one of [created|queued|working|pause|finished|error]"`
 	Conf   ScanConf      `json:"conf,omitempty"`
 
