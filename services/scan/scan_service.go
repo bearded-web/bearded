@@ -249,6 +249,9 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 	}
 	// put scan to queue
 	s.Scheduler().AddScan(obj)
+	if _, err := mgr.Feed.AddScan(obj); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+	}
 
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(obj)
@@ -292,6 +295,7 @@ func (s *ScanService) get(_ *restful.Request, resp *restful.Response, pl *scan.S
 // disabled
 func (s *ScanService) update(req *restful.Request, resp *restful.Response, pl *scan.Scan) {
 	// TODO (m0sth8): Check permissions
+	// TODO (m0sth8): Forbid changes in scan after finished status
 
 	raw := &scan.Scan{}
 
@@ -326,6 +330,8 @@ func (s *ScanService) update(req *restful.Request, resp *restful.Response, pl *s
 }
 
 func (s *ScanService) delete(_ *restful.Request, resp *restful.Response, obj *scan.Scan) {
+	// TODO (m0sth8): Forbid to remove scan after queued status
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
@@ -377,7 +383,7 @@ func (s *ScanService) TakeScan(fn ScanFunction) restful.RouteFunction {
 		mgr := s.Manager()
 		defer mgr.Close()
 
-		obj, err := mgr.Scans.GetById(id)
+		obj, err := mgr.Scans.GetById(mgr.ToId(id))
 		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {

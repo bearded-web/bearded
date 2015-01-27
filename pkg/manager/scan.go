@@ -39,12 +39,27 @@ func (m *ScanManager) Fltr() *ScanFltr {
 	return &ScanFltr{}
 }
 
-func (m *ScanManager) GetById(id string) (*scan.Scan, error) {
+func (m *ScanManager) GetById(id bson.ObjectId) (*scan.Scan, error) {
 	u := &scan.Scan{}
-	if err := m.col.FindId(bson.ObjectIdHex(id)).One(u); err != nil {
+	if err := m.col.FindId(id).One(u); err != nil {
 		return nil, err
 	}
 	return u, nil
+}
+
+func (m *ScanManager) GetByMulti(ids []bson.ObjectId) (map[bson.ObjectId]*scan.Scan, error) {
+	scans := []*scan.Scan{}
+	query := bson.M{
+		"id": bson.M{"$in": ids},
+	}
+	if err := m.col.Find(query).All(&scans); err != nil {
+		return nil, err
+	}
+	results := map[bson.ObjectId]*scan.Scan{}
+	for _, sc := range scans {
+		results[sc.Id] = sc
+	}
+	return results, nil
 }
 
 func (m *ScanManager) All() ([]*scan.Scan, int, error) {
@@ -171,7 +186,7 @@ func (m *ScanManager) UpdateSession(sc *scan.Scan, obj *scan.Session) error {
 	}
 
 	key := fmt.Sprintf("sessions.%d", *index)
-	update := bson.M{"$set": bson.M{key: obj}}
+	update := bson.M{"$set": bson.M{key: obj, "updated": now}}
 	m.col.UpdateId(sc.Id, update)
 	return m.Update(sc)
 }

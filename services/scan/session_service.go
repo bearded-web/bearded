@@ -14,7 +14,6 @@ import (
 	"github.com/bearded-web/bearded/services"
 )
 
-
 func (s *ScanService) RegisterSessions(ws *restful.WebService) {
 	r := ws.GET(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionGet)))
 	r.Doc("sessionGet")
@@ -71,7 +70,6 @@ func (s *ScanService) RegisterSessions(ws *restful.WebService) {
 	ws.Route(r)
 }
 
-
 func (s *ScanService) sessionGet(_ *restful.Request, resp *restful.Response, _ *scan.Scan, sess *scan.Session) {
 	resp.WriteHeader(http.StatusOK)
 	resp.WriteEntity(sess)
@@ -79,6 +77,7 @@ func (s *ScanService) sessionGet(_ *restful.Request, resp *restful.Response, _ *
 
 func (s *ScanService) sessionUpdate(req *restful.Request, resp *restful.Response, sc *scan.Scan, sess *scan.Session) {
 	// TODO (m0sth8): Check permissions
+	// TODO (m0sth8): Forbid changes in session after finished|failed status
 
 	raw := &SessionUpdateEntity{}
 
@@ -105,6 +104,10 @@ func (s *ScanService) sessionUpdate(req *restful.Request, resp *restful.Response
 	}
 	s.Scheduler().UpdateScan(sc)
 
+	if err := mgr.Feed.UpdateScan(sc); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+	}
+
 	resp.WriteEntity(sess)
 }
 
@@ -130,6 +133,7 @@ func (s *ScanService) sessionReportGet(_ *restful.Request, resp *restful.Respons
 
 func (s *ScanService) sessionReportCreate(req *restful.Request, resp *restful.Response, sc *scan.Scan, sess *scan.Session) {
 	// TODO (m0sth8): Check permissions
+	// TODO (m0sth8): Forbid creating report in session after finished|failed status
 
 	raw := &report.Report{}
 
