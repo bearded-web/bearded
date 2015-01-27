@@ -3,6 +3,7 @@ package target
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/Sirupsen/logrus"
 	restful "github.com/emicklei/go-restful"
@@ -121,6 +122,16 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.domain is required for target.type=web"))
 			return
 		}
+		addr, err := url.Parse(raw.Web.Domain)
+		if err != nil {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+			return
+		}
+		if addr.Scheme == "" || !(addr.Scheme == "http" || addr.Scheme == "https") {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("scheme must be http or https"))
+			return
+		}
+		raw.Web.Domain = addr.String()
 	}
 
 	user := filters.GetUser(req)
