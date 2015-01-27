@@ -61,7 +61,7 @@ func (d *Docker) PullImage(name string) error {
 	if err == dockerclient.ErrNoSuchImage {
 		logrus.Infof("pull image: %s", name)
 		err = d.Client.PullImage(dockerclient.PullImageOptions{
-			Repository: name,
+			Repository:   name,
 			OutputStream: os.Stdout,
 		}, dockerclient.AuthConfiguration{})
 	}

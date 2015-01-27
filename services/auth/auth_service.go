@@ -7,10 +7,10 @@ import (
 	restful "github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
+	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
-	"github.com/bearded-web/bearded/models/user"
 )
 
 type AuthService struct {
@@ -179,7 +179,7 @@ func (s *AuthService) register(req *restful.Request, resp *restful.Response) {
 	}
 
 	u := &user.User{
-		Email: raw.Email,
+		Email:    raw.Email,
 		Password: pass,
 	}
 

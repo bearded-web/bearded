@@ -21,6 +21,7 @@ type Manager struct {
 	Scans    *ScanManager
 	Agents   *AgentManager
 	Reports  *ReportManager
+	Feed     *FeedManager
 
 	managers []ManagerInterface
 }
@@ -42,6 +43,7 @@ func New(db *mgo.Database) *Manager {
 	m.Scans = &ScanManager{manager: m, col: db.C("scans")}
 	m.Agents = &AgentManager{manager: m, col: db.C("agents")}
 	m.Reports = &ReportManager{manager: m, col: db.C("reports")}
+	m.Feed = &FeedManager{manager: m, col: db.C("feed")}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -52,6 +54,7 @@ func New(db *mgo.Database) *Manager {
 		m.Scans,
 		m.Agents,
 		m.Reports,
+		m.Feed,
 	)
 
 	return m
@@ -139,6 +142,21 @@ func (m *Manager) NewId() bson.ObjectId {
 
 func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface{}) (int, error) {
 	q := col.Find(query)
+	if err := q.All(results); err != nil {
+		return 0, err
+	}
+	count, err := q.Count()
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (m *Manager) FilterAndSortBy(col *mgo.Collection, query *bson.M, sort []string, results interface{}) (int, error) {
+	q := col.Find(query)
+	if sort != nil && len(sort) > 0 {
+		q.Sort(sort...)
+	}
 	if err := q.All(results); err != nil {
 		return 0, err
 	}
