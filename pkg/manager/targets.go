@@ -58,7 +58,7 @@ func (m *TargetManager) GetByProject(project string) ([]*target.Target, int, err
 func (m *TargetManager) Create(raw *target.Target) (*target.Target, error) {
 	// TODO (m0sth8): add validation
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (m *TargetManager) Create(raw *target.Target) (*target.Target, error) {
 }
 
 func (m *TargetManager) Update(obj *target.Target) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }
 

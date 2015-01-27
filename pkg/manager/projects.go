@@ -59,7 +59,7 @@ func (m *ProjectManager) GetByOwner(owner string) ([]*project.Project, int, erro
 func (m *ProjectManager) Create(raw *project.Project) (*project.Project, error) {
 	// TODO (m0sth8): add validation
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -76,6 +76,6 @@ func (m *ProjectManager) CreateDefault(owner string) (*project.Project, error) {
 }
 
 func (m *ProjectManager) Update(obj *project.Project) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }

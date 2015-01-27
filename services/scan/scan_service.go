@@ -246,7 +246,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 		},
 		Sessions: []*scan.Session{},
 	}
-	now := time.Now()
+	now := time.Now().UTC()
 	// Add session from plans workflow steps
 	for _, step := range plan.Workflow {
 		// TODO (m0sth8): Take latest plugin or search by version, extract this logic

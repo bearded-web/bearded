@@ -78,7 +78,7 @@ func (m *UserManager) All() ([]*user.User, int, error) {
 func (m *UserManager) Create(raw *user.User) (*user.User, error) {
 	// TODO (m0sth8): add validation
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	raw.Avatar = utils.GetGravatar(raw.Email, 38, utils.AvatarRetro)
 	if err := m.col.Insert(raw); err != nil {
@@ -88,7 +88,7 @@ func (m *UserManager) Create(raw *user.User) (*user.User, error) {
 }
 
 func (m *UserManager) Update(obj *user.User) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	if obj.Avatar == "" {
 		obj.Avatar = utils.GetGravatar(obj.Email, 38, utils.AvatarRetro)
 	}

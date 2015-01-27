@@ -72,7 +72,7 @@ func (m *PlanManager) FilterBy(fltr *PlanFltr) ([]*plan.Plan, int, error) {
 func (m *PlanManager) Create(raw *plan.Plan) (*plan.Plan, error) {
 	// TODO (m0sth8): add validattion
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (m *PlanManager) Create(raw *plan.Plan) (*plan.Plan, error) {
 }
 
 func (m *PlanManager) Update(obj *plan.Plan) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }
 

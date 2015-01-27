@@ -78,7 +78,7 @@ func (m *ReportManager) FilterBy(fltr *ReportFltr) ([]*report.Report, int, error
 func (m *ReportManager) Create(raw *report.Report) (*report.Report, error) {
 	// TODO (m0sth8): add validattion
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (m *ReportManager) Create(raw *report.Report) (*report.Report, error) {
 }
 
 func (m *ReportManager) Update(obj *report.Report) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }
 

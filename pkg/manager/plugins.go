@@ -94,7 +94,7 @@ func (m *PluginManager) FilterBy(fltr *PluginFltr) ([]*plugin.Plugin, int, error
 func (m *PluginManager) Create(raw *plugin.Plugin) (*plugin.Plugin, error) {
 	// TODO (m0sth8): add validattion
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -103,6 +103,6 @@ func (m *PluginManager) Create(raw *plugin.Plugin) (*plugin.Plugin, error) {
 }
 
 func (m *PluginManager) Update(obj *plugin.Plugin) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }

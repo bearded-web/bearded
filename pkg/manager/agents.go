@@ -79,7 +79,7 @@ func (m *AgentManager) FilterBy(fltr *AgentFltr) ([]*agent.Agent, int, error) {
 func (m *AgentManager) Create(raw *agent.Agent) (*agent.Agent, error) {
 	// TODO (m0sth8): add validattion
 	raw.Id = bson.NewObjectId()
-	raw.Created = time.Now()
+	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (m *AgentManager) Create(raw *agent.Agent) (*agent.Agent, error) {
 }
 
 func (m *AgentManager) Update(obj *agent.Agent) error {
-	obj.Updated = time.Now()
+	obj.Updated = time.Now().UTC()
 	return m.col.UpdateId(obj.Id, obj)
 }
 
