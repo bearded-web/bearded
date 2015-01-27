@@ -56,10 +56,29 @@ func (d *Docker) Ping() error {
 //	return nil
 //}
 
+func (d *Docker) PullImage(name string) error {
+	_, err := d.Client.InspectImage(name)
+	if err == dockerclient.ErrNoSuchImage {
+		logrus.Infof("pull image: %s", name)
+		err = d.Client.PullImage(dockerclient.PullImageOptions{
+			Repository: name,
+			OutputStream: os.Stdout,
+		}, dockerclient.AuthConfiguration{})
+	}
+	return err
+}
+
 func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan ContainerResponse {
 	ch := make(chan ContainerResponse, 1)
 	go func(ch chan<- ContainerResponse, docker *dockerclient.Client, config *ContainerConfig) {
 		resp := ContainerResponse{}
+		// pull container
+		if err := d.PullImage(config.Image); err != nil {
+			logrus.Errorf("Failed: %v", err)
+			resp.Err = err
+			ch <- resp
+			return
+		}
 		// Create a container
 		logrus.Infof("Create container %s", config)
 		cfg := dockerclient.Config(*config)
