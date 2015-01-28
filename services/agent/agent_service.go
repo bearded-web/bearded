@@ -250,7 +250,7 @@ func (s *AgentService) jobs(_ *restful.Request, resp *restful.Response, ag *agen
 		return
 	}
 	if sess == nil {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 		sess, err = s.Scheduler().GetSession()
 
 	}

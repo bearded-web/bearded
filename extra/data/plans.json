@@ -36,6 +36,35 @@
                 }
             }
         ]
+    },
+    {
+        "name": "Cms scan",
+        "desc": "Detect cms used by the site and scan for vulnerabilities",
+        "targetType": "web",
+        "workflow": [
+            {
+                "plugin": "barbudo/wpscan:0.0.2",
+                "name": "Detect wordpress",
+                "desc": "Detect usage of wordpress and show known vulnerabilities",
+                "conf": {
+                    "commandArgs": "--url {{ .Target }} --follow-redirection --batch --no-color"
+                }
+            }
+        ]
+    },
+    {
+        "name": "Wordpress full scan",
+        "desc": "Scan wordpress in heavy mode",
+        "targetType": "web",
+        "workflow": [
+            {
+                "plugin": "barbudo/wpscan:0.0.2",
+                "name": "Detect wordpress",
+                "desc": "Detect usage of wordpress and show known vulnerabilities",
+                "conf": {
+                    "commandArgs": "--url {{ .Target }} --follow-redirection --batch --no-color --enumerate"
+                }
+            }
+        ]
     }
-
 ]

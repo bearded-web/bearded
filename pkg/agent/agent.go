@@ -67,8 +67,8 @@ loop:
 			err := a.GetJobs(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("GetJobs error: %v", err)
+				timeout = 5
 			}
-			timeout = 5
 		case agent.Blocked:
 			resultErr = fmt.Errorf("Agent is blocked")
 			break loop
@@ -152,9 +152,11 @@ func (a *Agent) GetJobs(ctx context.Context, agnt *agent.Agent) error {
 func (a *Agent) HandleJob(ctx context.Context, job *agent.Job) error {
 	logrus.Debugf("Job: %s", job)
 	if job.Cmd == agent.CmdScan {
-		if err := a.HandleScan(ctx, job.Scan); err != nil {
-			return stackerr.Wrap(err)
-		}
+		go func() {
+			if err := a.HandleScan(ctx, job.Scan); err != nil {
+				logrus.Error(stackerr.Wrap(err))
+			}
+		}()
 	}
 	return nil
 }

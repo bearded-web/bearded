@@ -26,5 +26,19 @@
         "container": {
             "image": "barbudo/retirejs"
         }
+    },
+    {
+        "name": "barbudo/wpscan",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "heavy",
+        "desc": {
+            "title": "Wpscan",
+            "info": "WPScan is a black box WordPress vulnerability scanner.",
+            "url": "https://registry.hub.docker.com/u/barbudo/wpscan/"
+        },
+        "container": {
+            "image": "barbudo/wpscan"
+        }
     }
 ]
