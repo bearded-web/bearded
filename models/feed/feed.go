@@ -37,7 +37,7 @@ type FeedItem struct {
 	Created time.Time     `json:"created,omitempty" description:"when feed item is created"`
 	Updated time.Time     `json:"updated,omitempty" description:"when feed item is updated"`
 
-	Owner   bson.ObjectId `json:"owner" bson:"target" description:""`
+	Owner   bson.ObjectId `json:"owner" bson:"owner" description:""`
 	Target  bson.ObjectId `json:"target" bson:"target" description:"target for this feed item"`
 	Project bson.ObjectId `json:"project" bson:"project" description:"project for this feed item"`
 
