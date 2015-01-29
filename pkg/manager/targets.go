@@ -3,10 +3,18 @@ package manager
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/target"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
+
+type TargetFltr struct {
+	Project bson.ObjectId     `fltr:"project,in"`
+	Type    target.TargetType `fltr:"type,in"`
+	Updated time.Time         `fltr:"updated,gte,lte"`
+	Created time.Time         `fltr:"created,gte,lte"`
+}
 
 type TargetManager struct {
 	manager *Manager
@@ -42,17 +50,15 @@ func (m *TargetManager) GetById(id bson.ObjectId) (*target.Target, error) {
 	return u, m.manager.GetById(m.col, id, &u)
 }
 
-func (m *TargetManager) GetByProject(project string) ([]*target.Target, int, error) {
+func (m *TargetManager) FilterBy(f *FeedItemFltr) ([]*target.Target, int, error) {
+	query := fltr.GetQuery(f)
+	return m.FilterByQuery(query)
+}
+
+func (m *TargetManager) FilterByQuery(query bson.M) ([]*target.Target, int, error) {
 	results := []*target.Target{}
-	q := m.col.Find(bson.D{{"project", bson.ObjectIdHex(project)}})
-	if err := q.All(&results); err != nil {
-		return results, 0, err
-	}
-	count, err := q.Count()
-	if err != nil {
-		return results, 0, err
-	}
-	return results, count, nil
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *TargetManager) Create(raw *target.Target) (*target.Target, error) {

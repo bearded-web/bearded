@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type PluginManager struct {
@@ -16,9 +17,9 @@ type PluginManager struct {
 }
 
 type PluginFltr struct {
-	Name    string
-	Version string
-	Type    plugin.PluginType
+	Name    string            `fltr:"name,in"`
+	Version string            `fltr:"version,in,nin,gte,gt,lte,lte"`
+	Type    plugin.PluginType `fltr:"type,in,nin"`
 }
 
 func (s *PluginManager) Init() error {
@@ -31,7 +32,7 @@ func (s *PluginManager) Init() error {
 	if err != nil {
 		return err
 	}
-	for _, index := range []string{"name", "version"} {
+	for _, index := range []string{"name", "version", "type"} {
 		err := s.col.EnsureIndex(mgo.Index{
 			Key:        []string{index},
 			Background: true,
@@ -70,25 +71,17 @@ func (m *PluginManager) All() ([]*plugin.Plugin, int, error) {
 	return results, count, err
 }
 
-func (m *PluginManager) FilterBy(fltr *PluginFltr) ([]*plugin.Plugin, int, error) {
-	query := bson.M{}
-
-	if fltr != nil {
-		if fltr.Name != "" {
-			query["name"] = fltr.Name
-		}
-		if fltr.Version != "" {
-			query["version"] = fltr.Version
-		}
-		if fltr.Type != "" {
-			query["type"] = fltr.Type
-		}
-	}
-
+func (m *PluginManager) FilterBy(f *PluginFltr) ([]*plugin.Plugin, int, error) {
+	query := fltr.GetQuery(f)
 	results := []*plugin.Plugin{}
 	count, err := m.manager.FilterBy(m.col, &query, &results)
 	return results, count, err
+}
 
+func (m *PluginManager) FilterByQuery(query bson.M) ([]*plugin.Plugin, int, error) {
+	results := []*plugin.Plugin{}
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *PluginManager) Create(raw *plugin.Plugin) (*plugin.Plugin, error) {

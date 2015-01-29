@@ -9,6 +9,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/plan"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -50,6 +51,7 @@ func (s *PlanService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
+	s.SetParams(r, fltr.GetParams(ws, manager.PlanFltr{}))
 	r.Writes(plan.PlanList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -138,12 +140,17 @@ func (s *PlanService) create(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(obj)
 }
 
-func (s *PlanService) list(_ *restful.Request, resp *restful.Response) {
+func (s *PlanService) list(req *restful.Request, resp *restful.Response) {
+	query, err := fltr.FromRequest(req, manager.PlanFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
-	fltr := mgr.Plans.Fltr()
 
-	results, count, err := mgr.Plans.FilterBy(fltr)
+	results, count, err := mgr.Plans.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

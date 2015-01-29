@@ -9,6 +9,8 @@ import (
 
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
+	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
 )
@@ -44,6 +46,7 @@ func (s *UserService) Register(container *restful.Container) {
 	r.Doc("list")
 	r.Operation("list")
 	r.Writes(user.UserList{})
+	s.SetParams(r, fltr.GetParams(ws, manager.UserFltr{}))
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	addDefaults(r)
@@ -90,11 +93,19 @@ func (s *UserService) Register(container *restful.Container) {
 
 // ====== service operations
 
-func (s *UserService) list(_ *restful.Request, resp *restful.Response) {
+func (s *UserService) list(req *restful.Request, resp *restful.Response) {
+	// TODO (m0sth8): do not show emails and other fields for everyone
+	// TODO (m0sth8): filter by email for admin only
+	query, err := fltr.FromRequest(req, manager.UserFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	results, count, err := mgr.Users.All()
+	results, count, err := mgr.Users.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

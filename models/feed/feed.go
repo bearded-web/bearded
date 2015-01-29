@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -17,12 +18,26 @@ const (
 	TypeScan    ItemType = "scan"
 )
 
+// It's a hack to show custom type as string in swagger
+func (t ItemType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(t))
+}
+
+func (t ItemType) Enum() []interface{} {
+	return []interface{}{TypeScan, TypeComment}
+}
+
+func (t ItemType) Convert(text string) (interface{}, error) {
+	return ItemType(text), nil
+}
+
 type FeedItem struct {
 	Id      bson.ObjectId `json:"id" bson:"_id"`
 	Type    ItemType      `json:"type"`
 	Created time.Time     `json:"created,omitempty" description:"when feed item is created"`
 	Updated time.Time     `json:"updated,omitempty" description:"when feed item is updated"`
 
+	Owner   bson.ObjectId `json:"owner" bson:"target" description:""`
 	Target  bson.ObjectId `json:"target" bson:"target" description:"target for this feed item"`
 	Project bson.ObjectId `json:"project" bson:"project" description:"project for this feed item"`
 

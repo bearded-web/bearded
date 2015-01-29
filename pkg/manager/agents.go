@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/agent"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type AgentManager struct {
@@ -16,8 +17,9 @@ type AgentManager struct {
 }
 
 type AgentFltr struct {
-	Name string
-	Type agent.Type
+	Name   string       `fltr:"name"`
+	Type   agent.Type   `fltr:"type,in,nin"`
+	Status agent.Status `fltr:"status,in,nin"`
 }
 
 func (s *AgentManager) Init() error {
@@ -58,22 +60,17 @@ func (m *AgentManager) All() ([]*agent.Agent, int, error) {
 	return results, count, err
 }
 
-func (m *AgentManager) FilterBy(fltr *AgentFltr) ([]*agent.Agent, int, error) {
-	query := bson.M{}
-
-	if fltr != nil {
-		if fltr.Name != "" {
-			query["name"] = fltr.Name
-		}
-		if fltr.Type != "" {
-			query["type"] = fltr.Type
-		}
-	}
-
+func (m *AgentManager) FilterBy(f *AgentFltr) ([]*agent.Agent, int, error) {
+	query := fltr.GetQuery(f)
 	results := []*agent.Agent{}
 	count, err := m.manager.FilterBy(m.col, &query, &results)
 	return results, count, err
+}
 
+func (m *AgentManager) FilterByQuery(query bson.M) ([]*agent.Agent, int, error) {
+	results := []*agent.Agent{}
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *AgentManager) Create(raw *agent.Agent) (*agent.Agent, error) {

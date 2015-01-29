@@ -15,6 +15,7 @@ import (
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -60,8 +61,7 @@ func (s *ScanService) Register(container *restful.Container) {
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
 	r.Operation("list")
-	r.Param(ws.QueryParameter("target", "filter by target"))
-	r.Param(ws.QueryParameter("status", "filter by status one of [created|queued|working|paused|finished|failed]"))
+	s.SetParams(r, fltr.GetParams(ws, manager.ScanFltr{}))
 	addDefaults(r)
 	r.Writes(scan.ScanList{})
 	r.Do(services.Returns(http.StatusOK))
@@ -258,23 +258,16 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *ScanService) list(req *restful.Request, resp *restful.Response) {
+	query, err := fltr.FromRequest(req, manager.ScanFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	fltr := mgr.Scans.Fltr()
-
-	if p := req.QueryParameter("target"); p != "" {
-		if !s.IsId(p) {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("target should be bson uuid in hex form"))
-			return
-		}
-		fltr.Target = mgr.ToId(p)
-	}
-	if p := req.QueryParameter("status"); p != "" {
-		fltr.Status = scan.ScanStatus(p)
-	}
-
-	results, count, err := mgr.Scans.FilterBy(fltr)
+	results, count, err := mgr.Scans.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

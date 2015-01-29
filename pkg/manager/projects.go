@@ -3,12 +3,17 @@ package manager
 import (
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/project"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
 )
 
 const defaultProject = "Default"
+
+type ProjectFltr struct {
+	Owner bson.ObjectId `fltr:"owner"`
+}
 
 type ProjectManager struct {
 	manager *Manager
@@ -43,17 +48,15 @@ func (m *ProjectManager) GetById(id bson.ObjectId) (*project.Project, error) {
 	return u, m.manager.GetById(m.col, id, u)
 }
 
-func (m *ProjectManager) GetByOwner(owner string) ([]*project.Project, int, error) {
+func (m *ProjectManager) FilterBy(f *ProjectFltr) ([]*project.Project, int, error) {
+	query := fltr.GetQuery(f)
+	return m.FilterByQuery(query)
+}
+
+func (m *ProjectManager) FilterByQuery(query bson.M) ([]*project.Project, int, error) {
 	results := []*project.Project{}
-	q := m.col.Find(bson.D{{"owner", m.manager.ToId(owner)}})
-	if err := q.All(&results); err != nil {
-		return results, 0, err
-	}
-	count, err := q.Count()
-	if err != nil {
-		return results, 0, err
-	}
-	return results, count, nil
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *ProjectManager) Create(raw *project.Project) (*project.Project, error) {
@@ -67,9 +70,9 @@ func (m *ProjectManager) Create(raw *project.Project) (*project.Project, error) 
 	return raw, nil
 }
 
-func (m *ProjectManager) CreateDefault(owner string) (*project.Project, error) {
+func (m *ProjectManager) CreateDefault(owner bson.ObjectId) (*project.Project, error) {
 	p := &project.Project{
-		Owner: m.manager.ToId(owner),
+		Owner: owner,
 		Name:  defaultProject,
 	}
 	return m.Create(p)

@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type ScanManager struct {
@@ -17,8 +18,10 @@ type ScanManager struct {
 }
 
 type ScanFltr struct {
-	Status scan.ScanStatus
-	Target bson.ObjectId
+	Status  scan.ScanStatus `fltr:"status,in,nin"`
+	Target  bson.ObjectId   `fltr:"target,in"`
+	Project bson.ObjectId   `fltr:"project"`
+	Plan    bson.ObjectId   `fltr:"plan,in"`
 }
 
 func (s *ScanManager) Init() error {
@@ -69,22 +72,18 @@ func (m *ScanManager) All() ([]*scan.Scan, int, error) {
 	return results, count, err
 }
 
-func (m *ScanManager) FilterBy(fltr *ScanFltr) ([]*scan.Scan, int, error) {
-	query := bson.M{}
-
-	if fltr != nil {
-		if p := fltr.Status; p != "" {
-			query["status"] = p
-		}
-		if p := fltr.Target; p != "" {
-			query["target"] = p
-		}
-	}
-
+func (m *ScanManager) FilterBy(f *ScanFltr) ([]*scan.Scan, int, error) {
+	query := fltr.GetQuery(f)
 	results := []*scan.Scan{}
 	count, err := m.manager.FilterBy(m.col, &query, &results)
 	return results, count, err
 
+}
+
+func (m *ScanManager) FilterByQuery(query bson.M) ([]*scan.Scan, int, error) {
+	results := []*scan.Scan{}
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *ScanManager) Create(raw *scan.Scan) (*scan.Scan, error) {

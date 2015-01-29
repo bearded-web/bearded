@@ -66,16 +66,15 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	u := filters.GetUser(req)
-	userId := u.IdStr()
 
-	projects, count, err := mgr.Projects.GetByOwner(userId)
+	projects, count, err := mgr.Projects.FilterBy(&manager.ProjectFltr{Owner: u.Id})
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 	} else {
 		// TODO (m0sth8): create default project when user on create is triggered.
 		// create one default project
 		if count == 0 {
-			p, err := mgr.Projects.CreateDefault(userId)
+			p, err := mgr.Projects.CreateDefault(u.Id)
 			if err != nil {
 				logrus.Error(stackerr.Wrap(err))
 				// It might be possible, that default project is already created

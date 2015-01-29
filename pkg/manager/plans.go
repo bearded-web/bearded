@@ -8,6 +8,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/plan"
+	"github.com/bearded-web/bearded/models/target"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type PlanManager struct {
@@ -16,6 +18,8 @@ type PlanManager struct {
 }
 
 type PlanFltr struct {
+	Name       string            `fltr:"name"`
+	TargetType target.TargetType `fltr:"targetType,in"`
 }
 
 func (s *PlanManager) Init() error {
@@ -37,6 +41,9 @@ func (s *PlanManager) Init() error {
 			return err
 		}
 	}
+	// temporary fix
+	s.col.UpdateAll(bson.M{"targetType": bson.M{"$exists": false}}, bson.M{"$set": bson.M{"targetType": target.TypeWeb}})
+
 	return nil
 }
 
@@ -56,17 +63,17 @@ func (m *PlanManager) All() ([]*plan.Plan, int, error) {
 	return results, count, err
 }
 
-func (m *PlanManager) FilterBy(fltr *PlanFltr) ([]*plan.Plan, int, error) {
-	query := bson.M{}
-
-	if fltr != nil {
-
-	}
-
+func (m *PlanManager) FilterBy(f *PlanFltr) ([]*plan.Plan, int, error) {
+	query := fltr.GetQuery(f)
 	results := []*plan.Plan{}
 	count, err := m.manager.FilterBy(m.col, &query, &results)
 	return results, count, err
+}
 
+func (m *PlanManager) FilterByQuery(query bson.M) ([]*plan.Plan, int, error) {
+	results := []*plan.Plan{}
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *PlanManager) Create(raw *plan.Plan) (*plan.Plan, error) {

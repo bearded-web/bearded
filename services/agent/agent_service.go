@@ -10,6 +10,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/agent"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -51,8 +52,7 @@ func (s *AgentService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
-	r.Param(ws.QueryParameter("name", "Agent name"))
-	r.Param(ws.QueryParameter("type", "Agent type, one of [system]"))
+	s.SetParams(r, fltr.GetParams(ws, manager.AgentFltr{}))
 	r.Writes(agent.AgentList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -148,7 +148,7 @@ func (s *AgentService) create(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	raw.Type = agent.System
-	raw.Status = agent.Registered
+	raw.Status = agent.StatusRegistered
 
 	obj, err := mgr.Agents.Create(raw)
 	if err != nil {
@@ -168,18 +168,16 @@ func (s *AgentService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *AgentService) list(req *restful.Request, resp *restful.Response) {
+	query, err := fltr.FromRequest(req, manager.AgentFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
-	fltr := mgr.Agents.Fltr()
 
-	if p := req.QueryParameter("name"); p != "" {
-		fltr.Name = p
-	}
-	if p := req.QueryParameter("type"); p != "" {
-		fltr.Type = agent.Type(p)
-	}
-
-	results, count, err := mgr.Agents.FilterBy(fltr)
+	results, count, err := mgr.Agents.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
@@ -233,14 +231,14 @@ func (s *AgentService) delete(_ *restful.Request, resp *restful.Response, obj *a
 func (s *AgentService) approve(_ *restful.Request, resp *restful.Response, ag *agent.Agent) {
 	// TODO (m0sth8): Check permissions
 
-	if ag.Status == agent.Registered {
-		ag.Status = agent.Approved
+	if ag.Status == agent.StatusRegistered {
+		ag.Status = agent.StatusApproved
 		s.updateAgent(resp, ag)
 	}
 	resp.WriteEntity(ag)
 }
 
-func (s *AgentService) jobs(_ *restful.Request, resp *restful.Response, ag *agent.Agent) {
+func (s *AgentService) jobs(_ *restful.Request, resp *restful.Response, _ *agent.Agent) {
 	jobs := []*agent.Job{}
 
 	sess, err := s.Scheduler().GetSession()

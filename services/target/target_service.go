@@ -11,6 +11,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -54,8 +55,8 @@ func (s *TargetService) Register(container *restful.Container) {
 	r := ws.GET("").To(s.list)
 	r.Doc("list")
 	r.Operation("list")
+	s.SetParams(r, fltr.GetParams(ws, manager.TargetFltr{}))
 	r.Writes(target.TargetList{})
-	r.Param(ws.QueryParameter("project", "filter by project id"))
 	r.Do(services.Returns(http.StatusOK))
 	addDefaults(r)
 	ws.Route(r)
@@ -117,7 +118,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 	// TODO (m0sth8): add validation and extract it to manager
-	if raw.Type == target.Web {
+	if raw.Type == target.TypeWeb {
 		if raw.Web == nil || raw.Web.Domain == "" { // TODO (m0sth8): check domain format
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.domain is required for target.type=web"))
 			return
@@ -174,28 +175,17 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
-	var (
-		results []*target.Target
-		count   int
-		err     error
-	)
+	// TODO (m0sth8): check project existence and permissions
+	query, err := fltr.FromRequest(req, manager.TargetFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	projectId := req.QueryParameter("project")
-	// TODO (m0sth8): check project existence and permissions
-
-	if projectId != "" {
-		if !s.IsId(projectId) {
-			resp.WriteServiceError(
-				http.StatusBadRequest,
-				services.NewError(services.CodeIdHex, "project should be bson uuid in hex form"))
-			return
-		}
-		results, count, err = mgr.Targets.GetByProject(projectId)
-	} else {
-		results, count, err = mgr.Targets.All()
-	}
+	results, count, err := mgr.Targets.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

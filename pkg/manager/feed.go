@@ -9,6 +9,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/feed"
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type FeedManager struct {
@@ -17,9 +18,10 @@ type FeedManager struct {
 }
 
 type FeedItemFltr struct {
-	Target  bson.ObjectId
-	Project bson.ObjectId
-	Type    feed.ItemType
+	Target  bson.ObjectId `fltr:"target,in"`
+	Project bson.ObjectId `fltr:"project,in"`
+	Type    feed.ItemType `fltr:"type,in"`
+	Updated time.Time     `fltr:"updated,gte,lte"`
 }
 
 func (s *FeedManager) Init() error {
@@ -74,32 +76,22 @@ func (m *FeedManager) GetById(id bson.ObjectId) (*feed.FeedItem, error) {
 	return u, m.manager.GetById(m.col, id, &u)
 }
 
-func (m *FeedManager) FilterBy(fltr *FeedItemFltr) ([]*feed.FeedItem, int, error) {
-	query := bson.M{}
+func (m *FeedManager) FilterBy(f *FeedItemFltr) ([]*feed.FeedItem, int, error) {
+	query := fltr.GetQuery(f)
+	return m.FilterByQuery(query)
+}
 
-	if fltr != nil {
-		if p := fltr.Project; p != "" {
-			query["project"] = p
-		}
-		if p := fltr.Target; p != "" {
-			query["target"] = p
-		}
-		if p := fltr.Type; p != "" {
-			query["type"] = p
-		}
-	}
-
+func (m *FeedManager) FilterByQuery(query bson.M) ([]*feed.FeedItem, int, error) {
 	results := []*feed.FeedItem{}
 	count, err := m.manager.FilterAndSortBy(m.col, &query, []string{"-updated"}, &results)
 	if err == nil && count > 0 {
 		results, err = m.EnrichMulti(results)
 	}
 	return results, count, err
-
 }
 
 func (m *FeedManager) Create(raw *feed.FeedItem) (*feed.FeedItem, error) {
-	// TODO (m0sth8): add validattion
+	// TODO (m0sth8): add validation
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
@@ -124,6 +116,7 @@ func (m *FeedManager) AddScan(sc *scan.Scan) (*feed.FeedItem, error) {
 		Project: sc.Project,
 		Target:  sc.Target,
 		ScanId:  sc.Id,
+		Owner:   sc.Owner,
 	}
 	return m.Create(&feedItem)
 }

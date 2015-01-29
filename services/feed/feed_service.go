@@ -10,6 +10,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/feed"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -52,9 +53,8 @@ func (s *FeedService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
-	r.Param(ws.QueryParameter("project", "filter by project id"))
-	r.Param(ws.QueryParameter("target", "filter by target id"))
-	r.Param(ws.QueryParameter("type", "filter by type [scan]"))
+	// set filters
+	s.SetParams(r, fltr.GetParams(ws, manager.FeedItemFltr{}))
 	r.Writes(feed.Feed{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -90,27 +90,13 @@ func (s *FeedService) list(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): check if this user has access to feed items
 	mgr := s.Manager()
 	defer mgr.Close()
-	fltr := mgr.Feed.Fltr()
 
-	if p := req.QueryParameter("project"); p != "" {
-		if !s.IsId(p) {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("project must be hex id"))
-			return
-		}
-		fltr.Project = mgr.ToId(p)
+	query, err := fltr.FromRequest(req, manager.FeedItemFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
 	}
-	if p := req.QueryParameter("target"); p != "" {
-		if !s.IsId(p) {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("target must be hex id"))
-			return
-		}
-		fltr.Target = mgr.ToId(p)
-	}
-	if p := req.QueryParameter("type"); p != "" {
-		fltr.Type = feed.ItemType(p)
-	}
-
-	results, count, err := mgr.Feed.FilterBy(fltr)
+	results, count, err := mgr.Feed.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

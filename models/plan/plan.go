@@ -19,14 +19,13 @@ type WorkflowStep struct {
 }
 
 type Plan struct {
-	Id   bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Name string        `json:"name"`
-	Desc string        `json:"desc"` // human readable description
-	//	Conf     string          `json:"conf"` // global plan configuration in json format
+	Id         bson.ObjectId     `json:"id,omitempty" bson:"_id,omitempty"`
+	Name       string            `json:"name"`
+	Desc       string            `json:"desc"` // human readable description
 	Workflow   []*WorkflowStep   `json:"workflow"`
 	Created    time.Time         `json:"created,omitempty" description:"when plan is created"`
 	Updated    time.Time         `json:"updated,omitempty" description:"when plan is updated"`
-	TargetType target.TargetType `json:"targetType" description:"what target type is supported"`
+	TargetType target.TargetType `json:"targetType" bson:"targetType" description:"what target type is supported"`
 }
 
 type PlanList struct {

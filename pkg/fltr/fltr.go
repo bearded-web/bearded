@@ -67,6 +67,15 @@ func GetQuery(raw interface{}) bson.M {
 	return result
 }
 
+func getBsonName(field *structs.Field) string {
+	tag := field.Tag("bson")
+	if tag == "" || tag == "-" {
+		return ""
+	}
+	tags := strings.Split(tag, ",")
+	return tags[0]
+}
+
 //
 func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 	params := []*restful.Parameter{}
@@ -149,12 +158,16 @@ fields:
 			name = tags[0] // take field name from tag
 			tags = tags[1:]
 		}
+		bsonName := getBsonName(field)
+		if bsonName == "" {
+			bsonName = name
+		}
 		val := req.QueryParameter(name)
 		if val != "" {
 			if v, err := parseValue(field, val); err != nil {
 				return nil, fmt.Errorf("param %s: %v", name, err)
 			} else {
-				result[name] = v
+				result[bsonName] = v
 				// if there is an eq value then we just skip modifiers
 				continue fields
 			}
@@ -176,14 +189,14 @@ fields:
 						ins = append(ins, v)
 					}
 				}
-				result[name] = bson.M{fmt.Sprintf("$%s", m): ins}
+				result[bsonName] = bson.M{fmt.Sprintf("$%s", m): ins}
 				continue modifiers
 			}
 			// gt, gte, lt, lte, ne
 			if v, err := parseValue(field, val); err != nil {
 				return nil, fmt.Errorf("param %s: %v", name, err)
 			} else {
-				result[name] = bson.M{fmt.Sprintf("$%s", m): v}
+				result[bsonName] = bson.M{fmt.Sprintf("$%s", m): v}
 				// if there is an eq value then we just skip modifiers
 				continue fields
 			}
@@ -232,7 +245,6 @@ func parseValue(field *structs.Field, val string) (interface{}, error) {
 				return nil, err
 			}
 			if enum, casted := fieldVal.(Enumer); casted {
-				println("enum!")
 				enumValues := enum.Enum()
 				for _, eV := range enumValues {
 					if eV == converted {

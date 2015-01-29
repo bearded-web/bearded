@@ -1,24 +1,11 @@
 package target
 
 import (
-	"encoding/json"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/pkg/pagination"
-)
-
-type TargetType string
-
-// It's a hack to show custom type as string in swagger
-func (t TargetType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(t))
-}
-
-const (
-	Web    TargetType = "web"
-	Mobile TargetType = "mobile"
 )
 
 type Target struct {

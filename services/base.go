@@ -51,3 +51,10 @@ func (s *BaseService) Register(*restful.Container) {
 func (s *BaseService) IsId(id string) bool {
 	return s.manager.IsId(id)
 }
+
+// set multiple params to route
+func (s *BaseService) SetParams(r *restful.RouteBuilder, params []*restful.Parameter) {
+	for _, p := range params {
+		r.Param(p)
+	}
+}

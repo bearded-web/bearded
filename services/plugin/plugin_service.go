@@ -9,6 +9,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -50,9 +51,8 @@ func (s *PluginService) Register(container *restful.Container) {
 	addDefaults(r)
 	r.Doc("list")
 	r.Operation("list")
-	r.Param(ws.QueryParameter("name", "Filter by name"))
-	r.Param(ws.QueryParameter("version", "Filter by version"))
-	r.Param(ws.QueryParameter("type", "Filter by type"))
+	s.SetParams(r, fltr.GetParams(ws, manager.PluginFltr{}))
+
 	r.Writes(plugin.PluginList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -131,21 +131,16 @@ func (s *PluginService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *PluginService) list(req *restful.Request, resp *restful.Response) {
+	query, err := fltr.FromRequest(req, manager.PluginFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
 	mgr := s.Manager()
 	defer mgr.Close()
-	fltr := mgr.Plugins.Fltr()
 
-	if p := req.QueryParameter("name"); p != "" {
-		fltr.Name = p
-	}
-	if p := req.QueryParameter("version"); p != "" {
-		fltr.Version = p
-	}
-	if p := req.QueryParameter("type"); p != "" {
-		fltr.Type = plugin.PluginType(p)
-	}
-
-	results, count, err := mgr.Plugins.FilterBy(fltr)
+	results, count, err := mgr.Plugins.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

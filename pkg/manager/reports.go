@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/report"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type ReportManager struct {
@@ -16,6 +17,7 @@ type ReportManager struct {
 }
 
 type ReportFltr struct {
+	Type report.ReportType `fltr:"type,in,nin"`
 }
 
 func (s *ReportManager) Init() error {
@@ -57,22 +59,21 @@ func (m *ReportManager) GetBySession(sessId bson.ObjectId) (*report.Report, erro
 
 func (m *ReportManager) All() ([]*report.Report, int, error) {
 	results := []*report.Report{}
-
 	count, err := m.manager.All(m.col, &results)
 	return results, count, err
 }
 
-func (m *ReportManager) FilterBy(fltr *ReportFltr) ([]*report.Report, int, error) {
-	query := bson.M{}
-
-	if fltr != nil {
-
-	}
-
+func (m *ReportManager) FilterBy(f *ReportFltr) ([]*report.Report, int, error) {
+	query := fltr.GetQuery(f)
 	results := []*report.Report{}
 	count, err := m.manager.FilterBy(m.col, &query, &results)
 	return results, count, err
+}
 
+func (m *ReportManager) FilterByQuery(query bson.M) ([]*report.Report, int, error) {
+	results := []*report.Report{}
+	count, err := m.manager.FilterBy(m.col, &query, &results)
+	return results, count, err
 }
 
 func (m *ReportManager) Create(raw *report.Report) (*report.Report, error) {

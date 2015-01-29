@@ -1,23 +1,11 @@
 package report
 
 import (
-	"encoding/json"
-	"gopkg.in/mgo.v2/bson"
 	"time"
 
 	"github.com/bearded-web/bearded/pkg/pagination"
+	"gopkg.in/mgo.v2/bson"
 )
-
-type ReportType string
-
-const (
-	TypeRaw ReportType = "raw"
-)
-
-// It's a hack to show custom type as string in swagger
-func (t ReportType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(string(t))
-}
 
 type Report struct {
 	Id          bson.ObjectId `json:"id,omitempty" bson:"_id"`

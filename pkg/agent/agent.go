@@ -39,7 +39,7 @@ func (a *Agent) Serve(ctx context.Context) error {
 	agnt := &agent.Agent{
 		Name:   a.name,
 		Type:   agent.System,
-		Status: agent.Undefined,
+		Status: agent.StatusUndefined,
 	}
 
 loop:
@@ -47,29 +47,29 @@ loop:
 		timeout := 0
 		logrus.Debugf("Agent status: %s", agnt.Status)
 		switch agnt.Status {
-		case agent.Undefined:
+		case agent.StatusUndefined:
 			err := a.Register(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("Registration error: %v", err)
 				timeout = 5
 			}
 			logrus.Infof("Agent Id: %s", client.FromId(agnt.Id))
-		case agent.Registered:
+		case agent.StatusRegistered:
 			err := a.Retrieve(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("Retrieve error: %v", err)
 				timeout = 5
 			}
-			if agnt.Status == agent.Registered {
+			if agnt.Status == agent.StatusRegistered {
 				timeout = 5
 			}
-		case agent.Approved:
+		case agent.StatusApproved:
 			err := a.GetJobs(ctx, agnt)
 			if err != nil {
 				logrus.Errorf("GetJobs error: %v", err)
 				timeout = 5
 			}
-		case agent.Blocked:
+		case agent.StatusBlocked:
 			resultErr = fmt.Errorf("Agent is blocked")
 			break loop
 		default:
@@ -121,7 +121,7 @@ func (a *Agent) Register(ctx context.Context, agnt *agent.Agent) error {
 func (a *Agent) Retrieve(ctx context.Context, agnt *agent.Agent) error {
 	logrus.Info("Retrieve")
 	if agnt.Id == "" {
-		agnt.Status = agent.Undefined
+		agnt.Status = agent.StatusUndefined
 		return fmt.Errorf("ageng.Id shouldn't be empty")
 	}
 	got, err := a.api.Agents.Get(ctx, client.FromId(agnt.Id))

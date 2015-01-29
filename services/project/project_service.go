@@ -10,6 +10,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/project"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
@@ -52,6 +53,7 @@ func (s *ProjectService) Register(container *restful.Container) {
 	r.Doc("list")
 	r.Operation("list")
 	r.Writes(project.ProjectList{})
+	s.SetParams(r, fltr.GetParams(ws, manager.ProjectFltr{}))
 	r.Do(services.Returns(http.StatusOK))
 	addDefaults(r)
 	ws.Route(r)
@@ -130,11 +132,17 @@ func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(obj)
 }
 
-func (s *ProjectService) list(_ *restful.Request, resp *restful.Response) {
+func (s *ProjectService) list(req *restful.Request, resp *restful.Response) {
+	// TODO (m0sth8): check  permissions
+	query, err := fltr.FromRequest(req, manager.ProjectFltr{})
+	if err != nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	results, count, err := mgr.Projects.All()
+	results, count, err := mgr.Projects.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
