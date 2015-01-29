@@ -6,11 +6,11 @@ type ScanStatus string
 
 const (
 	StatusCreated  ScanStatus = "created"
-	StatusQueued              = "queued"  // put scan to queue
-	StatusWorking             = "working" // scan was taken by agent
-	StatusPaused              = "paused"
-	StatusFinished            = "finished"
-	StatusFailed              = "failed"
+	StatusQueued   ScanStatus = "queued"  // put scan to queue
+	StatusWorking  ScanStatus = "working" // scan was taken by agent
+	StatusPaused   ScanStatus = "paused"
+	StatusFinished ScanStatus = "finished"
+	StatusFailed   ScanStatus = "failed"
 )
 
 // It's a hack to show custom type as string in swagger

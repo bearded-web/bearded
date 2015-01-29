@@ -7,18 +7,18 @@ type CodeErr int
 const (
 	CodeApp CodeErr = 1 // just application error
 	// error codes related to db
-	CodeDb        = 18
-	CodeIdHex     = 19
-	CodeDuplicate = 20
+	CodeDb        CodeErr = 18
+	CodeIdHex     CodeErr = 19
+	CodeDuplicate CodeErr = 20
 
 	// Bad Request
-	CodeWrongData   = 40
-	CodeWrongEntity = 41
+	CodeWrongData   CodeErr = 40
+	CodeWrongEntity CodeErr = 41
 
 	// error codes related to auth
-	CodeAuthReq    = 60
-	CodeAuthFailed = 61
-	CodeAuthForbid = 61
+	CodeAuthReq    CodeErr = 60
+	CodeAuthFailed CodeErr = 61
+	CodeAuthForbid CodeErr = 61
 )
 
 var (

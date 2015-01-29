@@ -13,7 +13,8 @@ import (
 type ItemType string
 
 const (
-	TypeScan ItemType = "scan"
+	TypeComment ItemType = "comment"
+	TypeScan    ItemType = "scan"
 )
 
 type FeedItem struct {

@@ -18,7 +18,7 @@ func (t TargetType) MarshalJSON() ([]byte, error) {
 
 const (
 	Web    TargetType = "web"
-	Mobile            = "mobile"
+	Mobile TargetType = "mobile"
 )
 
 type Target struct {

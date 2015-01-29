@@ -11,17 +11,17 @@ const (
 	//	a simple, cartoon-style silhouetted outline of a person (does not vary by email hash)
 	AvatarMysteryMan AvatarType = "mm"
 	//	a geometric pattern based on an email hash
-	AvatarIdenticon = "identicon"
+	AvatarIdenticon AvatarType = "identicon"
 	//	a generated 'monster' with different colors, faces, etc
-	AvatarMonster = "monsterid"
+	AvatarMonster AvatarType = "monsterid"
 	//	generated faces with differing features and backgrounds
-	AvatarWavatar = "wavatar"
+	AvatarWavatar AvatarType = "wavatar"
 	//	awesome generated, 8-bit arcade-style pixelated faces
-	AvatarRetro = "retro"
+	AvatarRetro AvatarType = "retro"
 	//	do not load any image if none is associated with the email hash, instead return an HTTP 404 (File Not Found) response
-	Avatar404 = "404"
+	Avatar404 AvatarType = "404"
 	//	a transparent PNG image (border added to HTML below for demonstration purposes)
-	Avatar = "blank"
+	Avatar AvatarType = "blank"
 )
 
 // Generate gravatar url

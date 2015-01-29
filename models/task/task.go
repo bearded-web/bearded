@@ -17,10 +17,10 @@ type Callback func(*Task)
 const (
 	StatusCreated StatusType = "created"
 	StatusQueued  StatusType = "queued"
-	StatusWorking            = "working"
-	StatusPaused             = "paused"
-	StatusDone               = "done"
-	StatusError              = "error"
+	StatusWorking StatusType = "working"
+	StatusPaused  StatusType = "paused"
+	StatusDone    StatusType = "done"
+	StatusError   StatusType = "error"
 )
 
 type Docker struct {

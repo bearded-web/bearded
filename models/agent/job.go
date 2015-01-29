@@ -9,7 +9,7 @@ type JobCmd string
 
 const (
 	CmdRepeat JobCmd = "repeat" // just repeat request
-	CmdScan          = "scan"
+	CmdScan   JobCmd = "scan"
 )
 
 type Job struct {

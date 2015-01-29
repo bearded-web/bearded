@@ -15,7 +15,7 @@ func (t PluginType) MarshalJSON() ([]byte, error) {
 
 const (
 	Util   PluginType = "util"
-	Script            = "script"
+	Script PluginType = "script"
 )
 
 // =========
@@ -29,8 +29,8 @@ func (t PluginWeight) MarshalJSON() ([]byte, error) {
 
 const (
 	Light  PluginWeight = "light"
-	Middle              = "middle"
-	Heavy               = "heavy"
+	Middle PluginWeight = "middle"
+	Heavy  PluginWeight = "heavy"
 )
 
 // =========
@@ -39,8 +39,8 @@ type Dependence string
 
 const (
 	Blocking  Dependence = "blocking"  // plugin will not run if dependency doesn't exist
-	Important            = "important" // plugin will run with warnings
-	Optional             = "optional"  // plugin will run with info messages
+	Important Dependence = "important" // plugin will run with warnings
+	Optional  Dependence = "optional"  // plugin will run with info messages
 )
 
 // =========
@@ -49,6 +49,6 @@ type LinkType string
 
 const (
 	Input    LinkType = "input"    // take output from previous plugin execution
-	Output            = "output"   // send output from current plugin execution to the next plugin
-	Parallel          = "parallel" // plugins communicates with each other
+	Output   LinkType = "output"   // send output from current plugin execution to the next plugin
+	Parallel LinkType = "parallel" // plugins communicates with each other
 )
