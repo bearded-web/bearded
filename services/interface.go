@@ -1,7 +1,7 @@
 package services
 
 import (
-	restful "github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful"
 )
 
 type ServiceInterface interface {

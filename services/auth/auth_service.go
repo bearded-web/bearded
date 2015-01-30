@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
-	restful "github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
-	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
 )
 

@@ -2,7 +2,7 @@ package filters
 
 import (
 	"github.com/bearded-web/bearded/pkg/manager"
-	restful "github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful"
 	"strings"
 )
 

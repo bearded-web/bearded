@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	restful "github.com/emicklei/go-restful"
+	"github.com/emicklei/go-restful"
 	"github.com/fatih/structs"
 	"gopkg.in/mgo.v2/bson"
 )

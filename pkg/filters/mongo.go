@@ -2,8 +2,8 @@ package filters
 
 import (
 	"fmt"
-	restful "github.com/emicklei/go-restful"
-	mgo "gopkg.in/mgo.v2"
+	"github.com/emicklei/go-restful"
+	"gopkg.in/mgo.v2"
 )
 
 var MongoKey = "__mongo"
