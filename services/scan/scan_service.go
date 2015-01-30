@@ -159,8 +159,13 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 
 	target, err := mgr.Targets.GetById(raw.Target)
 	if err != nil {
-		resp.WriteServiceError(http.StatusBadRequest,
-			services.NewBadReq("target not found"))
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest,
+				services.NewBadReq("target not found"))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
 	if target.Project != project.Id {
@@ -171,8 +176,13 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 
 	plan, err := mgr.Plans.GetById(raw.Plan)
 	if err != nil {
-		resp.WriteServiceError(http.StatusBadRequest,
-			services.NewBadReq("plan not found"))
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest,
+				services.NewBadReq("plan not found"))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
 	if plan.TargetType != target.Type {
