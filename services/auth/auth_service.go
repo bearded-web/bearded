@@ -30,11 +30,6 @@ func addDefaults(r *restful.RouteBuilder) {
 	))
 }
 
-// Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
-func (s *AuthService) Manager() *manager.Manager {
-	return s.BaseService.Manager()
-}
-
 func (s *AuthService) Register(container *restful.Container) {
 	authRequired := filters.AuthRequiredFilter(s.BaseManager())
 

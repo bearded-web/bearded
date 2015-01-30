@@ -27,11 +27,6 @@ func (s *MeService) Init() error {
 	return nil
 }
 
-// Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
-func (s *MeService) Manager() *manager.Manager {
-	return s.BaseService.Manager()
-}
-
 func addDefaults(r *restful.RouteBuilder) {
 	r.Notes("Authorization required")
 	r.Do(services.ReturnsE(

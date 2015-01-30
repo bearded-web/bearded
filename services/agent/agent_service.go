@@ -36,11 +36,6 @@ func addDefaults(r *restful.RouteBuilder) {
 	))
 }
 
-// Fix for IntelijIdea inpsections. Cause it can't investigate anonymous method results =(
-func (s *AgentService) Manager() *manager.Manager {
-	return s.BaseService.Manager()
-}
-
 func (s *AgentService) Register(container *restful.Container) {
 	ws := &restful.WebService{}
 	ws.Path("/api/v1/agents")
