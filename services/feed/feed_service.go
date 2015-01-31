@@ -52,8 +52,8 @@ func (s *FeedService) Register(container *restful.Container) {
 	// set filters
 	s.SetParams(r, fltr.GetParams(ws, manager.FeedItemFltr{}))
 	//	r.Param(ws.QueryParameter("sort", "sort feed"))
-	r.Param(ws.QueryParameter("limit", "show limit"))
-	r.Param(ws.QueryParameter("skip", "skip n elements"))
+	r.Param(ws.QueryParameter("limit", "show limit").DataType("integer"))
+	r.Param(ws.QueryParameter("skip", "skip n elements").DataType("integer"))
 	r.Writes(feed.Feed{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
