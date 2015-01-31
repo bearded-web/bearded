@@ -14,6 +14,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
+	"strconv"
 )
 
 const ParamId = "feed-id"
@@ -50,6 +51,9 @@ func (s *FeedService) Register(container *restful.Container) {
 	r.Operation("list")
 	// set filters
 	s.SetParams(r, fltr.GetParams(ws, manager.FeedItemFltr{}))
+	//	r.Param(ws.QueryParameter("sort", "sort feed"))
+	r.Param(ws.QueryParameter("limit", "show limit"))
+	r.Param(ws.QueryParameter("skip", "skip n elements"))
 	r.Writes(feed.Feed{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -67,6 +71,7 @@ func (s *FeedService) Register(container *restful.Container) {
 	ws.Route(r)
 
 	r = ws.DELETE(fmt.Sprintf("{%s}", ParamId)).To(s.TakeFeed(s.delete))
+	addDefaults(r)
 	r.Doc("delete")
 	r.Operation("delete")
 	r.Param(ws.PathParameter(ParamId, ""))
@@ -91,7 +96,26 @@ func (s *FeedService) list(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
 		return
 	}
-	results, count, err := mgr.Feed.FilterByQuery(query)
+	skip := 0
+	if p := req.QueryParameter("skip"); p != "" {
+		if val, err := strconv.Atoi(p); err != nil {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(fmt.Sprintf("skip: %s", err.Error())))
+			return
+		} else {
+			skip = val
+		}
+	}
+	limit := 20
+	if p := req.QueryParameter("limit"); p != "" {
+		if val, err := strconv.Atoi(p); err != nil {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(fmt.Sprintf("limit: %s", err.Error())))
+			return
+		} else {
+			limit = val
+		}
+	}
+	sort := []string{"-update"}
+	results, count, err := mgr.Feed.FilterByQuery(query, mgr.Opts(skip, limit, sort))
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)

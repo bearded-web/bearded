@@ -76,14 +76,14 @@ func (m *FeedManager) GetById(id bson.ObjectId) (*feed.FeedItem, error) {
 	return u, m.manager.GetById(m.col, id, &u)
 }
 
-func (m *FeedManager) FilterBy(f *FeedItemFltr) ([]*feed.FeedItem, int, error) {
+func (m *FeedManager) FilterBy(f *FeedItemFltr, opts ...Opts) ([]*feed.FeedItem, int, error) {
 	query := fltr.GetQuery(f)
-	return m.FilterByQuery(query)
+	return m.FilterByQuery(query, opts...)
 }
 
-func (m *FeedManager) FilterByQuery(query bson.M) ([]*feed.FeedItem, int, error) {
+func (m *FeedManager) FilterByQuery(query bson.M, opts ...Opts) ([]*feed.FeedItem, int, error) {
 	results := []*feed.FeedItem{}
-	count, err := m.manager.FilterAndSortBy(m.col, &query, []string{"-updated"}, &results)
+	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
 	if err == nil && count > 0 {
 		results, err = m.EnrichMulti(results)
 	}

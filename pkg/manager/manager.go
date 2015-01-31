@@ -162,6 +162,8 @@ func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface
 	if err := q.All(results); err != nil {
 		return 0, err
 	}
+	q.Limit(0)
+	q.Skip(0)
 	count, err := q.Count()
 	if err != nil {
 		return 0, err
