@@ -21,7 +21,7 @@ type FeedItemFltr struct {
 	Target  bson.ObjectId `fltr:"target,in"`
 	Project bson.ObjectId `fltr:"project,in"`
 	Type    feed.ItemType `fltr:"type,in"`
-	Updated time.Time     `fltr:"updated,gte,lte"`
+	Updated time.Time     `fltr:"updated,gte,gt,lte,lt"`
 }
 
 func (s *FeedManager) Init() error {
