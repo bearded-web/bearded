@@ -114,7 +114,7 @@ func (s *FeedService) list(req *restful.Request, resp *restful.Response) {
 			limit = val
 		}
 	}
-	sort := []string{"-update"}
+	sort := []string{"-updated"}
 	results, count, err := mgr.Feed.FilterByQuery(query, mgr.Opts(skip, limit, sort))
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
