@@ -10,8 +10,16 @@ Work in progress, do not use this
 Update
 `go get -u github.com/bearded-web/bearded`
 
+
+
 Go to path
 `cd $GOPATH/src/github.com/bearded-web/bearded`
+
+Update dependencies
+`godep restore`
+
+Build
+`go get github.com/bearded-web/bearded`
 
 Run dev server and look to build path
 `bearded dispatcher --frontend ../frontend/build/ -v`

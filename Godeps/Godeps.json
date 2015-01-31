@@ -1,0 +1,106 @@
+{
+	"ImportPath": "github.com/bearded-web/bearded",
+	"GoVersion": "go1.4.1",
+	"Packages": [
+		"bearded.go"
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go.net/context",
+			"Comment": "null-240",
+			"Rev": "937a34c9de13c766c814510f76bca091dee06028"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.6.4-10-g89efc1f",
+			"Rev": "89efc1fea9b8b47f6f6ce72279a7ed9496b4cdb3"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/negroni",
+			"Comment": "v0.1-55-g1dd3ab0",
+			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/archive",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/fileutils",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/ioutils",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/pools",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/promise",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/system",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar",
+			"Comment": "v1.4.1-820-g18d8fe1",
+			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+		},
+		{
+			"ImportPath": "github.com/emicklei/go-restful",
+			"Comment": "v1.1.2-60-g2624314",
+			"Rev": "2624314e35708d0faa5ab631856dc0ccd3b525bb"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/stack",
+			"Rev": "6c824be2ba589917fb264589f99aab11b98fea5f"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/stackerr",
+			"Rev": "2b3dd9a9859e213410d0e6e3b26c5f693c5f2964"
+		},
+		{
+			"ImportPath": "github.com/fatih/structs",
+			"Rev": "bc210cbd8c7fe94bb15fa0d744bc60806f44345f"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "0758f407f25a8df60c540b0ec758905192687e14"
+		},
+		{
+			"ImportPath": "github.com/google/go-querystring/query",
+			"Rev": "d8840cbb2baa915f4836edda4750050a2c0b7aea"
+		},
+		{
+			"ImportPath": "github.com/gorilla/securecookie",
+			"Rev": "f0559d009e6943011cd1ba6eb16195cf5e0ed326"
+		},
+		{
+			"ImportPath": "github.com/m0sth8/cli",
+			"Comment": "1.2.0-63-g8814969",
+			"Rev": "8814969dbe11ffd1486a38def8214462a9db61ab"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/bcrypt",
+			"Rev": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/blowfish",
+			"Rev": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Comment": "r2015.01.24",
+			"Rev": "c6a7dce14133ccac2dcac3793f1d6e2ef048503a"
+		}
+	]
+}
