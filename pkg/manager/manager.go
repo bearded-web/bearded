@@ -140,8 +140,25 @@ func (m *Manager) NewId() bson.ObjectId {
 	return bson.NewObjectId()
 }
 
-func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface{}) (int, error) {
+type Opts struct {
+	Limit int
+	Skip  int
+	Sort  []string
+}
+
+func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface{}, opts ...Opts) (int, error) {
 	q := col.Find(query)
+	for _, opt := range opts {
+		if opt.Limit != 0 {
+			q.Limit(opt.Limit)
+		}
+		if opt.Skip != 0 {
+			q.Skip(opt.Skip)
+		}
+		if opt.Sort != nil {
+			q.Sort(opt.Sort...)
+		}
+	}
 	if err := q.All(results); err != nil {
 		return 0, err
 	}
@@ -167,6 +184,10 @@ func (m *Manager) FilterAndSortBy(col *mgo.Collection, query *bson.M, sort []str
 	return count, nil
 }
 
+func (m *Manager) Opts(skip, limit int, sort []string) Opts {
+	return GetOpts(skip, limit, sort)
+}
+
 // helpers
 
 func TimeP(t time.Time) *time.Time {
@@ -179,4 +200,12 @@ func ToId(id string) bson.ObjectId {
 
 func FromId(id bson.ObjectId) string {
 	return id.Hex()
+}
+
+func GetOpts(skip, limit int, sort []string) Opts {
+	return Opts{
+		Skip:  skip,
+		Limit: limit,
+		Sort:  sort,
+	}
 }

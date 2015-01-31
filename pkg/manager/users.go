@@ -10,6 +10,7 @@ import (
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/utils"
+	"strings"
 )
 
 type UserManager struct {
@@ -51,6 +52,15 @@ func (m *UserManager) Init() error {
 		if !m.manager.IsDup(err) {
 			return err
 		}
+	}
+
+	// TODO (m0sth8): remove after the next release
+	users := []*user.User{}
+	if _, err := m.manager.FilterBy(m.col, &bson.M{"nickname": bson.M{"$exists": false}}, &users); err != nil {
+		return err
+	}
+	for _, user := range users {
+		m.Update(user)
 	}
 
 	return err
@@ -109,6 +119,10 @@ func (m *UserManager) Create(raw *user.User) (*user.User, error) {
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
 	raw.Avatar = utils.GetGravatar(raw.Email, 38, utils.AvatarRetro)
+	if raw.Nickname == "" {
+		raw.Nickname = strings.Split(raw.Email, "@")[0]
+	}
+
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}
@@ -119,6 +133,9 @@ func (m *UserManager) Update(obj *user.User) error {
 	obj.Updated = time.Now().UTC()
 	if obj.Avatar == "" {
 		obj.Avatar = utils.GetGravatar(obj.Email, 38, utils.AvatarRetro)
+	}
+	if obj.Nickname == "" {
+		obj.Nickname = strings.Split(obj.Email, "@")[0]
 	}
 	return m.col.UpdateId(obj.Id, obj)
 }

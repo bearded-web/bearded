@@ -9,6 +9,7 @@ import (
 
 type User struct {
 	Id       bson.ObjectId `json:"id,omitempty" bson:"_id"`
+	Nickname string        `json:"nickname"`
 	Email    string        `json:"email"`
 	Password string        `json:"-"` // password hash in passlib format: $hashAlgo[$values]$hexdigest_hash$
 	Avatar   string        `json:"avatar,omitempty"`
