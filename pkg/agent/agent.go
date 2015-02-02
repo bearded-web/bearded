@@ -15,6 +15,7 @@ import (
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/docker"
+	"github.com/bearded-web/bearded/pkg/script/mango"
 )
 
 type Agent struct {
@@ -182,35 +183,50 @@ func (a *Agent) HandleScan(ctx context.Context, sc *scan.Session) error {
 		}
 		return nil
 	}
-
-	if pl.Type == plugin.Util {
+	var cfg docker.ContainerConfig
+	switch pl.Type {
+	case plugin.Util:
 		args := sc.Step.Conf.CommandArgs
 		container := pl.Container
-		cfg := docker.ContainerConfig{
+		cfg = docker.ContainerConfig{
 			Image: container.Image,
 			Tty:   true,
 			Cmd:   strings.Split(args, " "),
 		}
-		ch := a.dclient.RunImage(ctx, &cfg)
-		select {
-		case <-ctx.Done():
-		case res := <-ch:
-			if res.Err != nil {
-				logrus.Error(res.Err)
-				return setFailed()
-			}
-			rep := &report.Report{
-				Type: report.TypeRaw,
-				Raw:  string(res.Log),
-			}
-			_, err := a.api.Scans.SessionReportCreate(ctx, sc, rep)
-			if err != nil {
-				logrus.Error(err)
-				return setFailed()
-			}
-		}
+	case plugin.Script:
 
+		mangoServer, err := mango.NewServer("ipc:///tmp/bearded-web.socket")
+		if err != nil {
+			return stackerr.Wrap(err)
+		}
+		defer mangoServer.Stop()
+	// make mango server with unix socket
+	// run script container with unix socket
+	// take raw report from logs
+	//
+	default:
+		return setFailed()
 	}
+
+	ch := a.dclient.RunImage(ctx, &cfg)
+	select {
+	case <-ctx.Done():
+	case res := <-ch:
+		if res.Err != nil {
+			logrus.Error(res.Err)
+			return setFailed()
+		}
+		rep := &report.Report{
+			Type: report.TypeRaw,
+			Raw:  report.Raw{Raw: string(res.Log)},
+		}
+		_, err := a.api.Scans.SessionReportCreate(ctx, sc, rep)
+		if err != nil {
+			logrus.Error(err)
+			return setFailed()
+		}
+	}
+
 	logrus.Info("finished")
 	sc.Status = scan.StatusFinished
 	if sc, err = a.api.Scans.SessionUpdate(ctx, sc); err != nil {
