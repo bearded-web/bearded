@@ -103,6 +103,17 @@ func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 		if desc == "-" {
 			desc = ""
 		}
+		dataType := "string"
+		switch field.Kind() {
+		case reflect.Int:
+			dataType = "integer"
+		case reflect.Float64:
+			dataType = "number"
+		case reflect.Float32:
+			dataType = "number"
+		case reflect.Bool:
+			dataType = "boolean"
+		}
 
 		param := ws.QueryParameter(name, desc)
 		if hasTag(tags, "required") {
@@ -113,7 +124,7 @@ func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 
 		for _, m := range modifiers {
 			mName := fmt.Sprintf("%s%s%s", name, ModifierDivider, m)
-			param := ws.QueryParameter(mName, desc)
+			param := ws.QueryParameter(mName, desc).DataType(dataType)
 			if m == in || m == nin {
 				param.AllowMultiple(true)
 			}
