@@ -3,9 +3,15 @@ package report
 import (
 	"time"
 
-	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/bearded-web/bearded/models/tech"
+	"github.com/bearded-web/bearded/pkg/pagination"
 )
+
+type Raw struct {
+	Raw string `json:"raw"`
+}
 
 type Report struct {
 	Id          bson.ObjectId `json:"id,omitempty" bson:"_id"`
@@ -15,10 +21,21 @@ type Report struct {
 	Scan        bson.ObjectId `json:"scan,omitempty" description:"scan id"`
 	ScanSession bson.ObjectId `json:"scanSession,omitempty" bson:"scanSession" description:"scan session id"`
 
-	Raw string `json:"raw"`
+	Raw `json:",inline,omitempty" bson:"raw,inline"`
+
+	Multi  []*Report `json:"multi,omitempty" bson:"multi,omitempty"`
+	Issues []*Issue  `json:"issues,omitempty" bson:"issues,omitempty"`
+	Techs  []*Tech   `json:"techs,omitempty"`
 }
 
 type ReportList struct {
 	pagination.Meta `json:",inline"`
 	Results         []*Report `json:"results"`
+}
+
+type Tech struct {
+	Categories []tech.Category `json:"categories,omitempty"`
+	Name       string          `json:"name"`
+	Version    string          `json:"version"`
+	Confidence int             `json:"confidence"`
 }
