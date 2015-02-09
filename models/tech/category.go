@@ -1,9 +1,13 @@
 //go:generate stringer -type=Category
 package tech
 
-type Category int
+type Category string
 
 const (
-	CMS Category = iota
-	JavascriptFrameworks
+	CMS                  = Category("cms")
+	JavascriptFrameworks = Category("javascript-frameworks")
+	Analytics            = Category("analytics")
+	WebServers           = Category("web-servers")
+	AdvertisingNetworks  = Category("advertising-networks")
+	OperatingSystems     = Category("operating-systems")
 )
