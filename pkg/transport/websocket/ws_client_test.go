@@ -6,10 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"net/http/httptest"
+
 	"code.google.com/p/go.net/context"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
-	"net/http/httptest"
 
 	"github.com/bearded-web/bearded/pkg/transport"
 )

@@ -2,9 +2,10 @@ package user
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 type User struct {

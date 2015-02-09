@@ -1,12 +1,13 @@
 package manager
 
 import (
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 type TargetFltr struct {

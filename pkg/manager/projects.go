@@ -1,12 +1,13 @@
 package manager
 
 import (
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/project"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 const defaultProject = "Default"

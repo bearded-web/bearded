@@ -1,9 +1,10 @@
 package filters
 
 import (
+	"strings"
+
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/emicklei/go-restful"
-	"strings"
 )
 
 func AuthTokenFilter(mgr *manager.Manager) restful.FilterFunction {

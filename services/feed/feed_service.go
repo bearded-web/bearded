@@ -8,13 +8,14 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
+	"strconv"
+
 	"github.com/bearded-web/bearded/models/feed"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
-	"strconv"
 )
 
 const ParamId = "feed-id"

@@ -77,6 +77,23 @@ scans:
 				// go to the next session
 				continue sessions
 			case scan.StatusWorking:
+				// if session has children, then we take one which is just created and return it
+				if len(sess.Children) > 0 {
+					child := s.GetChild(sc, sess.Children)
+					if child != nil {
+						child.Status = scan.StatusQueued
+						err := s.mgr.Scans.UpdateSession(sc, child)
+						if err != nil {
+							if s.mgr.IsNotFound(err) {
+								delete(s.scans, id)
+								continue scans
+							}
+							logrus.Error(err)
+							continue scans
+						}
+						return child, nil
+					}
+				}
 				// this scan is still working go to the next one
 				continue scans
 			case scan.StatusPaused:
@@ -90,4 +107,44 @@ scans:
 		delete(s.scans, id)
 	}
 	return nil, nil
+}
+
+func (s *MemoryScheduler) GetChild(sc *scan.Scan, sessions []*scan.Session) *scan.Session {
+	id := s.mgr.FromId(sc.Id)
+sessions:
+	for _, sess := range sessions {
+		switch sess.Status {
+
+		case scan.StatusCreated:
+			sess.Status = scan.StatusQueued
+			err := s.mgr.Scans.UpdateSession(sc, sess)
+			if err != nil {
+				if s.mgr.IsNotFound(err) {
+					delete(s.scans, id)
+					return nil
+				}
+				logrus.Error(err)
+				return nil
+			}
+			return sess
+		case scan.StatusQueued:
+			// all scans session run in sequence order
+			return nil
+		case scan.StatusFinished:
+			// go to the next session
+			continue sessions
+		case scan.StatusWorking:
+			if len(sess.Children) > 0 {
+				return s.GetChild(sc, sess.Children)
+			}
+			return nil
+		case scan.StatusPaused:
+			return nil
+		case scan.StatusFailed:
+			// sub session might fail
+			// delete(s.scans, id)
+			return nil
+		}
+	}
+	return nil
 }

@@ -7,10 +7,11 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"strings"
+
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/utils"
-	"strings"
 )
 
 type UserManager struct {

@@ -2,6 +2,7 @@ package filters
 
 import (
 	"fmt"
+
 	"github.com/emicklei/go-restful"
 	"gopkg.in/mgo.v2"
 )

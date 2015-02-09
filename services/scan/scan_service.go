@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
-	"strings"
 	"text/template"
 	"time"
 
@@ -40,6 +39,7 @@ func addDefaults(r *restful.RouteBuilder) {
 	r.Notes("Authorization required")
 	r.Do(services.ReturnsE(
 		http.StatusUnauthorized,
+		http.StatusForbidden,
 		http.StatusInternalServerError,
 	))
 }
@@ -200,9 +200,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 	now := time.Now().UTC()
 	// Add session from plans workflow steps
 	for _, step := range plan.Workflow {
-		// TODO (m0sth8): Take latest plugin or search by version, extract this logic
-		plNameVersion := strings.Split(step.Plugin, ":")
-		plugin, err := mgr.Plugins.GetByNameVersion(plNameVersion[0], plNameVersion[1])
+		plugin, err := mgr.Plugins.GetByName(step.Plugin)
 		if err != nil {
 			if mgr.IsNotFound(err) {
 				resp.WriteServiceError(http.StatusBadRequest,
@@ -230,6 +228,9 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 					return
 				}
 				step.Conf.CommandArgs = buf.String()
+			}
+			if target := step.Conf.Target; target == "" {
+				step.Conf.Target = sc.Conf.Target
 			}
 		}
 

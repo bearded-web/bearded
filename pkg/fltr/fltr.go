@@ -194,6 +194,9 @@ fields:
 			if m == in || m == nin {
 				ins := []interface{}{}
 				for _, val := range strings.Split(val, ",") {
+					if val == "" {
+						continue
+					}
 					if v, err := parseValue(field, val); err != nil {
 						return nil, fmt.Errorf("param %s: %v", mName, err)
 					} else {

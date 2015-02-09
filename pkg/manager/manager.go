@@ -1,9 +1,10 @@
 package manager
 
 import (
+	"time"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 type ManagerInterface interface {
@@ -131,8 +132,19 @@ func (m *Manager) GetById(col *mgo.Collection, id bson.ObjectId, result interfac
 	return col.FindId(id).One(result)
 }
 
-func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}) error {
+func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}, opts ...Opts) error {
 	q := col.Find(query)
+	for _, opt := range opts {
+		if opt.Limit != 0 {
+			q.Limit(opt.Limit)
+		}
+		if opt.Skip != 0 {
+			q.Skip(opt.Skip)
+		}
+		if opt.Sort != nil {
+			q.Sort(opt.Sort...)
+		}
+	}
 	return q.One(result)
 }
 

@@ -5,8 +5,13 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
+
+type SummaryReport struct {
+	Issues map[report.Severity]int `json:"issues"`
+}
 
 type Target struct {
 	Id      bson.ObjectId `json:"id,omitempty" bson:"_id"`
@@ -15,6 +20,8 @@ type Target struct {
 	Project bson.ObjectId `json:"project"`
 	Created time.Time     `json:"created,omitempty"`
 	Updated time.Time     `json:"updated,omitempty"`
+
+	SummaryReport *SummaryReport `json:"summaryReport" bson:"-"`
 }
 
 type WebTarget struct {

@@ -1,8 +1,9 @@
 package passlib
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"testing"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestBcrypt(t *testing.T) {

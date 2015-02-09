@@ -1,8 +1,9 @@
 package services
 
 import (
-	"github.com/emicklei/go-restful"
 	"net/http"
+
+	"github.com/emicklei/go-restful"
 )
 
 func Returns500(b *restful.RouteBuilder) {

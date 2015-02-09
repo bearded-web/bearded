@@ -7,6 +7,8 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
+	"strings"
+
 	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/pkg/fltr"
 )
@@ -60,8 +62,25 @@ func (m *PluginManager) GetByNameVersion(name, version string) (*plugin.Plugin, 
 	p := &plugin.Plugin{}
 	query := bson.M{}
 	query["name"] = name
-	query["version"] = version
-	return p, m.manager.GetBy(m.col, &query, p)
+	query["enabled"] = true
+	opts := Opts{}
+	// if version is not specified, then look for the biggest version
+	if version != "" {
+		opts.Sort = []string{"-version"}
+	} else {
+		query["version"] = version
+	}
+	return p, m.manager.GetBy(m.col, &query, p, opts)
+}
+
+// plugin name must be in format "name:version"
+func (m *PluginManager) GetByName(name string) (*plugin.Plugin, error) {
+	plNameVersion := strings.Split(name, ":")
+	version := ""
+	if len(plNameVersion) > 1 {
+		version = plNameVersion[1]
+	}
+	return m.GetByNameVersion(plNameVersion[0], version)
 }
 
 func (m *PluginManager) All() ([]*plugin.Plugin, int, error) {

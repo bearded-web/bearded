@@ -1,8 +1,9 @@
 package transport
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSessions(t *testing.T) {

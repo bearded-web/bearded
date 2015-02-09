@@ -2,9 +2,10 @@ package plugin
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
-	"time"
 )
 
 type Container struct {
@@ -26,6 +27,7 @@ type Required struct {
 
 type Conf struct {
 	CommandArgs string `json:"commandArgs,omitempty" description:"passed to command line for plugins with type:util"`
+	Target      string
 }
 
 type Plugin struct {

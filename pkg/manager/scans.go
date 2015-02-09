@@ -87,7 +87,7 @@ func (m *ScanManager) FilterByQuery(query bson.M) ([]*scan.Scan, int, error) {
 }
 
 func (m *ScanManager) Create(raw *scan.Scan) (*scan.Scan, error) {
-	// TODO (m0sth8): add validattion
+	// TODO (m0sth8): add validation
 	raw.Id = bson.NewObjectId()
 	raw.Dates.Created = TimeP(time.Now().UTC())
 	raw.Dates.Updated = raw.Dates.Created
@@ -128,14 +128,17 @@ func (m *ScanManager) Remove(obj *scan.Scan) error {
 
 func (m *ScanManager) UpdateSession(sc *scan.Scan, obj *scan.Session) error {
 	var index *int
-	// find session indx for updating
-	for i, s := range sc.Sessions {
-		if s.Id == obj.Id {
-			index = &i
-			break
+	isRootSession := !obj.HasParent()
+	if isRootSession {
+		// find session indx for updating, but only for root session
+		for i, s := range sc.Sessions {
+			if s.Id == obj.Id {
+				index = &i
+				break
+			}
 		}
 	}
-	if index == nil {
+	if isRootSession && index == nil {
 		return mgo.ErrNotFound
 	}
 	now := time.Now().UTC()
@@ -156,34 +159,38 @@ func (m *ScanManager) UpdateSession(sc *scan.Scan, obj *scan.Session) error {
 
 	scanModified := false
 
-	// if session is queued then scan should also be queued
-	if obj.Status == scan.StatusQueued && (sc.Status == scan.StatusCreated || sc.Status == scan.StatusWorking) {
-		sc.Status = scan.StatusQueued
-		scanModified = true
-	}
+	// only root sessions have influence on scan
+	if isRootSession {
+		// if session is queued then scan should also be queued
+		if obj.Status == scan.StatusQueued && (sc.Status == scan.StatusCreated || sc.Status == scan.StatusWorking) {
+			sc.Status = scan.StatusQueued
+			scanModified = true
+		}
 
-	// if session is working then scan should also be working
-	if obj.Status == scan.StatusWorking && (sc.Status != scan.StatusWorking) {
-		sc.Status = scan.StatusWorking
-		scanModified = true
-	}
+		// if session is working then scan should also be working
+		if obj.Status == scan.StatusWorking && (sc.Status != scan.StatusWorking) {
+			sc.Status = scan.StatusWorking
+			scanModified = true
+		}
 
-	// if session failed then scan should be failed too
-	if obj.Status == scan.StatusFailed {
-		sc.Status = scan.StatusFailed
-		scanModified = true
-	}
-	// if session was the last one
-	if obj.Status == scan.StatusFinished && (*index+1) == len(sc.Sessions) {
-		sc.Status = scan.StatusFinished
-		scanModified = true
+		// if session failed then scan should be failed too
+		if obj.Status == scan.StatusFailed {
+			sc.Status = scan.StatusFailed
+			scanModified = true
+		}
+		// if session was the last one
+		if obj.Status == scan.StatusFinished && (*index+1) == len(sc.Sessions) {
+			sc.Status = scan.StatusFinished
+			scanModified = true
+		}
 	}
 
 	// if scan modified then update the whole scan object
-	if scanModified {
+	if scanModified || !isRootSession {
 		return m.Update(sc)
 	}
 
+	// TODO (m0sth8): update non root session with set
 	key := fmt.Sprintf("sessions.%d", *index)
 	update := bson.M{"$set": bson.M{key: obj, "updated": now}}
 	m.col.UpdateId(sc.Id, update)

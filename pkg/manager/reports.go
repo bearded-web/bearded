@@ -81,6 +81,7 @@ func (m *ReportManager) Create(raw *report.Report) (*report.Report, error) {
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
+	UpdateMulti(raw)
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}
@@ -89,9 +90,29 @@ func (m *ReportManager) Create(raw *report.Report) (*report.Report, error) {
 
 func (m *ReportManager) Update(obj *report.Report) error {
 	obj.Updated = time.Now().UTC()
+	UpdateMulti(obj)
 	return m.col.UpdateId(obj.Id, obj)
 }
 
 func (m *ReportManager) Remove(obj *report.Report) error {
 	return m.col.RemoveId(obj.Id)
+}
+
+// upgrade underneath multi reports with created/updated, scan, scanSession fields
+func UpdateMulti(r *report.Report) {
+	if r.Type == report.TypeMulti {
+		for _, rep := range r.Multi {
+			if rep.Id == "" {
+				rep.Id = bson.NewObjectId()
+			}
+			rep.Scan = r.Scan
+			rep.ScanSession = r.ScanSession
+			now := time.Now().UTC()
+			if rep.Created.IsZero() {
+				rep.Created = now
+			}
+			rep.Updated = now
+			UpdateMulti(rep)
+		}
+	}
 }

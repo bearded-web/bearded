@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"sync"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emicklei/go-restful"
 	"github.com/gorilla/securecookie"
-	"sync"
 )
 
 // name for key in restful attributes
@@ -98,6 +99,13 @@ func SessionCookieFilter(cookieName string, opts *CookieOpts, keyPairs ...[]byte
 			}
 		})
 
+		chain.ProcessFilter(req, resp)
+	}
+}
+
+func SessionFilterMock(session *Session) restful.FilterFunction {
+	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+		req.SetAttribute(AttrSessionKey, session)
 		chain.ProcessFilter(req, resp)
 	}
 }

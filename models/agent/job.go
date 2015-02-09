@@ -2,6 +2,7 @@ package agent
 
 import (
 	"fmt"
+
 	"github.com/bearded-web/bearded/models/scan"
 )
 

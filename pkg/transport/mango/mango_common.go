@@ -1,8 +1,9 @@
 package mango
 
 import (
-	"code.google.com/p/go.net/context"
 	"encoding/json"
+
+	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/facebookgo/stackerr"
 	"github.com/gdamore/mangos"
