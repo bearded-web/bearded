@@ -1,0 +1,30 @@
+[
+    {
+        "name": "barbudo/wappalyzer",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "middle",
+        "desc": {
+            "title": "Wappalyzer",
+            "info": "Wappalyzer is a library that uncovers the technologies used on websites. It detects content management systems, eCommerce platforms, web servers, JavaScript frameworks, analytics tools and many more.",
+            "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer/"
+        },
+        "container": {
+            "image": "barbudo/wappalyzer"
+        }
+    },
+    {
+        "name": "barbudo/retirejs",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "middle",
+        "desc": {
+            "title": "Retirejs",
+            "info": "Detect usage of JavaScript libraries with known vulnerabilities",
+            "url": "https://registry.hub.docker.com/u/barbudo/retirejs/"
+        },
+        "container": {
+            "image": "barbudo/retirejs"
+        }
+    }
+]

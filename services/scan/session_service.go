@@ -3,6 +3,7 @@ package scan
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/emicklei/go-restful"
@@ -15,7 +16,20 @@ import (
 )
 
 func (s *ScanService) RegisterSessions(ws *restful.WebService) {
-	r := ws.GET(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionGet)))
+	r := ws.POST(fmt.Sprintf("{%s}/sessions", ParamId)).To(s.TakeScan(s.sessionCreate))
+	r.Doc("sessionCreate")
+	r.Operation("sessionCreate")
+	addDefaults(r)
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Reads(scan.Session{})
+	r.Writes(scan.Session{})
+	r.Do(services.Returns(
+		http.StatusCreated,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
+
+	r = ws.GET(fmt.Sprintf("{%s}/sessions/{%s}", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionGet)))
 	r.Doc("sessionGet")
 	r.Operation("sessionGet")
 	addDefaults(r)
@@ -68,6 +82,96 @@ func (s *ScanService) RegisterSessions(ws *restful.WebService) {
 		http.StatusBadRequest,
 		http.StatusConflict))
 	ws.Route(r)
+}
+
+// create child session
+func (s *ScanService) sessionCreate(req *restful.Request, resp *restful.Response, sc *scan.Scan) {
+	// TODO (m0sth8): Check permissions for this scan to create other session
+	// TODO (m0sth8): Check permissions for this scan to create session with this plugin
+	raw := &scan.Session{}
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Warn(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	if raw.Step == nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("step is required"))
+		return
+	}
+
+	if raw.Step.Plugin == "" {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("step.plugin is required"))
+		return
+	}
+
+	//	if raw.Step.Conf == nil {
+	//		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("step.conf is required"))
+	//		return
+	//	}
+
+	if raw.Scan != sc.Id {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("wrong scan id"))
+		return
+	}
+	if sc.Status != scan.StatusWorking {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("scan should have working status"))
+		return
+	}
+	if raw.Parent == "" {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("parent field is required"))
+		return
+	}
+	parent := sc.GetSession(raw.Parent)
+	if parent == nil {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("parent not found"))
+		return
+	}
+	if parent.Status != scan.StatusWorking {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("parent should have working status"))
+		return
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	pl, err := mgr.Plugins.GetByName(raw.Step.Plugin)
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest,
+				services.NewBadReq(fmt.Sprintf("plugin %s is not found", raw.Step.Plugin)))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	now := time.Now().UTC()
+	sess := scan.Session{
+		Id:     mgr.NewId(),
+		Status: scan.StatusCreated,
+		Scan:   sc.Id,
+		Parent: parent.Id,
+		Step:   raw.Step,
+		Plugin: pl.Id,
+		Dates: scan.Dates{
+			Created: &now,
+			Updated: &now,
+		},
+	}
+
+	parent.Children = append(parent.Children, &sess)
+	if err := mgr.Scans.Update(sc); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	s.Scheduler().UpdateScan(sc)
+
+	resp.WriteHeader(http.StatusCreated)
+	resp.WriteEntity(sess)
 }
 
 func (s *ScanService) sessionGet(_ *restful.Request, resp *restful.Response, _ *scan.Scan, sess *scan.Session) {
@@ -143,8 +247,8 @@ func (s *ScanService) sessionReportCreate(req *restful.Request, resp *restful.Re
 		return
 	}
 
-	raw.Scan = sc.Id
-	raw.ScanSession = sess.Id
+	raw.SetScan(sc.Id)
+	raw.SetScanSession(sess.Id)
 
 	mgr := s.Manager()
 	defer mgr.Close()
@@ -183,13 +287,11 @@ func (s *ScanService) TakeSession(fn SessionFunction) ScanFunction {
 
 		objId := manager.ToId(id)
 
-		for _, sess := range sc.Sessions {
-			if sess.Id == objId {
-				fn(req, resp, sc, sess)
-				return
-			}
+		sess := sc.GetSession(objId)
+		if sess == nil {
+			resp.WriteErrorString(http.StatusNotFound, "Not found")
+			return
 		}
-		resp.WriteErrorString(http.StatusNotFound, "Not found")
-		return
+		fn(req, resp, sc, sess)
 	}
 }

@@ -50,6 +50,19 @@ func (s *ScansService) SessionUpdate(ctx context.Context, src *scan.Session) (*s
 	return obj, s.client.Update(ctx, sessUrl, id, src, obj)
 }
 
+func (s *ScansService) SessionGet(ctx context.Context, scanId, sessionId string) (*scan.Session, error) {
+	obj := &scan.Session{}
+	sessUrl := fmt.Sprintf("%s/%s/sessions", scansUrl, scanId)
+	return obj, s.client.Get(ctx, sessUrl, sessionId, obj)
+}
+
+func (s *ScansService) SessionAddChild(ctx context.Context, child *scan.Session) (*scan.Session, error) {
+	scanId := FromId(child.Scan)
+	obj := &scan.Session{}
+	sessUrl := fmt.Sprintf("%s/%s/sessions", scansUrl, scanId)
+	return obj, s.client.Create(ctx, sessUrl, child, obj)
+}
+
 func (s *ScansService) SessionReportCreate(ctx context.Context,
 	src *scan.Session, rep *report.Report) (*report.Report, error) {
 
@@ -58,5 +71,14 @@ func (s *ScansService) SessionReportCreate(ctx context.Context,
 	id := FromId(src.Id)
 	reportUrl := fmt.Sprintf("%s/%s/sessions/%s/report", scansUrl, scanId, id)
 	return obj, s.client.Create(ctx, reportUrl, rep, obj)
+}
+
+func (s *ScansService) SessionReportGet(ctx context.Context, sc *scan.Session) (*report.Report, error) {
+	obj := &report.Report{}
+	scanId := FromId(sc.Scan)
+	id := FromId(sc.Id)
+	reportUrl := fmt.Sprintf("%s/%s/sessions/%s", scansUrl, scanId, id)
+	println("get report url", reportUrl)
+	return obj, s.client.Get(ctx, reportUrl, "report", obj)
 
 }
