@@ -1,0 +1,195 @@
+package mango
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"code.google.com/p/go.net/context"
+	"github.com/Sirupsen/logrus"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/facebookgo/stackerr"
+	"github.com/gdamore/mangos"
+	"github.com/gdamore/mangos/protocol/pair"
+	"github.com/gdamore/mangos/transport/tcp"
+	"github.com/gdamore/mangos/transport/tlstcp"
+
+	"github.com/bearded-web/bearded/pkg/transport"
+)
+
+type Transport struct {
+	session *transport.Session
+	sock    mangos.Socket
+	stop    bool
+}
+
+// check interface
+var _ transport.Transport = (*Transport)(nil)
+
+func NewListener(addr string) (*Transport, error) {
+	sock, err := newPairSock()
+	if err != nil {
+		return nil, err
+	}
+	err = sock.Listen(addr)
+	if err != nil {
+		return nil, err
+	}
+	return newTransport(sock), nil
+}
+
+func NewDialer(addr string) (*Transport, error) {
+	sock, err := newPairSock()
+	if err != nil {
+		return nil, err
+	}
+	err = sock.Dial(addr)
+	if err != nil {
+		return nil, err
+	}
+	return newTransport(sock), nil
+}
+
+func newTransport(sock mangos.Socket) *Transport {
+	return &Transport{
+		sock:    sock,
+		session: transport.NewSession(),
+	}
+}
+
+func newPairSock() (mangos.Socket, error) {
+	sock, err := pair.NewSocket()
+	if err != nil {
+		return nil, stackerr.Newf("can't get new pair socket: %s", err.Error())
+	}
+	sock.AddTransport(tcp.NewTransport())
+	sock.AddTransport(tlstcp.NewTransport())
+	if err != nil {
+		return nil, err
+	}
+	return sock, nil
+}
+
+// don't forget to call Close to close underlying socket
+func (c *Transport) Close() error {
+	return c.sock.Close()
+}
+
+func (c *Transport) Serve(ctx context.Context, h transport.Handler) error {
+loop:
+	for {
+		msg := &transport.Message{}
+		select {
+		case <-ctx.Done():
+			break loop
+		default:
+			select {
+			case <-ctx.Done():
+				break loop
+			case err := <-c.asyncRecv(msg):
+				if err != nil {
+					logrus.Error(err)
+					continue loop
+				}
+				if msg.Cmd == transport.CmdResponse || msg.Cmd == transport.CmdError {
+					c.response(ctx, msg)
+					continue loop
+				}
+				if msg.Cmd != transport.CmdRequest {
+					continue loop
+				}
+				if h != nil {
+					go func(msg *transport.Message) {
+						resp := &transport.Message{
+							Id:  msg.Id,
+							Cmd: transport.CmdResponse,
+						}
+						respObj, err := h.Handle(ctx, msg)
+						if err == nil {
+							err = resp.SetData(respObj)
+						}
+						if err != nil {
+							logrus.Error(err)
+							resp.SetData(err.Error())
+							resp.Cmd = transport.CmdError
+						}
+						err = c.send(resp)
+						if err != nil {
+							logrus.Error(stackerr.Wrap(err))
+						}
+					}(msg)
+					continue loop
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
+func (c *Transport) Request(ctx context.Context, send, recv interface{}) error {
+	msg, err := transport.NewMessage(transport.CmdRequest, send)
+	if err != nil {
+		return err
+	}
+	ch := c.session.Add(msg.Id)
+	//	defer c.pickSession(msg.Id)
+	println("send request", spew.Sdump(msg))
+	err = c.send(msg)
+	if err != nil {
+		return err
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case msg := <-ch:
+		if msg.Cmd == transport.CmdResponse {
+			return msg.GetData(recv)
+		}
+		if msg.Cmd == transport.CmdError {
+			retErr := ""
+			err = msg.GetData(&retErr)
+			if err != nil {
+				return fmt.Errorf("Can't get error response: %v", err)
+			}
+			return fmt.Errorf(retErr)
+		}
+		return fmt.Errorf("Unspopported cmd %v", msg.Cmd)
+	}
+}
+
+func (c *Transport) response(ctx context.Context, msg *transport.Message) {
+	ch := c.session.Pick(msg.Id)
+	if ch == nil {
+		return
+	}
+	select {
+	case <-ctx.Done():
+	case ch <- msg:
+	}
+	return
+}
+
+func (c *Transport) send(obj interface{}) error {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return stackerr.Wrap(err)
+	}
+	return stackerr.Wrap(c.sock.Send(data))
+}
+
+func (c *Transport) recv(obj interface{}) error {
+	data, err := c.sock.Recv()
+	println(string(data))
+	if err != nil {
+		return stackerr.Wrap(err)
+	}
+	return stackerr.Wrap(json.Unmarshal(data, obj))
+}
+
+func (c *Transport) asyncRecv(obj interface{}) <-chan error {
+	ch := make(chan error, 1)
+	go func(ch chan<- error) {
+		ch <- c.recv(obj)
+	}(ch)
+	return ch
+}

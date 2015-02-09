@@ -1,0 +1,307 @@
+package mango
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+	"time"
+
+	"code.google.com/p/go.net/context"
+	"github.com/bearded-web/bearded/pkg/transport"
+	"github.com/gdamore/mangos"
+	"github.com/gdamore/mangos/protocol/pair"
+	"github.com/gdamore/mangos/transport/tcp"
+	"github.com/stretchr/testify/require"
+)
+
+const addr string = "tcp://127.0.0.1:54673"
+
+func TestNewTransport(t *testing.T) {
+	var (
+		transp *Transport
+		err    error
+	)
+	transp, err = NewListener("127.0.0.1:233")
+	require.Error(t, err)
+	require.Nil(t, transp)
+
+	transp, err = NewDialer("127.0.0.1:233")
+	require.Error(t, err)
+	require.Nil(t, transp)
+
+	transp, err = NewListener(addr)
+	require.NoError(t, err)
+	require.NotNil(t, transp)
+	transp.Close()
+
+	transp, err = NewDialer(addr)
+	require.NoError(t, err)
+	require.NotNil(t, transp)
+	transp.Close()
+}
+
+func TestTransportSend(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+
+	println(1)
+	err := transp.send("message")
+	println(2)
+	require.NoError(t, err)
+	data, err := sock.Recv()
+	println(3)
+	require.NoError(t, err)
+	require.NotNil(t, data)
+	require.Equal(t, "\"message\"", string(data))
+
+	err = transp.send(make(chan int))
+	require.Error(t, err) // json can't marshal channel
+
+}
+
+func TestTransportRecv(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+
+	err := sock.Send([]byte("\"message\""))
+	require.NoError(t, err)
+
+	msg := ""
+	err = transp.recv(&msg)
+	require.NoError(t, err)
+	require.Equal(t, "message", msg)
+
+	err = sock.Send([]byte("bad json"))
+	require.NoError(t, err)
+	err = transp.recv(&msg)
+	require.Error(t, err)
+}
+
+func TestTransportAsyncRecv(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+	msg := ""
+	ch := transp.asyncRecv(&msg)
+
+	err := sock.Send([]byte("\"message\""))
+	require.NoError(t, err)
+
+	require.NoError(t, <-ch)
+	require.Equal(t, "message", msg)
+
+	err = sock.Send([]byte("bad json"))
+	require.NoError(t, err)
+	ch = transp.asyncRecv(&msg)
+	require.Error(t, <-ch)
+}
+
+func TestTransportSessions(t *testing.T) {
+	transp := getTransport(t, addr)
+	defer transp.Close()
+
+	chOut := transp.session.Add(10)
+	require.NotNil(t, chOut)
+
+	chIn := transp.session.Pick(10)
+	require.NotNil(t, chIn)
+	require.NotEqual(t, chIn, chOut)
+
+	msg := &transport.Message{}
+
+	chIn <- msg
+	require.Equal(t, msg, <-chOut)
+
+	chIn = transp.session.Pick(10)
+	require.Nil(t, chIn)
+}
+
+func TestTransportRequestResponse(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+	bg := context.Background()
+
+	ctx, cancel := context.WithTimeout(bg, 10*time.Millisecond)
+	defer cancel()
+	msgData := ""
+	ch := make(chan error)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				ch <- transp.Request(ctx, "message", &msgData)
+			}
+		}
+	}()
+
+	answer := func(cmd transport.Cmd, set interface{}) {
+		data, err := sock.Recv()
+		require.NoError(t, err)
+		msg := &transport.Message{}
+		err = json.Unmarshal(data, msg)
+		require.NoError(t, err)
+		require.Equal(t, transport.CmdRequest, msg.Cmd)
+		msg.Cmd = cmd
+		if set != nil {
+			msg.SetData(set)
+		}
+		transp.response(ctx, msg)
+	}
+
+	// receive message and send response
+	answer(transport.CmdResponse, nil)
+
+	err := <-ch
+	require.NoError(t, err)
+	require.Equal(t, "message", msgData)
+
+	// ==== check error situations
+
+	answer(transport.CmdError, "ERROR_MESSAGE")
+	err = <-ch
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "ERROR_MESSAGE")
+
+	// unsupported msg CMD response, can be only transport.CmdResponse or transport.CmdError
+	answer(transport.Cmd(9009), nil)
+	err = <-ch
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "Unspopported transport.Cmd transport.Cmd(9009)")
+
+	// Bad error response format
+	answer(transport.CmdError, 1234) // error msg should be a string
+	err = <-ch
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unmarshal")
+
+	ctx, cancel2 := context.WithTimeout(bg, 10*time.Millisecond)
+	defer cancel2()
+	require.Error(t, transp.Request(ctx, make(chan int), make(chan int)))
+
+	cancel2()
+	require.Error(t, transp.Request(ctx, "message", &msgData))
+
+}
+
+func TestTransportOnRequest(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+	bg := context.Background()
+
+	ctx, cancel := context.WithTimeout(bg, 10*time.Millisecond)
+	defer cancel()
+
+	pluginName := ""
+
+	h := transport.Handle(func(ctx context.Context, msg transport.Extractor) (interface{}, error) {
+		println("blalba")
+		if err := msg.Extract(&pluginName); err != nil {
+			return nil, err
+		}
+		return []string{"0.0.2"}, nil
+	})
+
+	go transp.Serve(ctx, h)
+
+	// check onRequest behaviour
+	//	onRequest := func(recv, send interface{}) {
+	//		transp.OnRequest(func(ctx context.Context, msg transport.Extractor) (interface{}, error) {
+	//			println("blalba")
+	//			if err := msg.Extract(recv); err != nil {
+	//				return nil, err
+	//			}
+	//			return send, nil
+	//		})
+	//	}
+
+	{
+		//		onRequest(&pluginName, []string{"0.0.2"})
+		msg, err := transport.NewMessage(transport.CmdRequest, "barbudo/wappalyzer")
+		require.NoError(t, err)
+		data, err := json.Marshal(msg)
+		require.NoError(t, err)
+		sock.Send(data)
+
+		data, err = sock.Recv()
+		require.NoError(t, err)
+		require.Equal(t, pluginName, "barbudo/wappalyzer")
+		msg = &transport.Message{}
+		err = json.Unmarshal(data, msg)
+		require.NoError(t, err)
+		require.Equal(t, transport.CmdResponse, msg.Cmd)
+		recvd := []string{}
+		msg.GetData(&recvd)
+		require.Equal(t, recvd, []string{"0.0.2"})
+
+	}
+}
+
+func TestTransportServe(t *testing.T) {
+	sock, transp := getSocketAndTransport(t, addr)
+	defer sock.Close()
+	defer transp.Close()
+	bg := context.Background()
+
+	ctx, cancel := context.WithTimeout(bg, 1*time.Millisecond)
+	defer cancel()
+	ch := make(chan error)
+	go func() {
+		ch <- transp.Serve(ctx, nil)
+	}()
+	msgData := ""
+	go func() {
+		ch <- transp.Request(ctx, "message", &msgData)
+	}()
+
+	// receive request and send response
+	data, err := sock.Recv()
+	require.NoError(t, err)
+	msg := &transport.Message{}
+	err = json.Unmarshal(data, msg)
+	require.NoError(t, err)
+	msg.Cmd = transport.CmdResponse
+	data, err = json.Marshal(msg)
+	require.NoError(t, err)
+	sock.Send(data)
+	//	sock.Send([]byte("blabla"))
+
+	require.NoError(t, <-ch)
+	require.NoError(t, <-ch)
+
+}
+
+func getSocket(t *testing.T, addr string) mangos.Socket {
+	sock, err := pair.NewSocket()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sock.AddTransport(tcp.NewTransport())
+	err = sock.Listen(addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return sock
+}
+
+func getTransport(t *testing.T, addr string) *Transport {
+	transp, err := NewDialer(addr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return transp
+}
+
+func getSocketAndTransport(t *testing.T, addr string) (mangos.Socket, *Transport) {
+	return getSocket(t, addr), getTransport(t, addr)
+}
+
+func TestMain(m *testing.M) {
+	//	os.Remove(addr[6:])
+	os.Exit(m.Run())
+}
