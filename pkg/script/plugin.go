@@ -3,6 +3,9 @@ package script
 import (
 	"code.google.com/p/go.net/context"
 
+	"fmt"
+
+	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 )
@@ -47,5 +50,10 @@ func (p *Plugin) LatestVersion() string {
 }
 
 func (p *Plugin) Run(ctx context.Context, version string, conf *plugin.Conf) (*report.Report, error) {
-	return p.client.RunPlugin(ctx, p.Name, version, conf)
+	step := plan.WorkflowStep{
+		Name:   "underscan",
+		Plugin: fmt.Sprintf("%s:%s", p.Name, version),
+		Conf:   conf,
+	}
+	return p.client.RunPlugin(ctx, &step)
 }

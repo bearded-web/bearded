@@ -63,8 +63,7 @@ func (m *FeedManager) EnrichMulti(items []*feed.FeedItem) ([]*feed.FeedItem, err
 	for _, item := range items {
 		if err := m.Enrich(item); err != nil {
 			logrus.Error(err)
-			//			continue
-			// TODO (m0sth8): skip non enriched items?
+			continue
 		}
 		results = append(results, item)
 	}

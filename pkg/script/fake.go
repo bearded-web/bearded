@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"code.google.com/p/go.net/context"
+	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 )
@@ -23,10 +24,14 @@ func (f *FakeClient) GetPlugin(ctx context.Context, name string) (*Plugin, error
 	return &Plugin{client: f, Name: name}, nil
 }
 
-func (f *FakeClient) RunPlugin(ctx context.Context, name, version string, conf *plugin.Conf) (*report.Report, error) {
+func (f *FakeClient) RunPlugin(ctx context.Context, step *plan.WorkflowStep) (*report.Report, error) {
 	return nil, fmt.Errorf("No reports")
 }
 
 func (f *FakeClient) SendReport(ctx context.Context, rep *report.Report) error {
 	return nil
+}
+
+func (f *FakeClient) GetConfig(ctx context.Context) (*plugin.Conf, error) {
+	return nil, nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
@@ -13,15 +12,10 @@ import (
 	dockerclient "github.com/fsouza/go-dockerclient"
 )
 
-type ContainerConfig dockerclient.Config
-
-func (c *ContainerConfig) String() string {
-	return fmt.Sprintf("%s: %s", c.Image, strings.Join(c.Cmd, " "))
-}
-
 type ContainerResponse struct {
-	Err error
-	Log []byte
+	Container *dockerclient.Container
+	Err       error
+	Log       []byte
 }
 
 type Docker struct {
@@ -45,17 +39,6 @@ func (d *Docker) Ping() error {
 	return d.Client.Ping()
 }
 
-//func (d *Docker) PullImages(images []string) error {
-//	for _, image := range images {
-//		logrus.Debugf("Pull image %s", image)
-//		if err := d.Client.PullImage(image, nil); err != nil {
-//			return err
-//		}
-//		d.log.Print("successful \n")
-//	}
-//	return nil
-//}
-
 func (d *Docker) PullImage(name string) error {
 	_, err := d.Client.InspectImage(name)
 	if err == dockerclient.ErrNoSuchImage {
@@ -68,9 +51,12 @@ func (d *Docker) PullImage(name string) error {
 	return err
 }
 
-func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan ContainerResponse {
-	ch := make(chan ContainerResponse, 1)
-	go func(ch chan<- ContainerResponse, docker *dockerclient.Client, config *ContainerConfig) {
+// RunImage returns 2 response, first with created container object, second with logs.
+// I know it's kind of stupid. But I'll rewrite it later.
+func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config, hostCfg *dockerclient.HostConfig) <-chan ContainerResponse {
+	// TODO (m0sth8): rewrite this, please
+	ch := make(chan ContainerResponse, 2)
+	go func(ch chan<- ContainerResponse, config *dockerclient.Config, hostCfg *dockerclient.HostConfig) {
 		resp := ContainerResponse{}
 		// pull container
 		if err := d.PullImage(config.Image); err != nil {
@@ -80,32 +66,33 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 			return
 		}
 		// Create a container
-		logrus.Infof("Create container %s", config)
-		cfg := dockerclient.Config(*config)
+		logrus.Infof("Create container %s: %v", config.Image, config.Cmd)
 		opts := dockerclient.CreateContainerOptions{
-			Config: &cfg,
+			Config:     config,
+			HostConfig: hostCfg,
 		}
-		container, err := docker.CreateContainer(opts)
+		container, err := d.Client.CreateContainer(opts)
 		if err != nil {
 			logrus.Errorf("Failed: %v", err)
 			resp.Err = err
 			ch <- resp
 			return
 		}
+
 		cprint := func(format string, opt ...interface{}) {
 			logrus.Infof("[%s] %s", container.ID[:6], fmt.Sprintf(format, opt...))
 		}
-		cprint("Created with config: %s", config)
+		cprint("Created")
 
 		defer func() {
-			docker.RemoveContainer(dockerclient.RemoveContainerOptions{
+			d.Client.RemoveContainer(dockerclient.RemoveContainerOptions{
 				ID: container.ID,
 			})
 			cprint("Removed")
 		}()
 
 		// Start the container
-		err = docker.StartContainer(container.ID, opts.HostConfig)
+		err = d.Client.StartContainer(container.ID, opts.HostConfig)
 		if err != nil {
 			resp.Err = stackerr.Wrap(err)
 			ch <- resp
@@ -113,16 +100,27 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 		}
 		cprint("Started")
 		defer func() {
-			docker.StopContainer(container.ID, 5)
+			d.Client.StopContainer(container.ID, 5)
 			cprint("Stopped")
 		}()
-		tmpCh := make(chan ContainerResponse, 1)
-		go func(tmpCh chan<- ContainerResponse) {
+		container, err = d.Client.InspectContainer(container.ID)
+		if err != nil {
+			logrus.Errorf("Failed: %v", err)
+			resp.Err = err
+			ch <- resp
+			return
+		}
+
+		resp.Container = container
+		ch <- resp
+
+		respCh := make(chan ContainerResponse, 1)
+		go func(respCh chan<- ContainerResponse) {
 			resp := ContainerResponse{}
 			cprint("Waiting for log")
 			stdout := bytes.NewBuffer(nil)
 			stderr := bytes.NewBuffer(nil)
-			err := docker.Logs(dockerclient.LogsOptions{
+			err := d.Client.Logs(dockerclient.LogsOptions{
 				OutputStream: stdout,
 				ErrorStream:  stderr,
 				Container:    container.ID,
@@ -133,7 +131,7 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 			})
 			if err != nil {
 				resp.Err = stackerr.Wrap(err)
-				tmpCh <- resp
+				respCh <- resp
 				return
 			}
 			serr := stderr.Bytes()
@@ -145,20 +143,20 @@ func (d *Docker) RunImage(ctx context.Context, config *ContainerConfig) <-chan C
 				cprint("STDOUT: %s", string(sout))
 			}
 			resp.Log = sout
-			tmpCh <- resp
-		}(tmpCh)
+			respCh <- resp
+		}(respCh)
 		select {
 		case <-ctx.Done():
 			cprint("Context done")
 			resp.Err = ctx.Err()
-		case tmpResp := <-tmpCh:
+		case tmpResp := <-respCh:
 			resp.Err = tmpResp.Err
 			resp.Log = tmpResp.Log
 		}
 		ch <- resp
 		return
 
-	}(ch, d.Client, config)
+	}(ch, config, hostCfg)
 	return ch
 }
 

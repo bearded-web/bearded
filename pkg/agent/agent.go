@@ -15,7 +15,9 @@ import (
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/docker"
-	"github.com/bearded-web/bearded/pkg/script/mango"
+	"github.com/bearded-web/bearded/pkg/transport/mango"
+	"github.com/davecgh/go-spew/spew"
+	dockerclient "github.com/fsouza/go-dockerclient"
 )
 
 type Agent struct {
@@ -154,7 +156,9 @@ func (a *Agent) HandleJob(ctx context.Context, job *agent.Job) error {
 	logrus.Debugf("Job: %s", job)
 	if job.Cmd == agent.CmdScan {
 		go func() {
-			if err := a.HandleScan(ctx, job.Scan); err != nil {
+			scanCtx, cancel := context.WithCancel(ctx)
+			defer cancel()
+			if err := a.HandleScan(scanCtx, job.Scan); err != nil {
 				logrus.Error(stackerr.Wrap(err))
 			}
 		}()
@@ -162,74 +166,137 @@ func (a *Agent) HandleJob(ctx context.Context, job *agent.Job) error {
 	return nil
 }
 
-func (a *Agent) HandleScan(ctx context.Context, sc *scan.Session) error {
+func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	// take a plugin
-	pl, err := a.api.Plugins.Get(ctx, client.FromId(sc.Plugin))
+	pl, err := a.api.Plugins.Get(ctx, client.FromId(sess.Plugin))
 	if err != nil {
 		return stackerr.Wrap(err)
 	}
 	logrus.Info("plugin: %s", pl)
 	logrus.Info("set session to working state")
-	sc.Status = scan.StatusWorking
-	if sc, err = a.api.Scans.SessionUpdate(ctx, sc); err != nil {
+	sess.Status = scan.StatusWorking
+	if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
 		return err
 	}
 
 	setFailed := func() error {
 		logrus.Info("set session to failed state")
-		sc.Status = scan.StatusFailed
-		if sc, err = a.api.Scans.SessionUpdate(ctx, sc); err != nil {
+		sess.Status = scan.StatusFailed
+		if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
 			return err
 		}
 		return nil
 	}
-	var cfg docker.ContainerConfig
+	hostCfg := &dockerclient.HostConfig{}
+	args := sess.Step.Conf.CommandArgs
+	cfg := &dockerclient.Config{
+		Image: pl.Container.Image,
+		Tty:   true,
+		Cmd:   strings.Split(args, " "),
+	}
+
 	switch pl.Type {
 	case plugin.Util:
-		args := sc.Step.Conf.CommandArgs
-		container := pl.Container
-		cfg = docker.ContainerConfig{
-			Image: container.Image,
-			Tty:   true,
-			Cmd:   strings.Split(args, " "),
-		}
 	case plugin.Script:
-
-		mangoServer, err := mango.NewServer("ipc:///tmp/bearded-web.socket")
-		if err != nil {
-			return stackerr.Wrap(err)
+		if hostCfg.PortBindings == nil {
+			hostCfg.PortBindings = map[dockerclient.Port][]dockerclient.PortBinding{}
 		}
-		defer mangoServer.Stop()
-	// make mango server with unix socket
-	// run script container with unix socket
-	// take raw report from logs
-	//
+		hostCfg.PortBindings["9238/tcp"] = []dockerclient.PortBinding{dockerclient.PortBinding{HostIP: "127.0.0.1"}}
 	default:
 		return setFailed()
 	}
 
-	ch := a.dclient.RunImage(ctx, &cfg)
+	ch := a.dclient.RunImage(ctx, cfg, hostCfg)
+	// creating container
+	var container *dockerclient.Container
 	select {
 	case <-ctx.Done():
+		return setFailed()
 	case res := <-ch:
+		// container info
 		if res.Err != nil {
 			logrus.Error(res.Err)
 			return setFailed()
 		}
-		rep := &report.Report{
-			Type: report.TypeRaw,
-			Raw:  report.Raw{Raw: string(res.Log)},
+		container = res.Container
+	}
+	spew.Dump(container)
+	// get ports
+	var serv *RemoteServer
+	if pl.Type == plugin.Script {
+		// setup transport between agent and script
+		// script should expose 9238
+		port := container.NetworkSettings.Ports["9238/tcp"][0].HostPort
+		logrus.Infof("container port is %v", port)
+		if port == "" {
+			return setFailed()
 		}
-		_, err := a.api.Scans.SessionReportCreate(ctx, sc, rep)
+		//		transp, err := mango.NewDialer(fmt.Sprintf("tcp://127.0.0.1:%s", port))
+		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:9238"))
+		if err != nil {
+			logrus.Error(err)
+			return setFailed()
+		}
+		// setup remote server
+		serv, _ = NewRemoteServer(transp, a.api, sess)
+		go transp.Serve(ctx, serv)
+		err = serv.Connect(ctx)
 		if err != nil {
 			logrus.Error(err)
 			return setFailed()
 		}
 	}
 
+	var (
+		res    docker.ContainerResponse
+		closed bool
+	)
+	// running
+	select {
+	case <-ctx.Done():
+		logrus.Error(stackerr.Wrap(ctx.Err()))
+		return setFailed()
+	case res = <-ch:
+		if closed {
+			// TODO (m0sth8): handle closed channel from docker container
+			return setFailed()
+		}
+	}
+	if res.Err != nil {
+		logrus.Error(res.Err)
+		return setFailed()
+	}
+	var rep *report.Report
+	raw := &report.Report{
+		Type: report.TypeRaw,
+		Raw:  report.Raw{Raw: string(res.Log)},
+	}
+	rep = raw
+	switch pl.Type {
+	case plugin.Script:
+		if serv != nil && serv.Rep != nil {
+			if serv.Rep.Type != report.TypeMulti {
+				rep = &report.Report{
+					Type: report.TypeMulti,
+				}
+				rep.Multi = append(rep.Multi, serv.Rep)
+			} else {
+				rep = serv.Rep
+			}
+
+			rep.Multi = append(rep.Multi, raw)
+		}
+	}
+
+	_, err = a.api.Scans.SessionReportCreate(ctx, sess, rep)
+	if err != nil {
+		logrus.Error(err)
+		return setFailed()
+	}
+
 	logrus.Info("finished")
-	sc.Status = scan.StatusFinished
-	if sc, err = a.api.Scans.SessionUpdate(ctx, sc); err != nil {
+	sess.Status = scan.StatusFinished
+	if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
 		return err
 	}
 	return nil
