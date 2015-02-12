@@ -36,7 +36,7 @@ func NewTlsServer(addr string, certFile, keyFile string) (transport.Transport, e
 	if err != nil {
 		return nil, err
 	}
-	sock.SetOption(mangos.OptionTLSConfig, config)
+	sock.SetOption(mangos.OptionTlsConfig, config)
 	s := server{
 		addr: addr,
 		sock: sock,
