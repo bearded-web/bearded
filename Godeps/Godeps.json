@@ -12,8 +12,8 @@
 		},
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
-			"Comment": "v0.6.4-10-g89efc1f",
-			"Rev": "89efc1fea9b8b47f6f6ce72279a7ed9496b4cdb3"
+			"Comment": "v0.6.4-16-g38a6ff9",
+			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/negroni",
@@ -21,44 +21,48 @@
 			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
 		},
 		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Rev": "9ed19f9b0c9116d712e32dee78f1704cb9fc5b02"
+		},
+		{
 			"ImportPath": "github.com/docker/docker/pkg/archive",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/fileutils",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/ioutils",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/pools",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/promise",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/system",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar",
-			"Comment": "v1.4.1-820-g18d8fe1",
-			"Rev": "18d8fe12494197773727c5d1a866e2d82d6e5602"
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
 			"ImportPath": "github.com/emicklei/go-restful",
-			"Comment": "v1.1.2-60-g2624314",
-			"Rev": "2624314e35708d0faa5ab631856dc0ccd3b525bb"
+			"Comment": "v1.1.3",
+			"Rev": "89af920d613f1e3f771f6460b2629632e7a36ae9"
 		},
 		{
 			"ImportPath": "github.com/facebookgo/stack",
@@ -77,6 +81,11 @@
 			"Rev": "0758f407f25a8df60c540b0ec758905192687e14"
 		},
 		{
+			"ImportPath": "github.com/gdamore/mangos",
+			"Comment": "v1.1.0-1-gb7cec85",
+			"Rev": "b7cec85592e9c6126b7ebefacb2444c13649ef39"
+		},
+		{
 			"ImportPath": "github.com/google/go-querystring/query",
 			"Rev": "d8840cbb2baa915f4836edda4750050a2c0b7aea"
 		},
@@ -88,6 +97,10 @@
 			"ImportPath": "github.com/m0sth8/cli",
 			"Comment": "1.2.0-63-g8814969",
 			"Rev": "8814969dbe11ffd1486a38def8214462a9db61ab"
+		},
+		{
+			"ImportPath": "github.com/satori/go.uuid",
+			"Rev": "46e1db27972f44c7722f23195ba6a8d2c2f3a0a3"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/bcrypt",
