@@ -15,8 +15,8 @@ import (
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/docker"
-	"github.com/bearded-web/bearded/pkg/transport/mango"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/bearded-web/bearded/pkg/transport/websocket"
+	"github.com/bearded-web/bearded/pkg/utils"
 	dockerclient "github.com/fsouza/go-dockerclient"
 )
 
@@ -187,6 +187,9 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		}
 		return nil
 	}
+	// we have a couple of hack for boot2docker network
+	isBoot2Docker := utils.IsBoot2Docker()
+
 	hostCfg := &dockerclient.HostConfig{}
 	args := sess.Step.Conf.CommandArgs
 	cfg := &dockerclient.Config{
@@ -201,7 +204,12 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		if hostCfg.PortBindings == nil {
 			hostCfg.PortBindings = map[dockerclient.Port][]dockerclient.PortBinding{}
 		}
-		hostCfg.PortBindings["9238/tcp"] = []dockerclient.PortBinding{dockerclient.PortBinding{HostIP: "127.0.0.1"}}
+		hostIp := "127.0.0.1"
+		if isBoot2Docker {
+			// we should listen on external boot2docker virtual machine interface
+			hostIp = ""
+		}
+		hostCfg.PortBindings["9238/tcp"] = []dockerclient.PortBinding{dockerclient.PortBinding{HostIP: hostIp}}
 	default:
 		return setFailed()
 	}
@@ -220,19 +228,27 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		}
 		container = res.Container
 	}
-	spew.Dump(container)
 	// get ports
 	var serv *RemoteServer
 	if pl.Type == plugin.Script {
 		// setup transport between agent and script
 		// script should expose 9238
 		port := container.NetworkSettings.Ports["9238/tcp"][0].HostPort
-		logrus.Infof("container port is %v", port)
 		if port == "" {
 			return setFailed()
 		}
-		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:%s", port))
-//		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:9238"))
+		host := "127.0.0.1"
+		// TODO (m0sth8): extract this logic
+		if isBoot2Docker {
+			bootIp, err := utils.Boot2DocketIp()
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return setFailed()
+			}
+			host = string(bootIp)
+		}
+		logrus.Infof("script addr is %s:%s", host, port)
+		transp := websocket.NewClient(fmt.Sprintf("ws://%s:%s", host, port))
 		if err != nil {
 			logrus.Error(err)
 			return setFailed()
