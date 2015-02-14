@@ -14,7 +14,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/docker/docker/vendor/src/github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 type RemoteServer struct {

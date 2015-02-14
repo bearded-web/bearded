@@ -5,7 +5,7 @@ import (
 
 	"code.google.com/p/go.net/context"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/docker/docker/vendor/src/github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 type Looper interface {
