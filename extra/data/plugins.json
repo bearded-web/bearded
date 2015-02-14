@@ -40,5 +40,19 @@
         "container": {
             "image": "barbudo/wpscan"
         }
+    },
+    {
+        "name": "barbudo/retirejs-script",
+        "version": "0.0.2",
+        "type": "script",
+        "weight": "light",
+        "desc": {
+            "title": "Retirejs script",
+            "info": "Detect usage of JavaScript libraries with known vulnerabilities",
+            "url": "https://registry.hub.docker.com/u/barbudo/retirejs-script/"
+        },
+        "container": {
+            "image": "barbudo/retirejs-script"
+        }
     }
 ]
