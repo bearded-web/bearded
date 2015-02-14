@@ -231,8 +231,8 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		if port == "" {
 			return setFailed()
 		}
-		//		transp, err := mango.NewDialer(fmt.Sprintf("tcp://127.0.0.1:%s", port))
-		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:9238"))
+		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:%s", port))
+//		transp, err := mango.NewClient(fmt.Sprintf("tcp://127.0.0.1:9238"))
 		if err != nil {
 			logrus.Error(err)
 			return setFailed()
