@@ -81,17 +81,16 @@
 			"Rev": "0758f407f25a8df60c540b0ec758905192687e14"
 		},
 		{
-			"ImportPath": "github.com/gdamore/mangos",
-			"Comment": "v1.1.0-1-gb7cec85",
-			"Rev": "b7cec85592e9c6126b7ebefacb2444c13649ef39"
-		},
-		{
 			"ImportPath": "github.com/google/go-querystring/query",
 			"Rev": "d8840cbb2baa915f4836edda4750050a2c0b7aea"
 		},
 		{
 			"ImportPath": "github.com/gorilla/securecookie",
 			"Rev": "f0559d009e6943011cd1ba6eb16195cf5e0ed326"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "ab5b3a61f5b6aa323d66ece457334396c4ccdd03"
 		},
 		{
 			"ImportPath": "github.com/m0sth8/cli",
