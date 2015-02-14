@@ -44,11 +44,14 @@ func (a *Agent) Serve(ctx context.Context) error {
 		Type:   agent.System,
 		Status: agent.StatusUndefined,
 	}
-
+	prevStatus := agnt.Status
 loop:
 	for {
 		timeout := 0
-		logrus.Debugf("Agent status: %s", agnt.Status)
+		if prevStatus != agnt.Status {
+			logrus.Debugf("Agent status: %s -> %s", prevStatus, agnt.Status)
+			prevStatus = agnt.Status
+		}
 		switch agnt.Status {
 		case agent.StatusUndefined:
 			err := a.Register(ctx, agnt)
@@ -136,12 +139,12 @@ func (a *Agent) Retrieve(ctx context.Context, agnt *agent.Agent) error {
 }
 
 func (a *Agent) GetJobs(ctx context.Context, agnt *agent.Agent) error {
-	logrus.Debug("Request jobs")
+//	logrus.Debug("Request jobs")
 	jobs, err := a.api.Agents.GetJobs(ctx, agnt)
 	if err != nil {
 		return err
 	}
-	logrus.Debugf("Got %d jobs", len(jobs))
+//	logrus.Debugf("Got %d jobs", len(jobs))
 	for _, job := range jobs {
 		if err := a.HandleJob(ctx, job); err != nil {
 			// TODO (m0sth8): return scan failed status
@@ -172,7 +175,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	if err != nil {
 		return stackerr.Wrap(err)
 	}
-	logrus.Info("plugin: %s", pl)
+	logrus.Infof("plugin: %s", pl)
 	logrus.Info("set session to working state")
 	sess.Status = scan.StatusWorking
 	if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
@@ -272,7 +275,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	case <-ctx.Done():
 		logrus.Error(stackerr.Wrap(ctx.Err()))
 		return setFailed()
-	case res = <-ch:
+	case res, closed = <-ch:
 		if closed {
 			// TODO (m0sth8): handle closed channel from docker container
 			return setFailed()

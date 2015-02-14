@@ -116,6 +116,7 @@ func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config, host
 
 		respCh := make(chan ContainerResponse, 1)
 		go func(respCh chan<- ContainerResponse) {
+			defer close(respCh)
 			resp := ContainerResponse{}
 			cprint("Waiting for log")
 			stdout := bytes.NewBuffer(nil)
