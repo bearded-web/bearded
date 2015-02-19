@@ -15,7 +15,7 @@ import (
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/docker"
-	"github.com/bearded-web/bearded/pkg/transport/websocket"
+	"github.com/bearded-web/bearded/pkg/transport/mango"
 	"github.com/bearded-web/bearded/pkg/utils"
 	dockerclient "github.com/fsouza/go-dockerclient"
 )
@@ -182,13 +182,13 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		return err
 	}
 
-	setFailed := func() error {
-		logrus.Info("set session to failed state")
+	setFailed := func(err error) error {
+		logrus.Info("set session to failed state, due to %s", err)
 		sess.Status = scan.StatusFailed
 		if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
 			return err
 		}
-		return nil
+		return err
 	}
 	// we have a couple of hack for boot2docker network
 	isBoot2Docker := utils.IsBoot2Docker()
@@ -214,7 +214,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		}
 		hostCfg.PortBindings["9238/tcp"] = []dockerclient.PortBinding{dockerclient.PortBinding{HostIP: hostIp}}
 	default:
-		return setFailed()
+		return setFailed(fmt.Errorf("Unexpected plugin type %v", pl.Type))
 	}
 
 	ch := a.dclient.RunImage(ctx, cfg, hostCfg)
@@ -222,12 +222,11 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	var container *dockerclient.Container
 	select {
 	case <-ctx.Done():
-		return setFailed()
+		return setFailed(ctx.Err())
 	case res := <-ch:
 		// container info
 		if res.Err != nil {
-			logrus.Error(res.Err)
-			return setFailed()
+			return setFailed(res.Err)
 		}
 		container = res.Container
 	}
@@ -238,52 +237,49 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		// script should expose 9238
 		port := container.NetworkSettings.Ports["9238/tcp"][0].HostPort
 		if port == "" {
-			return setFailed()
+			return setFailed(stackerr.New("Unexpected empty port"))
 		}
 		host := "127.0.0.1"
 		// TODO (m0sth8): extract this logic
 		if isBoot2Docker {
 			bootIp, err := utils.Boot2DocketIp()
 			if err != nil {
-				logrus.Error(stackerr.Wrap(err))
-				return setFailed()
+				return setFailed(stackerr.Wrap(err))
 			}
 			host = string(bootIp)
 		}
 		logrus.Infof("script addr is %s:%s", host, port)
-		transp := websocket.NewClient(fmt.Sprintf("ws://%s:%s", host, port))
+//		transp := websocket.NewClient(fmt.Sprintf("ws://%s:%s", host, port))
+		transp, err := mango.NewClient(fmt.Sprintf("tcp://%s:%s", host, port))
 		if err != nil {
-			logrus.Error(err)
-			return setFailed()
+			return setFailed(stackerr.Wrap(err))
 		}
 		// setup remote server
 		serv, _ = NewRemoteServer(transp, a.api, sess)
 		go transp.Serve(ctx, serv)
 		err = serv.Connect(ctx)
 		if err != nil {
-			logrus.Error(err)
-			return setFailed()
+			return setFailed(stackerr.Wrap(err))
 		}
 	}
 
 	var (
 		res    docker.ContainerResponse
-		closed bool
+//		closed bool
 	)
 	// running
 	select {
 	case <-ctx.Done():
-		logrus.Error(stackerr.Wrap(ctx.Err()))
-		return setFailed()
-	case res, closed = <-ch:
-		if closed {
-			// TODO (m0sth8): handle closed channel from docker container
-			return setFailed()
-		}
+		return setFailed(ctx.Err())
+	case res = <-ch:
+//		if closed {
+//			// TODO (m0sth8): handle closed channel from docker container
+//			return setFailed(stackerr.Newf("Docker channel is closed, %v", res))
+//		}
 	}
 	if res.Err != nil {
 		logrus.Error(res.Err)
-		return setFailed()
+		return setFailed(stackerr.Wrap(res.Err))
 	}
 	var rep *report.Report
 	raw := &report.Report{
@@ -309,8 +305,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 
 	_, err = a.api.Scans.SessionReportCreate(ctx, sess, rep)
 	if err != nil {
-		logrus.Error(err)
-		return setFailed()
+		return setFailed(stackerr.Wrap(err))
 	}
 
 	logrus.Info("finished")
