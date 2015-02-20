@@ -42,6 +42,20 @@
         }
     },
     {
+        "name": "barbudo/wappalyzer-script",
+        "version": "0.0.2",
+        "type": "script",
+        "weight": "light",
+        "desc": {
+            "title": "Wappalyzer script",
+            "info": "Detect usage of JavaScript libraries and technologies",
+            "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer-script/"
+        },
+        "container": {
+            "image": "barbudo/wappalyzer-script"
+        }
+    },
+    {
         "name": "barbudo/retirejs-script",
         "version": "0.0.2",
         "type": "script",

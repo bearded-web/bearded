@@ -5,6 +5,25 @@
         "targetType": "web",
         "workflow": [
             {
+                "plugin": "barbudo/wappalyzer-script:0.0.2",
+                "name": "Detect technologies",
+                "desc": "Detect usage of JavaScript libraries and technologies",
+                "conf": {}
+            },
+            {
+                "plugin": "barbudo/retirejs-script:0.0.2",
+                "name": "Detect vulnerable js",
+                "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
+                "conf": {}
+            }
+        ]
+    },
+    {
+        "name": "detectJs",
+        "desc": "Detect web technologies used by the site with wappalyzer and retirejs",
+        "targetType": "web",
+        "workflow": [
+            {
                 "plugin": "barbudo/wappalyzer:0.0.2",
                 "name": "Detect technologies",
                 "desc": "Use wappalyzer in phantomjs to detect web technologies used by the site",
@@ -19,19 +38,6 @@
                 "conf": {
                     "commandArgs": "{{ .Target }}"
                 }
-            }
-        ]
-    },
-    {
-        "name": "detectJs",
-        "desc": "Check vulnerabilities with retirejs",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/retirejs-script:0.0.2",
-                "name": "Detect vulnerable js",
-                "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
-                "conf": {}
             }
         ]
     },
