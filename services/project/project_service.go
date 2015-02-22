@@ -56,14 +56,14 @@ func (s *ProjectService) Register(container *restful.Container) {
 	r = ws.POST("").To(s.create)
 	r.Doc("create")
 	r.Operation("create")
+	r.Reads(ProjectEntity{})
 	r.Writes(project.Project{})
-	r.Reads(project.Project{})
 	r.Do(services.Returns(http.StatusCreated))
 	r.Do(services.ReturnsE(http.StatusConflict))
 	addDefaults(r)
 	ws.Route(r)
 
-	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.get)
+	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakeProject(s.get))
 	r.Doc("get")
 	r.Operation("get")
 	r.Param(ws.PathParameter(ParamId, ""))
@@ -75,20 +75,20 @@ func (s *ProjectService) Register(container *restful.Container) {
 	addDefaults(r)
 	ws.Route(r)
 
-	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
-	//	// docs
-	//	r.Doc("update")
-	//	r.Operation("update")
-	//	r.Param(ws.PathParameter(ParamId, ""))
-	//	r.Writes(project.Project{})
-	//	r.Reads(project.Project{})
-	//	r.Do(services.Returns(
-	//		http.StatusOK,
-	//		http.StatusNotFound))
-	//	r.Do(services.ReturnsE(
-	//		http.StatusBadRequest,
-	//		http.StatusInternalServerError))
-	//	ws.Route(r)
+	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.TakeProject(s.update))
+	// docs
+	r.Doc("update")
+	r.Operation("update")
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Reads(ProjectEntity{})
+	r.Writes(project.Project{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusInternalServerError))
+	ws.Route(r)
 
 	container.Add(ws)
 }
@@ -96,7 +96,7 @@ func (s *ProjectService) Register(container *restful.Container) {
 func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
-	raw := &project.Project{}
+	raw := &ProjectEntity{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
@@ -109,8 +109,11 @@ func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	raw.Owner = user.Id
-	obj, err := mgr.Projects.Create(raw)
+	obj := &project.Project{
+		Name:  raw.Name,
+		Owner: user.Id,
+	}
+	obj, err := mgr.Projects.Create(obj)
 	if err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
@@ -151,27 +154,67 @@ func (s *ProjectService) list(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(result)
 }
 
-func (s *ProjectService) get(req *restful.Request, resp *restful.Response) {
-	projectId := req.PathParameter(ParamId)
-	if !s.IsId(projectId) {
-		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
+func (s *ProjectService) get(_ *restful.Request, resp *restful.Response, p *project.Project) {
+	resp.WriteEntity(p)
+}
+
+func (s *ProjectService) update(req *restful.Request, resp *restful.Response, p *project.Project) {
+	raw := &ProjectEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	user := filters.GetUser(req)
+
+	if p.Owner != user.Id {
+		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}
 
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	// TODO (m0sth8): check permissions for the user
-	u, err := mgr.Projects.GetById(mgr.ToId(projectId))
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			resp.WriteErrorString(http.StatusNotFound, "Not found")
+	p.Name = raw.Name
+	if err := mgr.Projects.Update(p); err != nil {
+		if mgr.IsDup(err) {
+			resp.WriteServiceError(
+				http.StatusConflict,
+				services.NewError(services.CodeDuplicate, "project with this name and owner is existed"))
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
+	resp.WriteEntity(p)
+}
 
-	resp.WriteEntity(u)
+func (s *ProjectService) TakeProject(fn func(*restful.Request,
+	*restful.Response, *project.Project)) restful.RouteFunction {
+	return func(req *restful.Request, resp *restful.Response) {
+		// TODO (m0sth8): check permissions for the user
+		id := req.PathParameter(ParamId)
+		if !s.IsId(id) {
+			resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)
+			return
+		}
+		mgr := s.Manager()
+		defer mgr.Close()
+
+		obj, err := mgr.Projects.GetById(mgr.ToId(id))
+		mgr.Close()
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				resp.WriteErrorString(http.StatusNotFound, "Not found")
+				return
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+			return
+		}
+		fn(req, resp, obj)
+	}
 }
