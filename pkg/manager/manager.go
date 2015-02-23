@@ -24,6 +24,7 @@ type Manager struct {
 	Reports  *ReportManager
 	Feed     *FeedManager
 	Files    *FileManager
+	Comments *CommentManager
 
 	managers []ManagerInterface
 }
@@ -47,6 +48,7 @@ func New(db *mgo.Database) *Manager {
 	m.Reports = &ReportManager{manager: m, col: db.C("reports")}
 	m.Feed = &FeedManager{manager: m, col: db.C("feed")}
 	m.Files = &FileManager{manager: m, grid: db.GridFS("")}
+	m.Comments = &CommentManager{manager: m, col: db.C("comments")}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -59,6 +61,7 @@ func New(db *mgo.Database) *Manager {
 		m.Reports,
 		m.Feed,
 		m.Files,
+		m.Comments,
 	)
 
 	return m
