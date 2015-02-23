@@ -110,8 +110,6 @@ func (s *ScanService) Register(container *restful.Container) {
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
 
-	// sessions
-
 	r = ws.GET(fmt.Sprintf("{%s}/reports", ParamId)).To(s.TakeScan(s.reports))
 	r.Doc("reports")
 	r.Operation("reports")

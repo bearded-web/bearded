@@ -139,12 +139,12 @@ func (a *Agent) Retrieve(ctx context.Context, agnt *agent.Agent) error {
 }
 
 func (a *Agent) GetJobs(ctx context.Context, agnt *agent.Agent) error {
-//	logrus.Debug("Request jobs")
+	//	logrus.Debug("Request jobs")
 	jobs, err := a.api.Agents.GetJobs(ctx, agnt)
 	if err != nil {
 		return err
 	}
-//	logrus.Debugf("Got %d jobs", len(jobs))
+	//	logrus.Debugf("Got %d jobs", len(jobs))
 	for _, job := range jobs {
 		if err := a.HandleJob(ctx, job); err != nil {
 			// TODO (m0sth8): return scan failed status
@@ -249,7 +249,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 			host = string(bootIp)
 		}
 		logrus.Infof("script addr is %s:%s", host, port)
-//		transp := websocket.NewClient(fmt.Sprintf("ws://%s:%s", host, port))
+		//		transp := websocket.NewClient(fmt.Sprintf("ws://%s:%s", host, port))
 		transp, err := mango.NewClient(fmt.Sprintf("tcp://%s:%s", host, port))
 		if err != nil {
 			return setFailed(stackerr.Wrap(err))
@@ -264,18 +264,18 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	}
 
 	var (
-		res    docker.ContainerResponse
-//		closed bool
+		res docker.ContainerResponse
+		//		closed bool
 	)
 	// running
 	select {
 	case <-ctx.Done():
 		return setFailed(ctx.Err())
 	case res = <-ch:
-//		if closed {
-//			// TODO (m0sth8): handle closed channel from docker container
-//			return setFailed(stackerr.Newf("Docker channel is closed, %v", res))
-//		}
+		//		if closed {
+		//			// TODO (m0sth8): handle closed channel from docker container
+		//			return setFailed(stackerr.Newf("Docker channel is closed, %v", res))
+		//		}
 	}
 	if res.Err != nil {
 		logrus.Error(res.Err)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"code.google.com/p/go.net/context"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/Sirupsen/logrus"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type Looper interface {

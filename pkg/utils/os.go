@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"runtime"
 	"os/exec"
-	"strings")
+	"runtime"
+	"strings"
+)
 
 func IsBoot2Docker() bool {
 	if runtime.GOOS == "darwin" {

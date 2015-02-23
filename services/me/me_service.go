@@ -9,9 +9,9 @@ import (
 
 	"github.com/bearded-web/bearded/models/me"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
-	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type MeService struct {

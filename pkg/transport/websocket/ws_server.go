@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"code.google.com/p/go.net/context"
-	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/Sirupsen/logrus"
+	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gorilla/websocket"
 )
 
