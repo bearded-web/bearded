@@ -19,7 +19,7 @@ type Project struct {
 	Created time.Time     `json:"created,omitempty"`
 	Updated time.Time     `json:"updated,omitempty"`
 
-	Members []*Member `json:"members,omitempty" bson:"members"`
+	Members []*Member `json:"members" bson:"members"`
 }
 
 type ProjectList struct {
@@ -34,4 +34,9 @@ func (p *Project) GetMember(userId bson.ObjectId) *Member {
 		}
 	}
 	return nil
+}
+
+type MemberList struct {
+	pagination.Meta `json:",inline"`
+	Results         []*Member `json:"results"`
 }

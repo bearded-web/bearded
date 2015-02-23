@@ -42,9 +42,8 @@ func (s *PlanManager) Init() error {
 		}
 	}
 	// temporary fix
-	s.col.UpdateAll(bson.M{"targetType": bson.M{"$exists": false}}, bson.M{"$set": bson.M{"targetType": target.TypeWeb}})
-
-	return nil
+	_, err = s.col.UpdateAll(bson.M{"targetType": bson.M{"$exists": false}}, bson.M{"$set": bson.M{"targetType": target.TypeWeb}})
+	return err
 }
 
 func (m *PlanManager) Fltr() *PlanFltr {

@@ -32,14 +32,17 @@ func (m *ProjectManager) Init() error {
 	if err != nil {
 		return err
 	}
-	err = m.col.EnsureIndex(mgo.Index{
-		Key:        []string{"owner"},
-		Background: false,
-	})
-	err = m.col.EnsureIndex(mgo.Index{
-		Key:        []string{"owner"},
-		Background: false,
-	})
+	for _, index := range []string{"owner", "members.user"} {
+		err := m.col.EnsureIndex(mgo.Index{
+			Key:        []string{index},
+			Background: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	// TODO (m0sth8): exclude to migration
+	_, err = m.col.UpdateAll(bson.M{"members": bson.M{"$exists": false}}, bson.M{"$set": bson.M{"members": []*project.Member{}}})
 	return err
 }
 
@@ -70,6 +73,9 @@ func (m *ProjectManager) Create(raw *project.Project) (*project.Project, error) 
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
+	if raw.Members == nil {
+		raw.Members = []*project.Member{}
+	}
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}

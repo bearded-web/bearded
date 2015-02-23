@@ -34,7 +34,7 @@ func AuthRequiredFilter(mgr *manager.Manager) restful.FilterFunction {
 		}
 		mgrCopy := mgr.Copy()
 		defer mgrCopy.Close() // if something goes wrong
-		user, err := mgr.Users.GetById(userId)
+		user, err := mgr.Users.GetById(mgr.ToId(userId))
 		mgrCopy.Close() // manually close manager here, because defer will be triggered too late
 
 		if err != nil {

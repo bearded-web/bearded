@@ -67,9 +67,9 @@ func (m *UserManager) Init() error {
 	return err
 }
 
-func (m *UserManager) GetById(id string) (*user.User, error) {
+func (m *UserManager) GetById(id bson.ObjectId) (*user.User, error) {
 	obj := &user.User{}
-	if err := m.col.FindId(bson.ObjectIdHex(id)).One(obj); err != nil {
+	if err := m.col.FindId(id).One(obj); err != nil {
 		return nil, err
 	}
 	if obj.Avatar == "" {

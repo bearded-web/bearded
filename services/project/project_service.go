@@ -90,6 +90,8 @@ func (s *ProjectService) Register(container *restful.Container) {
 		http.StatusInternalServerError))
 	ws.Route(r)
 
+	s.RegisterMembers(ws)
+
 	container.Add(ws)
 }
 
@@ -188,9 +190,6 @@ func (s *ProjectService) update(req *restful.Request, resp *restful.Response, p 
 	if raw.Name != "" {
 		p.Name = raw.Name
 	}
-	if p.Members != nil {
-		p.Members = raw.Members
-	}
 	if err := mgr.Projects.Update(p); err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
@@ -205,8 +204,11 @@ func (s *ProjectService) update(req *restful.Request, resp *restful.Response, p 
 	resp.WriteEntity(p)
 }
 
-func (s *ProjectService) TakeProject(fn func(*restful.Request,
-	*restful.Response, *project.Project)) restful.RouteFunction {
+// Helpers
+
+type ProjectFunction func(*restful.Request, *restful.Response, *project.Project)
+
+func (s *ProjectService) TakeProject(fn ProjectFunction) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		// TODO (m0sth8): check permissions for the user
 		id := req.PathParameter(ParamId)
