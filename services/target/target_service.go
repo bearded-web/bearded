@@ -9,6 +9,8 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
+	"github.com/bearded-web/bearded/models/comment"
+	"github.com/bearded-web/bearded/models/project"
 	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
@@ -82,6 +84,28 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Param(ws.PathParameter(ParamId, ""))
 	r.Do(services.Returns(http.StatusNoContent))
 	addDefaults(r)
+	ws.Route(r)
+
+	r = ws.GET(fmt.Sprintf("{%s}/comments", ParamId)).To(s.TakeTarget(s.comments))
+	r.Doc("comments")
+	r.Operation("comments")
+	r.Param(ws.PathParameter(ParamId, ""))
+	//	s.SetParams(r, fltr.GetParams(ws, manager.CommentFltr{}))
+	r.Writes(comment.CommentList{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	ws.Route(r)
+
+	r = ws.POST(fmt.Sprintf("{%s}/comments", ParamId)).To(s.TakeTarget(s.commentsAdd))
+	r.Doc("commentsAdd")
+	r.Operation("commentsAdd")
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Reads(CommentEntity{})
+	r.Writes(comment.Comment{})
+	r.Do(services.Returns(
+		http.StatusCreated,
+		http.StatusNotFound))
 	ws.Route(r)
 
 	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
@@ -194,11 +218,12 @@ func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(result)
 }
 
-func (s *TargetService) get(_ *restful.Request, resp *restful.Response, obj *target.Target) {
+func (s *TargetService) get(_ *restful.Request, resp *restful.Response, obj *target.Target, _ *project.Project) {
 	resp.WriteEntity(obj)
 }
 
-func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *target.Target) {
+func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *target.Target, _ *project.Project) {
+	// TODO (m0sth8): do not remove target, just mark as deleted
 	mgr := s.Manager()
 	defer mgr.Close()
 
@@ -207,8 +232,57 @@ func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *
 	resp.WriteHeader(http.StatusNoContent)
 }
 
+func (s *TargetService) comments(_ *restful.Request, resp *restful.Response, obj *target.Target, _ *project.Project) {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	results, count, err := mgr.Comments.FilterBy(&manager.CommentFltr{Type: comment.Scan, Link: obj.Id})
+
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	result := &comment.CommentList{
+		Meta:    pagination.Meta{count, "", ""},
+		Results: results,
+	}
+	resp.WriteEntity(result)
+}
+
+func (s *TargetService) commentsAdd(req *restful.Request, resp *restful.Response, t *target.Target, _ *project.Project) {
+	ent := &CommentEntity{}
+	if err := req.ReadEntity(ent); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	u := filters.GetUser(req)
+	raw := &comment.Comment{
+		Owner: u.Id,
+		Type:  comment.Scan,
+		Link:  t.Id,
+		Text:  ent.Text,
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	obj, err := mgr.Comments.Create(raw)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	resp.WriteHeader(http.StatusCreated)
+	resp.WriteEntity(obj)
+}
+
 func (s *TargetService) TakeTarget(fn func(*restful.Request,
-	*restful.Response, *target.Target)) restful.RouteFunction {
+	*restful.Response, *target.Target, *project.Project)) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		// TODO (m0sth8): check permissions for the user for the project of this target
 		id := req.PathParameter(ParamId)
@@ -220,17 +294,33 @@ func (s *TargetService) TakeTarget(fn func(*restful.Request,
 		mgr := s.Manager()
 		defer mgr.Close()
 
-		obj, err := mgr.Targets.GetById(mgr.ToId(id))
-		mgr.Close()
+		t, err := mgr.Targets.GetById(mgr.ToId(id))
 		if err != nil {
 			if mgr.IsNotFound(err) {
-				resp.WriteErrorString(http.StatusNotFound, "Not found")
+				resp.WriteErrorString(http.StatusNotFound, "Target not found")
 				return
 			}
 			logrus.Error(stackerr.Wrap(err))
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
-		fn(req, resp, obj)
+		p, err := mgr.Projects.GetById(t.Project)
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				resp.WriteErrorString(http.StatusNotFound, "Project not found")
+				return
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+			return
+		}
+		u := filters.GetUser(req)
+		admin := false
+		if !admin && p.Owner != u.Id && p.GetMember(u.Id) == nil {
+			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+			return
+		}
+		mgr.Close()
+		fn(req, resp, t, p)
 	}
 }

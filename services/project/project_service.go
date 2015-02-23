@@ -217,7 +217,7 @@ func (s *ProjectService) TakeProject(fn func(*restful.Request,
 		mgr := s.Manager()
 		defer mgr.Close()
 
-		obj, err := mgr.Projects.GetById(mgr.ToId(id))
+		p, err := mgr.Projects.GetById(mgr.ToId(id))
 		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
@@ -231,11 +231,11 @@ func (s *ProjectService) TakeProject(fn func(*restful.Request,
 
 		u := filters.GetUser(req)
 		admin := false
-		if !admin && obj.Owner != u.Id && obj.GetMember(u.Id) == nil {
+		if !admin && p.Owner != u.Id && p.GetMember(u.Id) == nil {
 			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 			return
 		}
 
-		fn(req, resp, obj)
+		fn(req, resp, p)
 	}
 }
