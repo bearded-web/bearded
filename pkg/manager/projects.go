@@ -13,7 +13,8 @@ import (
 const defaultProject = "Default"
 
 type ProjectFltr struct {
-	Owner bson.ObjectId `fltr:"owner"`
+	Owner  bson.ObjectId `fltr:"owner"`
+	Member bson.ObjectId `fltr:"member" bson:"members.user"`
 }
 
 type ProjectManager struct {
@@ -31,6 +32,10 @@ func (m *ProjectManager) Init() error {
 	if err != nil {
 		return err
 	}
+	err = m.col.EnsureIndex(mgo.Index{
+		Key:        []string{"owner"},
+		Background: false,
+	})
 	err = m.col.EnsureIndex(mgo.Index{
 		Key:        []string{"owner"},
 		Background: false,

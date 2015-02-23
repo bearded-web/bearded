@@ -62,7 +62,11 @@ func GetQuery(raw interface{}) bson.M {
 				}
 			}
 		}
-		result[name] = field.Value()
+		bsonName := getBsonName(field)
+		if bsonName == "" {
+			bsonName = name
+		}
+		result[bsonName] = field.Value()
 	}
 	return result
 }

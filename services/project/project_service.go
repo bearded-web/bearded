@@ -132,10 +132,18 @@ func (s *ProjectService) create(req *restful.Request, resp *restful.Response) {
 
 func (s *ProjectService) list(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): check  permissions
+
 	query, err := fltr.FromRequest(req, manager.ProjectFltr{})
 	if err != nil {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
 		return
+	}
+
+	user := filters.GetUser(req)
+	admin := false
+	// if user is not admin then show him only his projects or where he has membership
+	if !admin {
+		query = manager.Or(fltr.GetQuery(&manager.ProjectFltr{Owner: user.Id, Member: user.Id}))
 	}
 	mgr := s.Manager()
 	defer mgr.Close()
@@ -177,7 +185,12 @@ func (s *ProjectService) update(req *restful.Request, resp *restful.Response, p 
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	p.Name = raw.Name
+	if raw.Name != "" {
+		p.Name = raw.Name
+	}
+	if p.Members != nil {
+		p.Members = raw.Members
+	}
 	if err := mgr.Projects.Update(p); err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
@@ -215,6 +228,14 @@ func (s *ProjectService) TakeProject(fn func(*restful.Request,
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
+
+		u := filters.GetUser(req)
+		admin := false
+		if !admin && obj.Owner != u.Id && obj.GetMember(u.Id) == nil {
+			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+			return
+		}
+
 		fn(req, resp, obj)
 	}
 }

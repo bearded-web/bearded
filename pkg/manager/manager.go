@@ -226,3 +226,11 @@ func GetOpts(skip, limit int, sort []string) Opts {
 		Sort:  sort,
 	}
 }
+
+func Or(q bson.M) bson.M {
+	results := make([]bson.M, 0, len(q))
+	for key, value := range q {
+		results = append(results, bson.M{key: value})
+	}
+	return bson.M{"$or": results}
+}
