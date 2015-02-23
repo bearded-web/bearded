@@ -11,6 +11,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type MeService struct {
@@ -62,7 +63,9 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 
 	u := filters.GetUser(req)
 
-	projects, count, err := mgr.Projects.FilterBy(&manager.ProjectFltr{Owner: u.Id})
+	query := manager.Or(fltr.GetQuery(&manager.ProjectFltr{Owner: u.Id, Member: u.Id}))
+
+	projects, count, err := mgr.Projects.FilterByQuery(query)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 	} else {

@@ -139,11 +139,11 @@ func (s *ProjectService) list(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	user := filters.GetUser(req)
+	u := filters.GetUser(req)
 	admin := false
 	// if user is not admin then show him only his projects or where he has membership
 	if !admin {
-		query = manager.Or(fltr.GetQuery(&manager.ProjectFltr{Owner: user.Id, Member: user.Id}))
+		query = manager.Or(fltr.GetQuery(&manager.ProjectFltr{Owner: u.Id, Member: u.Id}))
 	}
 	mgr := s.Manager()
 	defer mgr.Close()
