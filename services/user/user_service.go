@@ -160,7 +160,7 @@ func (s *UserService) get(req *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	u, err := mgr.Users.GetById(userId)
+	u, err := mgr.Users.GetById(mgr.ToId(userId))
 	if err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
@@ -192,7 +192,7 @@ func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) 
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	u, err := mgr.Users.GetById(userId)
+	u, err := mgr.Users.GetById(mgr.ToId(userId))
 	if err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
