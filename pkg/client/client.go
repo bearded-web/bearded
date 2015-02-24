@@ -17,6 +17,7 @@ import (
 	"github.com/facebookgo/stackerr"
 	"github.com/google/go-querystring/query"
 	"gopkg.in/mgo.v2/bson"
+	"mime/multipart"
 )
 
 const (
@@ -50,6 +51,7 @@ type Client struct {
 	Plans   *PlansService
 	Agents  *AgentsService
 	Scans   *ScansService
+	Files   *FilesService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -70,6 +72,7 @@ func NewClient(baseUrl string, httpClient *http.Client) *Client {
 	c.Plans = &PlansService{client: c}
 	c.Agents = &AgentsService{client: c}
 	c.Scans = &ScansService{client: c}
+	c.Files = &FilesService{client: c}
 	return c
 }
 
@@ -113,26 +116,28 @@ func (c *Client) SetBaseUrl(u string) error {
 // specified, the value pointed to by body is JSON encoded and included as the
 // request body.
 func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Request, error) {
-	urlStr = fmt.Sprintf("v%d/%s", apiVersion, urlStr)
-	rel, err := url.Parse(urlStr)
+	u, err := c.getUrl(urlStr)
 	if err != nil {
 		return nil, err
 	}
 
-	u := c.BaseURL.ResolveReference(rel)
-
-	var buf io.ReadWriter
+	var buf io.Reader
 	if body != nil {
-		buf = new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(body)
-		if err != nil {
-			return nil, err
+		if bodyReader, casted := body.(io.Reader); casted {
+			buf = bodyReader
+		} else {
+			bufW := new(bytes.Buffer)
+			err := json.NewEncoder(bufW).Encode(body)
+			if err != nil {
+				return nil, err
+			}
+			buf = bufW
 		}
 	}
 	if c.Debug {
-		logrus.Debugf("%s %s", method, u.String())
+		logrus.Debugf("%s %s", method, u)
 	}
-	req, err := http.NewRequest(method, u.String(), buf)
+	req, err := http.NewRequest(method, u, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -149,6 +154,17 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	}
 
 	return req, nil
+}
+
+func (c *Client) getUrl(urlStr string) (string, error) {
+	urlStr = fmt.Sprintf("v%d/%s", apiVersion, urlStr)
+	rel, err := url.Parse(urlStr)
+	if err != nil {
+		return "", err
+	}
+
+	u := c.BaseURL.ResolveReference(rel)
+	return u.String(), nil
 }
 
 // Do sends an API request and returns the API response.  The API response is
@@ -249,6 +265,30 @@ func (c *Client) Update(ctx context.Context, url string, id string, send interfa
 	if err != nil {
 		return err
 	}
+	_, err = c.Do(ctx, req, payload)
+	return err
+}
+
+func (c *Client) Upload(ctx context.Context, urlStr string, files []*UploadedFile, payload interface{}) error {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+	for _, ufile := range files {
+		dst, err := w.CreateFormFile(ufile.Fieldname, ufile.Filename)
+		if err != nil {
+			return err
+		}
+		if _, err = io.Copy(dst, ufile.Data); err != nil {
+			return err
+		}
+	}
+	if err := w.Close(); err != nil {
+		return err
+	}
+	req, err := c.NewRequest("POST", urlStr, &b)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", w.FormDataContentType())
 	_, err = c.Do(ctx, req, payload)
 	return err
 }
@@ -357,4 +397,9 @@ func IsConflicted(err error) bool {
 		return true
 	}
 	return false
+}
+
+type UploadedFile struct {
+	Fieldname, Filename string
+	Data                io.Reader
 }

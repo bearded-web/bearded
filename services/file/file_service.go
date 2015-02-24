@@ -43,6 +43,7 @@ func (s *FileService) Register(container *restful.Container) {
 	ws.Doc("Manage Files")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthTokenFilter(s.BaseManager()))
 	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.POST("").To(s.create)
