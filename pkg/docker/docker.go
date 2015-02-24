@@ -1,9 +1,12 @@
 package docker
 
 import (
+	"archive/tar"
 	"bytes"
 	"fmt"
+	"io"
 	"os"
+	"path"
 	"path/filepath"
 
 	"code.google.com/p/go.net/context"
@@ -16,6 +19,7 @@ type ContainerResponse struct {
 	Container *dockerclient.Container
 	Err       error
 	Log       []byte
+	Files     map[string]io.Reader
 }
 
 type Docker struct {
@@ -53,7 +57,9 @@ func (d *Docker) PullImage(name string) error {
 
 // RunImage returns 2 response, first with created container object, second with logs.
 // I know it's kind of stupid. But I'll rewrite it later.
-func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config, hostCfg *dockerclient.HostConfig) <-chan ContainerResponse {
+func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config,
+	hostCfg *dockerclient.HostConfig, takeFiles []string) <-chan ContainerResponse {
+
 	// TODO (m0sth8): rewrite this, please
 	ch := make(chan ContainerResponse, 2)
 	go func(ch chan<- ContainerResponse, config *dockerclient.Config, hostCfg *dockerclient.HostConfig) {
@@ -153,6 +159,54 @@ func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config, host
 			resp.Err = tmpResp.Err
 			resp.Log = tmpResp.Log
 		}
+		if resp.Err == nil && takeFiles != nil && len(takeFiles) > 0 {
+			files := map[string]io.Reader{}
+			for _, fPath := range takeFiles {
+				cprint("take file %s from container", fPath)
+				// try to copy files from container
+				buf := new(bytes.Buffer)
+				err := d.Client.CopyFromContainer(dockerclient.CopyFromContainerOptions{
+					Container:    container.ID,
+					Resource:     fPath,
+					OutputStream: buf,
+				})
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					continue
+				}
+				tr := tar.NewReader(buf)
+				// Iterate through the files in the archive.
+				fName := path.Base(fPath)
+				for {
+					hdr, err := tr.Next()
+					if err == io.EOF {
+						// end of tar archive
+						break
+					}
+					if err != nil {
+						logrus.Error(stackerr.Wrap(err))
+						break
+					}
+					if hdr.Typeflag != tar.TypeReg {
+						continue
+					}
+					if hdr.Name != fName {
+						continue
+					}
+					fBuf := new(bytes.Buffer)
+					_, err = io.Copy(fBuf, tr)
+					if err != nil {
+						logrus.Error(stackerr.Wrap(err))
+						break
+					}
+					files[fPath] = fBuf
+				}
+			}
+			if len(files) > 0 {
+				resp.Files = files
+			}
+		}
+
 		ch <- resp
 		return
 

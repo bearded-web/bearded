@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 
 	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
+	"github.com/docker/docker/pkg/homedir"
+	dockerclient "github.com/fsouza/go-dockerclient"
 
 	"github.com/bearded-web/bearded/models/agent"
 	"github.com/bearded-web/bearded/models/plugin"
@@ -17,7 +22,6 @@ import (
 	"github.com/bearded-web/bearded/pkg/docker"
 	"github.com/bearded-web/bearded/pkg/transport/mango"
 	"github.com/bearded-web/bearded/pkg/utils"
-	dockerclient "github.com/fsouza/go-dockerclient"
 )
 
 type Agent struct {
@@ -217,7 +221,59 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		return setFailed(fmt.Errorf("Unexpected plugin type %v", pl.Type))
 	}
 
-	ch := a.dclient.RunImage(ctx, cfg, hostCfg)
+	if sharedFiles := sess.Step.Conf.SharedFiles; sharedFiles != nil && len(sharedFiles) > 0 {
+		tmpRoot := os.TempDir()
+		if isBoot2Docker {
+			// in mac os boot2docker, our binded directories must be inside the /Users home directory
+			// TODO (m0sth8): exclude tmp root to config files
+			tmpRoot = filepath.Join(homedir.Get(), "Library/Caches/bearded-web")
+			err := os.MkdirAll(tmpRoot, 0755)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return setFailed(fmt.Errorf("Can't create a tmp directory %s", tmpRoot))
+			}
+		}
+		tmpDir, err := ioutil.TempDir(tmpRoot, "bearded-volume-")
+		if err != nil {
+			logrus.Error(stackerr.Wrap(err))
+			return setFailed(fmt.Errorf("Can't create a temp directory"))
+		}
+		defer func() {
+			os.RemoveAll(tmpDir)
+		}()
+		shareDir := filepath.Join(tmpDir, "share")
+		err = os.MkdirAll(shareDir, 0755)
+		if err != nil {
+			logrus.Error(stackerr.Wrap(err))
+			return setFailed(fmt.Errorf("Can't create a share directory"))
+		}
+		for _, sharedFile := range sharedFiles {
+			base := filepath.Base(sharedFile.Path)
+			dir := filepath.Dir(sharedFile.Path)
+			dir = filepath.Join(shareDir, filepath.Join("/", dir))
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return setFailed(fmt.Errorf("Can't create a directory"))
+			}
+			err = ioutil.WriteFile(filepath.Join(dir, base), []byte(sharedFile.Text), 0644)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return setFailed(fmt.Errorf("Can't create a temporary file"))
+			}
+			println("put file", filepath.Join(dir, base))
+		}
+		hostCfg.Binds = append(hostCfg.Binds, fmt.Sprintf("%s:/share:r", shareDir))
+		println("bind", fmt.Sprintf("%s:/share:ro", shareDir))
+	}
+
+	takeFiles := []string{}
+	if sess.Step.Conf.TakeFiles != nil {
+		for _, f := range sess.Step.Conf.TakeFiles {
+			takeFiles = append(takeFiles, f.Path)
+		}
+	}
+	ch := a.dclient.RunImage(ctx, cfg, hostCfg, takeFiles)
 	// creating container
 	var container *dockerclient.Container
 	select {
@@ -286,6 +342,24 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		Type: report.TypeRaw,
 		Raw:  report.Raw{Raw: string(res.Log)},
 	}
+	// handle files from container
+	if sess.Step.Conf.TakeFiles != nil && res.Files != nil {
+		for _, f := range sess.Step.Conf.TakeFiles {
+			if data, found := res.Files[f.Path]; found {
+				name := f.Path
+				if f.Name != "" {
+					name = f.Name
+				}
+				meta, err := a.api.Files.Create(ctx, name, data)
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					continue
+				}
+				raw.Files = append(raw.Files, meta)
+			}
+		}
+	}
+
 	rep = raw
 	switch pl.Type {
 	case plugin.Script:

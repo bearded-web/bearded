@@ -5,12 +5,14 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/bearded-web/bearded/models/file"
 	"github.com/bearded-web/bearded/models/tech"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
 
 type Raw struct {
-	Raw string `json:"raw"`
+	Raw   string       `json:"raw"`
+	Files []*file.Meta `json:"files,omitempty" bson:"files,omitempty"`
 }
 
 type Report struct {
