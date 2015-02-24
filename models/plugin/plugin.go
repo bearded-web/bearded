@@ -25,11 +25,6 @@ type Required struct {
 	Dependence Dependence `json:"dependence" description:"one of blocking|important|optional"` // with blocking dependency plugin will not run
 }
 
-type Conf struct {
-	CommandArgs string `json:"commandArgs,omitempty" description:"passed to command line for plugins with type:util"`
-	Target      string
-}
-
 type Plugin struct {
 	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Name      string        `json:"name" description:"unique plugin id, ex: barbudo/wpscan"` // TODO: do we need aliases or tags?

@@ -8,7 +8,6 @@ import (
 	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/agent/api"
@@ -98,7 +97,7 @@ func (s *RemoteServer) GetPluginVersions(ctx context.Context, name string) ([]st
 	return versions, nil
 }
 
-func (s *RemoteServer) GetConfig(ctx context.Context) (*plugin.Conf, error) {
+func (s *RemoteServer) GetConfig(ctx context.Context) (*plan.Conf, error) {
 	return s.sess.Step.Conf, nil
 }
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 )
 
@@ -49,7 +48,7 @@ func (p *Plugin) LatestVersion() string {
 	return p.Versions[len(p.Versions)-1]
 }
 
-func (p *Plugin) Run(ctx context.Context, version string, conf *plugin.Conf) (*report.Report, error) {
+func (p *Plugin) Run(ctx context.Context, version string, conf *plan.Conf) (*report.Report, error) {
 	step := plan.WorkflowStep{
 		Name:   "underscan",
 		Plugin: fmt.Sprintf("%s:%s", p.Name, version),

@@ -5,7 +5,6 @@ import (
 
 	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 )
 
@@ -32,6 +31,6 @@ func (f *FakeClient) SendReport(ctx context.Context, rep *report.Report) error {
 	return nil
 }
 
-func (f *FakeClient) GetConfig(ctx context.Context) (*plugin.Conf, error) {
+func (f *FakeClient) GetConfig(ctx context.Context) (*plan.Conf, error) {
 	return nil, nil
 }

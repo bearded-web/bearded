@@ -3,7 +3,6 @@ package api
 
 import (
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 )
 
@@ -27,7 +26,7 @@ type RequestV1 struct {
 }
 
 type ResponseV1 struct {
-	GetConfig *plugin.Conf
+	GetConfig *plan.Conf
 
 	GetPluginVersions []string
 	RunPlugin         *report.Report

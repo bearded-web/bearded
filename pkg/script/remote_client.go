@@ -4,12 +4,12 @@ import (
 	"fmt"
 
 	"code.google.com/p/go.net/context"
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/transport"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type RemoteClient struct {
@@ -57,7 +57,7 @@ func (s *RemoteClient) WaitForConnection(ctx context.Context) error {
 
 // Client Methods
 
-func (c *RemoteClient) GetConfig(ctx context.Context) (*plugin.Conf, error) {
+func (c *RemoteClient) GetConfig(ctx context.Context) (*plan.Conf, error) {
 	req := api.RequestV1{
 		Method: api.GetConfig,
 	}

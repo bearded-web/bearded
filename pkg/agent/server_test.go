@@ -32,7 +32,7 @@ func TestServerMethods(t *testing.T) {
 
 	sess := &scan.Session{
 		Step: &plan.WorkflowStep{
-			Conf: &plugin.Conf{
+			Conf: &plan.Conf{
 				CommandArgs: "args",
 			},
 		},
@@ -44,7 +44,7 @@ func TestServerMethods(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
-	actualCfg := &plugin.Conf{}
+	actualCfg := &plan.Conf{}
 
 	transp.Mock.On("Request", ctx,
 		api.RequestV1{Method: api.GetConfig},
