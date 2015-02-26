@@ -34,3 +34,7 @@ func (f *FakeClient) SendReport(ctx context.Context, rep *report.Report) error {
 func (f *FakeClient) GetConfig(ctx context.Context) (*plan.Conf, error) {
 	return nil, nil
 }
+
+func (f *FakeClient) DownloadFile(ctx context.Context, fileId string) ([]byte, error) {
+	return nil, nil
+}

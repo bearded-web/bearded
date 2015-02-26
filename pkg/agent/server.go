@@ -2,7 +2,7 @@ package agent
 
 import (
 	"fmt"
-
+	"io/ioutil"
 	"time"
 
 	"code.google.com/p/go.net/context"
@@ -68,7 +68,12 @@ func (s *RemoteServer) Handle(ctx context.Context, msg transport.Extractor) (int
 		if err := s.SendReport(ctx, req.SendReport); err != nil {
 			return nil, err
 		}
-
+	case api.DownloadFile:
+		if data, err := s.DownloadFile(ctx, req.DownloadFile); err != nil {
+			return nil, err
+		} else {
+			resp.DownloadFile = data
+		}
 	default:
 		return nil, fmt.Errorf("Unknown method requested %s", req.Method)
 	}
@@ -141,7 +146,7 @@ loop:
 			time.Sleep(time.Second * 30)
 			continue loop
 		}
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 2)
 	}
 
 	rep, err := s.api.Scans.SessionReportGet(ctx, sess)
@@ -156,16 +161,10 @@ func (s *RemoteServer) SendReport(ctx context.Context, rep *report.Report) error
 	return nil
 }
 
-var reportTool string = `
-{
-  "type": "raw",
-  "raw": "{\n  \"angularjs\": {\n    \"component\": \"angularjs\",\n    \"version\": \"1.2.12\",\n    \"vulnerabilities\": [\n      \"https://github.com/angular/angular.js/blob/b3b5015cb7919708ce179dc3d6f0d7d7f43ef621/CHANGELOG.md\",\n      \"http://avlidienbrunn.se/angular.txt\",\n      \"https://github.com/angular/angular.js/commit/b39e1d47b9a1b39a9fe34c847a81f589fba522f8\"\n    ]\n  },\n  \"jquery\": {\n    \"component\": \"jquery\",\n    \"version\": \"1.11.1\"\n  }\n}"
-}`
-
-var reportTool2 string = `
-{
-	"type": "raw",
-	"raw": "{ \"jquery\": { \"component\": \"jquery\", \"version\": \"1.7.2\", \"vulnerabilities\": [ \"http://bugs.jquery.com/ticket/11290\", \"http://research.insecurelabs.org/jquery/test/\" ] } }"
+func (s *RemoteServer) DownloadFile(ctx context.Context, fileId string) ([]byte, error) {
+	buf, err := s.api.Files.Download(ctx, fileId)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(buf)
 }
-
-`

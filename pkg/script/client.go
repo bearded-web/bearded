@@ -12,4 +12,5 @@ type ClientV1 interface {
 	GetPlugin(ctx context.Context, name string) (*Plugin, error)
 	RunPlugin(ctx context.Context, step *plan.WorkflowStep) (*report.Report, error)
 	SendReport(ctx context.Context, rep *report.Report) error
+	DownloadFile(ctx context.Context, fileId string) ([]byte, error)
 }

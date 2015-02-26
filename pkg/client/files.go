@@ -1,10 +1,12 @@
 package client
 
 import (
-	"code.google.com/p/go.net/context"
-
-	"github.com/bearded-web/bearded/models/file"
+	"bytes"
+	"fmt"
 	"io"
+
+	"code.google.com/p/go.net/context"
+	"github.com/bearded-web/bearded/models/file"
 )
 
 const (
@@ -34,4 +36,13 @@ func (s *FilesService) Create(ctx context.Context, filename string, data io.Read
 		},
 	}
 	return meta, s.client.Upload(ctx, filesUrl, files, meta)
+}
+
+func (s *FilesService) Download(ctx context.Context, id string) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	err := s.client.Get(ctx, fmt.Sprintf("%s/%s", filesUrl, id), "download", buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }

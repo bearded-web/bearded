@@ -15,6 +15,7 @@ const (
 	GetPluginVersions
 	RunPlugin
 	SendReport
+	DownloadFile
 )
 
 type RequestV1 struct {
@@ -23,6 +24,7 @@ type RequestV1 struct {
 	GetPluginVersions string
 	RunPlugin         *plan.WorkflowStep
 	SendReport        *report.Report
+	DownloadFile      string
 }
 
 type ResponseV1 struct {
@@ -30,4 +32,5 @@ type ResponseV1 struct {
 
 	GetPluginVersions []string
 	RunPlugin         *report.Report
+	DownloadFile      []byte
 }

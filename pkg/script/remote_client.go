@@ -103,3 +103,15 @@ func (c *RemoteClient) SendReport(ctx context.Context, rep *report.Report) error
 	}
 	return nil
 }
+
+func (c *RemoteClient) DownloadFile(ctx context.Context, fileId string) ([]byte, error) {
+	req := api.RequestV1{
+		Method:       api.DownloadFile,
+		DownloadFile: fileId,
+	}
+	resp := api.ResponseV1{}
+	if err := c.transp.Request(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+	return resp.DownloadFile, nil
+}

@@ -2,16 +2,16 @@ package agent
 
 import (
 	"fmt"
-	"strings"
-	"time"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
-	"github.com/facebookgo/stackerr"
 	"github.com/docker/docker/pkg/homedir"
+	"github.com/facebookgo/stackerr"
 	dockerclient "github.com/fsouza/go-dockerclient"
 
 	"github.com/bearded-web/bearded/models/agent"
