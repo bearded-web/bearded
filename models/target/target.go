@@ -39,3 +39,8 @@ func (t *Target) Addr() string {
 	}
 	return ""
 }
+
+type TargetIssue struct {
+	Issue  *report.Issue `json:"issue"`
+	Status IssueStatus   `json:"status"`
+}
