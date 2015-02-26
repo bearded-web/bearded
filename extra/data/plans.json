@@ -19,6 +19,27 @@
         ]
     },
     {
+        "name": "test",
+        "desc": "Test script",
+        "targetType": "web",
+        "workflow": [
+            {
+                "plugin": "barbudo/test:0.0.2",
+                "name": "TEST",
+                "desc": "fuf",
+                "conf": {
+                    "commandArgs": "{{ .Target }}",
+                    "takeFiles": [
+                        {"path": "/extra/run.sh", "name": "run.sh"}
+                    ],
+                    "sharedFiles": [
+                        {"path": "file.txt", "text": "data in file"}
+                    ]
+                }
+            }
+        ]
+    },
+    {
         "name": "detectJs",
         "desc": "Detect web technologies used by the site with wappalyzer and retirejs",
         "targetType": "web",
@@ -70,5 +91,19 @@
                 }
             }
         ]
+    },
+    {
+        "name": "W3af base profile scan",
+        "desc": "Scan web target with w3af base profile",
+        "targetType": "web",
+        "workflow": [
+            {
+                "plugin": "barbudo/w3af-script:0.0.2",
+                "name": "W3af scan",
+                "desc": "Scan web target with w3af base profile",
+                "conf": {}
+            }
+        ]
     }
+
 ]

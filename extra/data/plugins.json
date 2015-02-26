@@ -42,6 +42,34 @@
         }
     },
     {
+        "name": "barbudo/w3af",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "heavy",
+        "desc": {
+            "title": "W3af",
+            "info": "W3af is a black box web vulnerability scanner.",
+            "url": "https://registry.hub.docker.com/u/barbudo/w3af/"
+        },
+        "container": {
+            "image": "barbudo/w3af"
+        }
+    },
+    {
+        "name": "barbudo/w3af-script",
+        "version": "0.0.2",
+        "type": "script",
+        "weight": "heavy",
+        "desc": {
+            "title": "W3af script",
+            "info": "W3af is a black box web vulnerability scanner.",
+            "url": "https://registry.hub.docker.com/u/barbudo/w3af-script/"
+        },
+        "container": {
+            "image": "barbudo/w3af-script"
+        }
+    },
+    {
         "name": "barbudo/wappalyzer-script",
         "version": "0.0.2",
         "type": "script",
@@ -53,6 +81,20 @@
         },
         "container": {
             "image": "barbudo/wappalyzer-script"
+        }
+    },
+    {
+        "name": "barbudo/test",
+        "version": "0.0.2",
+        "type": "util",
+        "weight": "middle",
+        "desc": {
+            "title": "Test",
+            "info": "Just test script",
+            "url": ""
+        },
+        "container": {
+            "image": "barbudo/test-script"
         }
     },
     {
