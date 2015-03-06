@@ -259,6 +259,11 @@ func (s *TargetService) commentsAdd(req *restful.Request, resp *restful.Response
 		return
 	}
 
+	if len(ent.Text) == 0 {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Text is required"))
+		return
+	}
+
 	u := filters.GetUser(req)
 	raw := &comment.Comment{
 		Owner: u.Id,
