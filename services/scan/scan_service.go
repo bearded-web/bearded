@@ -343,20 +343,15 @@ func (s *ScanService) reports(_ *restful.Request, resp *restful.Response, sc *sc
 
 	results := []*report.Report{}
 
-	for _, sess := range sc.Sessions {
-		rep, err := mgr.Reports.GetBySession(sess.Id)
-		if err != nil {
-			if mgr.IsNotFound(err) {
-				continue
-			}
-			logrus.Error(stackerr.Wrap(err))
-			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		}
-		results = append(results, rep)
+	results, count, err := mgr.Reports.FilterBySessions(sc.GetAllSessions())
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
 	}
 
 	reportList := report.ReportList{
-		Meta:    pagination.Meta{len(results), "", ""},
+		Meta:    pagination.Meta{count, "", ""},
 		Results: results,
 	}
 

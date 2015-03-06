@@ -48,6 +48,16 @@ func (p *Session) GetChild(id bson.ObjectId) *Session {
 	return nil
 }
 
+// get all children from this session and all children recursively
+func (p *Session) GetAllChildren() []*Session {
+	result := []*Session{}
+	result = append(result, p.Children...)
+	for _, child := range p.Children {
+		result = append(result, child.GetAllChildren()...)
+	}
+	return result
+}
+
 func (p *Session) HasParent() bool {
 	return p.Parent != ""
 }
@@ -96,4 +106,14 @@ func (p *Scan) GetSession(id bson.ObjectId) *Session {
 		}
 	}
 	return nil
+}
+
+// get all session from this session and all children recursively
+func (p *Scan) GetAllSessions() []*Session {
+	result := []*Session{}
+	result = append(result, p.Sessions...)
+	for _, child := range p.Sessions {
+		result = append(result, child.GetAllChildren()...)
+	}
+	return result
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/pkg/fltr"
+	"github.com/bearded-web/bearded/models/scan"
 )
 
 type ReportManager struct {
@@ -55,6 +56,15 @@ func (m *ReportManager) GetBySession(sessId bson.ObjectId) (*report.Report, erro
 	query := bson.M{"scanSession": sessId}
 	u := &report.Report{}
 	return u, m.manager.GetBy(m.col, &query, &u)
+}
+
+func (m *ReportManager) FilterBySessions(sessions []*scan.Session) ([]*report.Report, int, error) {
+	sessIds := make([]bson.ObjectId, 0, len(sessions))
+	for _, sess := range sessions {
+		sessIds = append(sessIds, sess.Id)
+	}
+	query := bson.M{"scanSession": bson.M{"$in": sessIds}}
+	return m.FilterByQuery(query)
 }
 
 func (m *ReportManager) All() ([]*report.Report, int, error) {
