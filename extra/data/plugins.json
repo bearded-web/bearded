@@ -98,6 +98,20 @@
         }
     },
     {
+        "name": "barbudo/wpscan-script",
+        "version": "0.0.2",
+        "type": "script",
+        "weight": "middle",
+        "desc": {
+            "title": "Wpscan script",
+            "info": "WPScan is a black box WordPress vulnerability scanner.",
+            "url": "https://registry.hub.docker.com/u/barbudo/wpscan-script/"
+        },
+        "container": {
+            "image": "barbudo/wpscan-script"
+        }
+    },
+    {
         "name": "barbudo/retirejs-script",
         "version": "0.0.2",
         "type": "script",

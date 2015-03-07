@@ -68,12 +68,10 @@
         "targetType": "web",
         "workflow": [
             {
-                "plugin": "barbudo/wpscan:0.0.2",
+                "plugin": "barbudo/wpscan-script:0.0.2",
                 "name": "Detect wordpress",
                 "desc": "Detect usage of wordpress and show known vulnerabilities",
-                "conf": {
-                    "commandArgs": "--url {{ .Target }} --follow-redirection --batch --no-color"
-                }
+                "conf": {}
             }
         ]
     },
