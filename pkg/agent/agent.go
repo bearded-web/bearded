@@ -10,7 +10,6 @@ import (
 
 	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/homedir"
 	"github.com/facebookgo/stackerr"
 	dockerclient "github.com/fsouza/go-dockerclient"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/docker"
 	"github.com/bearded-web/bearded/pkg/transport/mango"
 	"github.com/bearded-web/bearded/pkg/utils"
+	"github.com/bearded-web/bearded/vendor/homedir"
 )
 
 type Agent struct {
@@ -226,8 +226,13 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		if isBoot2Docker {
 			// in mac os boot2docker, our binded directories must be inside the /Users home directory
 			// TODO (m0sth8): exclude tmp root to config files
-			tmpRoot = filepath.Join(homedir.Get(), "Library/Caches/bearded-web")
-			err := os.MkdirAll(tmpRoot, 0755)
+			home, err := homedir.Dir()
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return setFailed(fmt.Errorf("Can't get a home directory"))
+			}
+			tmpRoot = filepath.Join(home, "Library/Caches/bearded-web")
+			err = os.MkdirAll(tmpRoot, 0755)
 			if err != nil {
 				logrus.Error(stackerr.Wrap(err))
 				return setFailed(fmt.Errorf("Can't create a tmp directory %s", tmpRoot))
