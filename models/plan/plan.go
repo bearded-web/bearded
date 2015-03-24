@@ -22,10 +22,12 @@ type SharedFile struct {
 
 type Conf struct {
 	CommandArgs string  `json:"commandArgs,omitempty" description:"passed to command line for plugins with type:util"`
-	Target      string  `json:"target" description:"used in script, taken from scan conf directly"`
-	TakeFiles   []*File `json:"takeFiles" description:"copy this files from container when it done"`
+	Target      string  `json:"target,omitempty" description:"used in script, taken from scan conf directly"`
+	FormData	string  `json:"formData,omitempty" description:"data from form is saved as json string here"`
 
-	SharedFiles []*SharedFile `json:"sharedFiles" description:"share file to container`
+	// this fields helps to communicate with container through files
+	TakeFiles   []*File `json:"takeFiles,omitempty" description:"copy this files from container when it's done"`
+	SharedFiles []*SharedFile `json:"sharedFiles,omitempty" description:"share file to container`
 }
 
 type WorkflowStep struct {
