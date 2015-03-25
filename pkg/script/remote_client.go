@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"code.google.com/p/go.net/context"
-	"github.com/davecgh/go-spew/spew"
-
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/pkg/agent/api"
@@ -31,7 +29,6 @@ func NewRemoteClient(transport transport.Transport) (*RemoteClient, error) {
 }
 
 func (s *RemoteClient) Handle(ctx context.Context, msg transport.Extractor) (interface{}, error) {
-	fmt.Printf("Handle msg", spew.Sdump(msg))
 	req := api.RequestV1{}
 	err := msg.Extract(&req)
 	if err != nil {

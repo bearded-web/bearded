@@ -13,7 +13,6 @@ import (
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/transport"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type RemoteServer struct {
@@ -34,7 +33,6 @@ func NewRemoteServer(transp transport.Transport, api *client.Client, sess *scan.
 }
 
 func (s *RemoteServer) Handle(ctx context.Context, msg transport.Extractor) (interface{}, error) {
-	fmt.Printf("Handle msg", spew.Sdump(msg))
 	req := api.RequestV1{}
 	resp := api.ResponseV1{}
 	err := msg.Extract(&req)

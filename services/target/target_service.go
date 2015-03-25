@@ -212,7 +212,7 @@ func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &target.TargetList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)
@@ -245,7 +245,7 @@ func (s *TargetService) comments(_ *restful.Request, resp *restful.Response, obj
 	}
 
 	result := &comment.CommentList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

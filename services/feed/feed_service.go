@@ -124,7 +124,7 @@ func (s *FeedService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &feed.Feed{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

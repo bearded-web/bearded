@@ -180,7 +180,7 @@ func (s *AgentService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &agent.AgentList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

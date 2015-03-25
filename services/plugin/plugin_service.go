@@ -143,7 +143,7 @@ func (s *PluginService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &plugin.PluginList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

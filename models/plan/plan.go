@@ -27,7 +27,7 @@ type Conf struct {
 
 	// this fields helps to communicate with container through files
 	TakeFiles   []*File       `json:"takeFiles,omitempty" description:"copy this files from container when it's done"`
-	SharedFiles []*SharedFile `json:"sharedFiles,omitempty" description:"share file to container`
+	SharedFiles []*SharedFile `json:"sharedFiles,omitempty" description:"share file to container"`
 }
 
 type WorkflowStep struct {

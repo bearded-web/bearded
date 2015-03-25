@@ -28,7 +28,7 @@ func (m *FileManager) GetById(id string) (*file.File, error) {
 	if err = f.GetMeta(meta); err != nil {
 		return nil, stackerr.Wrap(err)
 	}
-	return &file.File{meta, f}, nil
+	return &file.File{Meta: meta, ReadCloser: f}, nil
 }
 
 // create file with data

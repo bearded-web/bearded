@@ -113,7 +113,7 @@ func (s *UserService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &user.UserList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

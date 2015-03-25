@@ -59,7 +59,7 @@ func (s *ProjectService) RegisterMembers(ws *restful.WebService) {
 
 func (s *ProjectService) members(_ *restful.Request, resp *restful.Response, p *project.Project) {
 	result := &project.MemberList{
-		Meta:    pagination.Meta{len(p.Members), "", ""},
+		Meta:    pagination.Meta{Count: len(p.Members)},
 		Results: p.Members,
 	}
 	resp.WriteEntity(result)

@@ -295,7 +295,7 @@ func (s *ScanService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &scan.ScanList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)
@@ -367,7 +367,7 @@ func (s *ScanService) reports(_ *restful.Request, resp *restful.Response, sc *sc
 	}
 
 	reportList := report.ReportList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 

@@ -153,7 +153,7 @@ func (s *PlanService) list(req *restful.Request, resp *restful.Response) {
 	}
 
 	result := &plan.PlanList{
-		Meta:    pagination.Meta{count, "", ""},
+		Meta:    pagination.Meta{Count: count},
 		Results: results,
 	}
 	resp.WriteEntity(result)

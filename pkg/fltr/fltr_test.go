@@ -13,7 +13,7 @@ func TestGetFilterQuery(t *testing.T) {
 		Field1 string `fltr:"field1"`
 		Field2 string `fltr:"field2"`
 		Field3 int
-		Field4 int `fltr:",`
+		Field4 int `fltr:","`
 	}{
 		Field1: "value1",
 		Field3: 10,
