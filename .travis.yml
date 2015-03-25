@@ -1,12 +1,15 @@
 language: go
 
 go:
- - 1.4
+  - 1.4
 
 install:
  - go get -u github.com/golang/lint/golint
 
-script: make travis
+env: GOPATH=$TRAVIS_BUILD_DIR/Godeps/_workspace:$GOPATH
+
+script:
+ - make travis
 
 notifications:
   email: false
