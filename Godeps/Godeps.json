@@ -1,8 +1,8 @@
 {
 	"ImportPath": "github.com/bearded-web/bearded",
-	"GoVersion": "go1.4.1",
+	"GoVersion": "go1.4.2",
 	"Packages": [
-		"bearded.go"
+		"./..."
 	],
 	"Deps": [
 		{
@@ -94,6 +94,14 @@
 			"Rev": "f0559d009e6943011cd1ba6eb16195cf5e0ed326"
 		},
 		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "ab5b3a61f5b6aa323d66ece457334396c4ccdd03"
+		},
+		{
+			"ImportPath": "github.com/jtolds/gls",
+			"Rev": "f1ac7f4f24f50328e6bc838ca4437d1612a0243c"
+		},
+		{
 			"ImportPath": "github.com/m0sth8/cli",
 			"Comment": "1.2.0-63-g8814969",
 			"Rev": "8814969dbe11ffd1486a38def8214462a9db61ab"
@@ -101,6 +109,32 @@
 		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "46e1db27972f44c7722f23195ba6a8d2c2f3a0a3"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions",
+			"Comment": "1.5.0-379-g75acd40",
+			"Rev": "75acd402ca38dc205641a826bb58b9de014926dd"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/goconvey/convey",
+			"Comment": "1.5.0-380-g1d9daca",
+			"Rev": "1d9daca83fc3cf35d01b9d0ac2debad3453bf178"
+		},
+		{
+			"ImportPath": "github.com/stretchr/objx",
+			"Rev": "cbeaeb16a013161a98496fad62933b1d21786672"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Rev": "33a31e5dbed8302d5ab7e6d12b416e95c2c4ebc0"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/mock",
+			"Rev": "33a31e5dbed8302d5ab7e6d12b416e95c2c4ebc0"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/require",
+			"Rev": "33a31e5dbed8302d5ab7e6d12b416e95c2c4ebc0"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/bcrypt",
