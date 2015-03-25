@@ -47,7 +47,7 @@ func New(db *mgo.Database) *Manager {
 	m.Agents = &AgentManager{manager: m, col: db.C("agents")}
 	m.Reports = &ReportManager{manager: m, col: db.C("reports")}
 	m.Feed = &FeedManager{manager: m, col: db.C("feed")}
-	m.Files = &FileManager{manager: m, grid: db.GridFS("")}
+	m.Files = &FileManager{manager: m, grid: db.GridFS("fs")}
 	m.Comments = &CommentManager{manager: m, col: db.C("comments")}
 
 	m.managers = append(m.managers,

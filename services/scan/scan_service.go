@@ -227,6 +227,22 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 				}
 				step.Conf.CommandArgs = buf.String()
 			}
+			if formData := step.Conf.FormData; formData != "" {
+				t, err := template.New("").Parse(formData)
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					resp.WriteServiceError(http.StatusInternalServerError, services.NewAppErr("Wrong form data template"))
+					return
+				}
+				buf := bytes.NewBuffer(nil)
+				err = t.Execute(buf, sc.Conf)
+				if err != nil {
+					logrus.Error(stackerr.Wrap(err))
+					resp.WriteServiceError(http.StatusInternalServerError, services.NewAppErr("Wrong form data template"))
+					return
+				}
+				step.Conf.FormData = buf.String()
+			}
 			if target := step.Conf.Target; target == "" {
 				step.Conf.Target = sc.Conf.Target
 			}

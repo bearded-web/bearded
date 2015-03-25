@@ -136,7 +136,6 @@ func (s *FileService) TakeFile(fn func(*restful.Request,
 		defer mgr.Close()
 
 		obj, err := mgr.Files.GetById(id)
-		defer obj.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
 				resp.WriteErrorString(http.StatusNotFound, "Not found")
@@ -146,6 +145,7 @@ func (s *FileService) TakeFile(fn func(*restful.Request,
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
+		defer obj.Close()
 		fn(req, resp, obj)
 	}
 }

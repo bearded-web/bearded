@@ -99,7 +99,9 @@
                 "plugin": "barbudo/w3af-script:0.0.2",
                 "name": "W3af scan",
                 "desc": "Scan web target with w3af base profile",
-                "conf": {}
+                "conf": {
+                    "formData": "{\"data\":\"[misc-settings]\\nmaxDiscoveryTime = 3\\nmaxThreads = 0\\nfuzzFCExt = txt\\nfuzzURLParts = True\\nautoDependencies = True\\nfuzzFormComboValues = t\\n\\n[audit.xss]\\n[audit.sqli]\\n[crawl.web_spider]\\n[output.console]\\nverbose = False\\n\\n[target]\\ntarget = {{ .Target }}\",\"type\":\"plan\"}"
+                }
             }
         ]
     }
