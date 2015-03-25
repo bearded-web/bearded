@@ -9,7 +9,7 @@ travis: all
 
 test:
 	@echo "+ $@"
-	@go test -cover ./...
+	@go test -v -cover ./...
 
 
 lint:
