@@ -6,7 +6,6 @@ import (
 
 	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/models/plan"
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/transport"

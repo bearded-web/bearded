@@ -8,8 +8,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/report"
-	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
 type ReportManager struct {
