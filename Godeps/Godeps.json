@@ -55,6 +55,11 @@
 			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
 		},
 		{
+			"ImportPath": "github.com/docker/docker/pkg/units",
+			"Comment": "v1.4.1-1056-g99ca215",
+			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
+		},
+		{
 			"ImportPath": "github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar",
 			"Comment": "v1.4.1-1056-g99ca215",
 			"Rev": "99ca215c65e9a482f981790f2d4dbe8d4ccce4be"
