@@ -6,9 +6,8 @@ go:
 install:
  - go get -u github.com/golang/lint/golint
 
-env: GOPATH=$TRAVIS_BUILD_DIR/Godeps/_workspace:$GOPATH
-
 script:
+ - export GOPATH=$TRAVIS_BUILD_DIR/Godeps/_workspace:$GOPATH
  - make travis
 
 notifications:
