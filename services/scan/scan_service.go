@@ -18,6 +18,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
+	"github.com/bearded-web/bearded/models/plan"
 )
 
 const (
@@ -167,7 +168,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	plan, err := mgr.Plans.GetById(raw.Plan)
+	planObj, err := mgr.Plans.GetById(raw.Plan)
 	if err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteServiceError(http.StatusBadRequest,
@@ -178,7 +179,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
-	if plan.TargetType != target.Type {
+	if planObj.TargetType != target.Type {
 		resp.WriteServiceError(http.StatusBadRequest,
 			services.NewBadReq("target.type and plan.targetType is not compatible"))
 		return
@@ -197,7 +198,7 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 	}
 	now := time.Now().UTC()
 	// Add session from plans workflow steps
-	for _, step := range plan.Workflow {
+	for _, step := range planObj.Workflow {
 		plugin, err := mgr.Plugins.GetByName(step.Plugin)
 		if err != nil {
 			if mgr.IsNotFound(err) {
@@ -245,6 +246,10 @@ func (s *ScanService) create(req *restful.Request, resp *restful.Response) {
 			}
 			if target := step.Conf.Target; target == "" {
 				step.Conf.Target = sc.Conf.Target
+			}
+		} else {
+			step.Conf = &plan.Conf{
+				Target: sc.Conf.Target,
 			}
 		}
 
