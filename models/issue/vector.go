@@ -23,7 +23,7 @@ type HttpTransaction struct {
 }
 
 type Vector struct {
-	Url              string             `json:"urls,omitempty" description:"where this issue is happened"`
+	Url              string             `json:"url,omitempty" description:"where this issue is happened"`
 	HttpTransactions []*HttpTransaction `json:"httpTransactions,omitempty" bson:"httpTransactions"`
 }
 
