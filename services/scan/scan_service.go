@@ -11,6 +11,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
+	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/filters"
@@ -18,7 +19,6 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
-	"github.com/bearded-web/bearded/models/plan"
 )
 
 const (

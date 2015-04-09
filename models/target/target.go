@@ -5,12 +5,12 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/bearded-web/bearded/models/report"
+	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
 
 type SummaryReport struct {
-	Issues map[report.Severity]int `json:"issues"`
+	Issues map[issue.Severity]int `json:"issues"`
 }
 
 type Target struct {
@@ -38,9 +38,4 @@ func (t *Target) Addr() string {
 		return t.Web.Domain
 	}
 	return ""
-}
-
-type TargetIssue struct {
-	Issue  *report.Issue `json:"issue"`
-	Status IssueStatus   `json:"status"`
 }

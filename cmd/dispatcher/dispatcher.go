@@ -20,6 +20,7 @@ import (
 	"github.com/bearded-web/bearded/services/auth"
 	"github.com/bearded-web/bearded/services/feed"
 	"github.com/bearded-web/bearded/services/file"
+	"github.com/bearded-web/bearded/services/issue"
 	"github.com/bearded-web/bearded/services/me"
 	"github.com/bearded-web/bearded/services/plan"
 	"github.com/bearded-web/bearded/services/plugin"
@@ -100,6 +101,7 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 		agent.New(base),
 		feed.New(base),
 		file.New(base),
+		issue.New(base),
 	}
 
 	// initialize services

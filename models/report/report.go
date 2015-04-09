@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/file"
+	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/models/tech"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
@@ -25,9 +26,9 @@ type Report struct {
 
 	Raw `json:",inline,omitempty" bson:"raw,inline"`
 
-	Multi  []*Report `json:"multi,omitempty" bson:"multi,omitempty"`
-	Issues []*Issue  `json:"issues,omitempty" bson:"issues,omitempty"`
-	Techs  []*Tech   `json:"techs,omitempty"`
+	Multi  []*Report      `json:"multi,omitempty" bson:"multi,omitempty"`
+	Issues []*issue.Issue `json:"issues,omitempty" bson:"issues,omitempty"`
+	Techs  []*tech.Tech   `json:"techs,omitempty"`
 }
 
 type ReportList struct {
@@ -35,16 +36,7 @@ type ReportList struct {
 	Results         []*Report `json:"results"`
 }
 
-type Tech struct {
-	Categories []tech.Category `json:"categories,omitempty"`
-	Name       string          `json:"name"`
-	Version    string          `json:"version"`
-	Confidence int             `json:"confidence"`
-	Icon       string          `json:"icon,omitempty" description:"base64 image"`
-	Url        string          `json:"url" description:"url to technology"`
-}
-
-// set scan to report and all multi reports if they are existed
+// set scan to report and all underlying multi reports if they are existed
 func (r *Report) SetScan(scanId bson.ObjectId) {
 	r.Scan = scanId
 	if r.Type == TypeMulti {
