@@ -80,7 +80,7 @@ func (m *UserManager) GetById(id bson.ObjectId) (*user.User, error) {
 
 func (m *UserManager) GetByEmail(email string) (*user.User, error) {
 	u := &user.User{}
-	if err := m.col.Find(bson.D{{"email", email}}).One(u); err != nil {
+	if err := m.col.Find(bson.D{{Name: "email", Value: email}}).One(u); err != nil {
 		return nil, err
 	}
 	return u, nil

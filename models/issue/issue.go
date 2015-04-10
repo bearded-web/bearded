@@ -29,9 +29,10 @@ type Issue struct {
 }
 
 type Status struct {
-	Confirmed bool `json:"confirmed"`
+	Confirmed bool `json:"confirmed" description:"the issue was confirmed by someone"`
 	False     bool `json:"false"`
 	Muted     bool `json:"muted"`
+	Resolved  bool `json:"resolved"`
 }
 
 type Report struct {

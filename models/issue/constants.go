@@ -50,6 +50,8 @@ const (
 	ActivityUnmuted   = ActivityType("unmuted")
 	ActivityFalse     = ActivityType("false") // set to false
 	ActivityTrue      = ActivityType("true")  // set to true
+	ActivityResolved  = ActivityType("resolved")
+	ActivityReopened  = ActivityType("reopened")
 )
 
 var activities = []interface{}{
