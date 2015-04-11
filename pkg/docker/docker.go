@@ -9,10 +9,10 @@ import (
 	"path"
 	"path/filepath"
 
-	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
 	dockerclient "github.com/fsouza/go-dockerclient"
+	"golang.org/x/net/context"
 )
 
 type ContainerResponse struct {

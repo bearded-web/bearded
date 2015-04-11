@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
 	dockerclient "github.com/fsouza/go-dockerclient"
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/models/agent"
 	"github.com/bearded-web/bearded/models/plugin"

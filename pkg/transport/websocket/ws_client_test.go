@@ -8,9 +8,9 @@ import (
 
 	"net/http/httptest"
 
-	"golang.org/x/net/context"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/pkg/transport"
 )

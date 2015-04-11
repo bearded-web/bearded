@@ -1,8 +1,8 @@
 package script
 
 import (
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/plan"
+	"golang.org/x/net/context"
 )
 
 type Scripter interface {

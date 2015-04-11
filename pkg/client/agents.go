@@ -3,8 +3,8 @@ package client
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/agent"
+	"golang.org/x/net/context"
 )
 
 const (

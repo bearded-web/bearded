@@ -12,10 +12,10 @@ import (
 	"net/url"
 	"reflect"
 
-	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
 	"github.com/google/go-querystring/query"
+	"golang.org/x/net/context"
 	"gopkg.in/mgo.v2/bson"
 	"mime/multipart"
 )

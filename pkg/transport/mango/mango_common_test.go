@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestHandleConnection(t *testing.T) {

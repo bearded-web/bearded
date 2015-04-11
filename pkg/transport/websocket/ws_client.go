@@ -3,9 +3,9 @@ package websocket
 import (
 	"crypto/tls"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 )
 
 type client struct {

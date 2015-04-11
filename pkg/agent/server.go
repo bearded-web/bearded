@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
@@ -13,6 +12,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/transport"
+	"golang.org/x/net/context"
 )
 
 type RemoteServer struct {

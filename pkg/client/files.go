@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/file"
+	"golang.org/x/net/context"
 )
 
 const (

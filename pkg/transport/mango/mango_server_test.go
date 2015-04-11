@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 const testAddr string = "tcp://127.0.0.1:54673"

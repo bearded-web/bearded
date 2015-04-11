@@ -4,8 +4,8 @@ import (
 	"time"
 
 	//	"github.com/codegangpsta/cli"
-	"golang.org/x/net/context"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/utils"

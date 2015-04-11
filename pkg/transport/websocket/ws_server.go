@@ -3,10 +3,10 @@ package websocket
 import (
 	"net/http"
 
-	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 )
 
 type server struct {

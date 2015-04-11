@@ -3,8 +3,8 @@ package client
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/plan"
+	"golang.org/x/net/context"
 )
 
 const plansUrl = "plans"

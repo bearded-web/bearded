@@ -1,9 +1,9 @@
 package script
 
 import (
-	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
+	"golang.org/x/net/context"
 )
 
 // Client helps to communicate with agent
