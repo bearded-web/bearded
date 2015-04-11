@@ -4,7 +4,7 @@
 all: test vet fmt
 
 
-travis: all
+travis: test fmt
 
 
 test:
