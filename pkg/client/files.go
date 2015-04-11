@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/file"
 )
 

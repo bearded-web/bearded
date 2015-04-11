@@ -1,7 +1,7 @@
 package mango
 
 import (
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gdamore/mangos"
 )

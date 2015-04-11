@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"

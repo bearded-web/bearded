@@ -3,7 +3,7 @@ package mango
 import (
 	"encoding/json"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/facebookgo/stackerr"
 	"github.com/gdamore/mangos"

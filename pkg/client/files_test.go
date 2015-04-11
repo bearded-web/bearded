@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/pkg/utils"
 	"github.com/stretchr/testify/require"
 )

@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 )
 
 type Extractor interface {

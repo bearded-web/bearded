@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/require"
 )

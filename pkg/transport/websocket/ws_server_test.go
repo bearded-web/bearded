@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
 

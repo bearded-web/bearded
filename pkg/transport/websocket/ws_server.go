@@ -3,7 +3,7 @@ package websocket
 import (
 	"net/http"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gorilla/websocket"

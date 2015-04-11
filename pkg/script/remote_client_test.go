@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/transport"

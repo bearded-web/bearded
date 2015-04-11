@@ -3,7 +3,7 @@ package transport
 import (
 	"fmt"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/davecgh/go-spew/spew"
 )

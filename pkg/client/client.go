@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"reflect"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/facebookgo/stackerr"
 	"github.com/google/go-querystring/query"
