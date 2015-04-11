@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"gopkg.in/mgo.v2"
@@ -80,4 +81,28 @@ func (m *TargetManager) Update(obj *target.Target) error {
 
 func (m *TargetManager) Remove(obj *target.Target) error {
 	return m.col.RemoveId(obj.Id)
+}
+
+func (m *TargetManager) UpdateSummary(obj *target.Target) error {
+	fltr := &IssueFltr{
+		Target:   obj.Id,
+		False:    false,
+		Resolved: false,
+		Muted:    false,
+	}
+	// TODO(m0sth8): get only severity/count through aggregation
+	issues, _, err := m.manager.Issues.FilterBy(fltr)
+	if err != nil {
+		return err
+	}
+	summary := map[issue.Severity]int{}
+	for _, issue := range issues {
+		summary[issue.Severity] = summary[issue.Severity] + 1
+	}
+	if obj.SummaryReport == nil {
+		obj.SummaryReport = &target.SummaryReport{}
+	}
+	obj.SummaryReport.Issues = summary
+	// TODO(m0sth8): update only summary field
+	return m.Update(obj)
 }

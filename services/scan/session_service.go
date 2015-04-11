@@ -57,6 +57,8 @@ func (s *ScanService) RegisterSessions(ws *restful.WebService) {
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	ws.Route(r)
 
+	// TODO (m0sth8): exclude reports to it's own service
+
 	r = ws.GET(fmt.Sprintf("{%s}/sessions/{%s}/report", ParamId, SessionParamId)).To(s.TakeScan(s.TakeSession(s.sessionReportGet)))
 	r.Doc("sessionReportGet")
 	r.Operation("sessionReportGet")
@@ -290,6 +292,8 @@ func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess
 	mgr := s.Manager()
 	defer mgr.Close()
 
+	isIssuesAdded := false
+
 	for _, issueObj := range issues {
 		targetIssue := &issue.TargetIssue{
 			Target:  sc.Target,
@@ -301,9 +305,22 @@ func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess
 		if err != nil {
 			if mgr.IsDup(err) {
 				// TODO(m0sth8): add new report activity to existed issue
+				continue
 			} else {
 				return stackerr.Wrap(err)
 			}
+		}
+		isIssuesAdded = true
+	}
+	if isIssuesAdded {
+		// TODO(m0sth8): exclude summary updating
+		targetObj, err := mgr.Targets.GetById(sc.Target)
+		if err != nil {
+			return stackerr.Wrap(err)
+		}
+		err = mgr.Targets.UpdateSummary(targetObj)
+		if err != nil {
+			return stackerr.Wrap(err)
 		}
 	}
 

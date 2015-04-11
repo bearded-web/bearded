@@ -19,10 +19,15 @@ type IssueManager struct {
 }
 
 type IssueFltr struct {
-	Updated time.Time     `fltr:"updated,gte,gt,lte,lt"`
-	Created time.Time     `fltr:"created,gte,gt,lte,lt"`
-	Target  bson.ObjectId `fltr:"target,in"`
-	Project bson.ObjectId `fltr:"project"`
+	Updated   time.Time      `fltr:"updated,gte,gt,lte,lt"`
+	Created   time.Time      `fltr:"created,gte,gt,lte,lt"`
+	Target    bson.ObjectId  `fltr:"target,in"`
+	Project   bson.ObjectId  `fltr:"project"`
+	Confirmed bool           `fltr:"confirmed"`
+	Muted     bool           `fltr:"muted"`
+	Resolved  bool           `fltr:"resolved"`
+	False     bool           `fltr:"false"`
+	Severity  issue.Severity `fltr:"severity,in"`
 }
 
 func (s *IssueManager) Init() error {

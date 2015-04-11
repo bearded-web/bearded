@@ -21,7 +21,7 @@ type Target struct {
 	Created time.Time     `json:"created,omitempty"`
 	Updated time.Time     `json:"updated,omitempty"`
 
-	SummaryReport *SummaryReport `json:"summaryReport,omitempty" bson:"-"`
+	SummaryReport *SummaryReport `json:"summaryReport,omitempty" bson:"summaryReport"`
 }
 
 type WebTarget struct {
