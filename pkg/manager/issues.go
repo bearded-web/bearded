@@ -28,7 +28,7 @@ type IssueFltr struct {
 func (s *IssueManager) Init() error {
 	logrus.Infof("Initialize issue indexes")
 	err := s.col.EnsureIndex(mgo.Index{
-		Key:        []string{"project", "uniqId"},
+		Key:        []string{"target", "uniqId"},
 		Unique:     true,
 		Background: false,
 	})

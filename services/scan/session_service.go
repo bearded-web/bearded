@@ -9,6 +9,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
+	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/manager"
@@ -267,8 +268,46 @@ func (s *ScanService) sessionReportCreate(req *restful.Request, resp *restful.Re
 		return
 	}
 
+	// create target issues from report
+	// TODO (m0sth8): exclude to another process (maybe push to queue)
+	err = s.createTargetIssues(rep, sc, sess)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(rep)
+}
+
+func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess *scan.Session) error {
+	issues := rep.GetAllIssues()
+	if len(issues) == 0 {
+		return nil
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	for _, issueObj := range issues {
+		targetIssue := &issue.TargetIssue{
+			Target:  sc.Target,
+			Project: sc.Project,
+			Issue:   *issueObj,
+		}
+		targetIssue.AddReportActivity(rep.Id, sc.Id, sess.Id)
+		_, err := mgr.Issues.Create(targetIssue)
+		if err != nil {
+			if mgr.IsDup(err) {
+				// TODO(m0sth8): add new report activity to existed issue
+			} else {
+				return stackerr.Wrap(err)
+			}
+		}
+	}
+
+	return nil
 }
 
 // Helpers

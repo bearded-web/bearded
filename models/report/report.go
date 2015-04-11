@@ -54,3 +54,17 @@ func (r *Report) SetScanSession(sessionId bson.ObjectId) {
 		}
 	}
 }
+
+// get all issues from the report and underlying multi reports
+func (r *Report) GetAllIssues() []*issue.Issue {
+	var issues []*issue.Issue
+	switch r.Type {
+	case TypeMulti:
+		for _, subReport := range r.Multi {
+			issues = append(issues, subReport.GetAllIssues()...)
+		}
+	case TypeIssues:
+		issues = append(issues, r.Issues...)
+	}
+	return issues
+}
