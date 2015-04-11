@@ -1,5 +1,6 @@
-//go:generate stringer -type=Category
 package tech
+
+// TODO (m0sth8): generate from the file for all sdk
 
 type Category string
 

@@ -3,11 +3,11 @@ package script
 import (
 	"fmt"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/transport"
+	"golang.org/x/net/context"
 )
 
 type RemoteClient struct {

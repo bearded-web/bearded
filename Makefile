@@ -4,7 +4,7 @@
 all: test vet fmt
 
 
-travis: all
+travis: test fmt
 
 
 test:
@@ -25,3 +25,8 @@ vet:
 fmt:
 	@echo "+ $@"
 	@./checkfmt.sh .
+
+updep:
+	@echo "+ $@"
+
+	@GOOS=linux godep save ./...

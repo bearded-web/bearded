@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/pkg/utils"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestFilesDownload(t *testing.T) {

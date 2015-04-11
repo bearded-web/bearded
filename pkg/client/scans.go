@@ -3,7 +3,7 @@ package client
 import (
 	"fmt"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"

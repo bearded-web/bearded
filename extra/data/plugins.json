@@ -109,7 +109,8 @@
         },
         "container": {
             "image": "barbudo/wpscan-script"
-        }
+        },
+        "formSchema": "{\"type\":\"object\",\"description\":\"A family\",\"properties\":{\"mother\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"father\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"children\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]}}},\"required\":[\"mother\",\"father\",\"children\"]}"
     },
     {
         "name": "barbudo/retirejs-script",

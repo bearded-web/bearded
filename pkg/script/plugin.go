@@ -1,7 +1,7 @@
 package script
 
 import (
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 
 	"fmt"
 

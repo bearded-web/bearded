@@ -3,9 +3,9 @@ package transport
 import (
 	"fmt"
 
-	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/davecgh/go-spew/spew"
+	"golang.org/x/net/context"
 )
 
 type Looper interface {

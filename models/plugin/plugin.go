@@ -26,15 +26,16 @@ type Required struct {
 }
 
 type Plugin struct {
-	Id        bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
-	Name      string        `json:"name" description:"unique plugin id, ex: barbudo/wpscan"` // TODO: do we need aliases or tags?
-	Version   string        `json:"version"`
-	Type      PluginType    `json:"type" description:"one of: util|script"`
-	Weight    PluginWeight  `json:"weight" description:"one of: light|middle|heavy"`
-	Desc      *Desc         `json:"desc" description:"human readable description"`
-	Container *Container    `json:"container,omitempty" description:"information about container"`
-	Created   time.Time     `json:"created,omitempty" description:"when plugin is created"`
-	Updated   time.Time     `json:"updated,omitempty" description:"when plugin is updated"`
+	Id         bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
+	Name       string        `json:"name" description:"unique plugin id, ex: barbudo/wpscan"` // TODO: do we need aliases or tags?
+	Version    string        `json:"version"`
+	Type       PluginType    `json:"type" description:"one of: util|script"`
+	Weight     PluginWeight  `json:"weight" description:"one of: light|middle|heavy"`
+	Desc       *Desc         `json:"desc" description:"human readable description"`
+	Container  *Container    `json:"container,omitempty" description:"information about container"`
+	Created    time.Time     `json:"created,omitempty" description:"when plugin is created"`
+	Updated    time.Time     `json:"updated,omitempty" description:"when plugin is updated"`
+	FormSchema string        `json:"formSchema" bson:"formSchema" description:"json schema form description"`
 
 	//	Requirements []*Required   `json:"requirements,omitempty" description:"other plugins required for running"`
 	Enabled bool `json:"enabled" description:"is plugin enabled for running"`

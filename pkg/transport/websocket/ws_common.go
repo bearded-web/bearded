@@ -1,10 +1,10 @@
 package websocket
 
 import (
-	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gorilla/websocket"
+	"golang.org/x/net/context"
 )
 
 func handleConnection(ctx context.Context, ws *websocket.Conn,

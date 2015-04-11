@@ -1,8 +1,8 @@
 package client
 
 import (
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/models/plugin"
+	"golang.org/x/net/context"
 )
 
 const pluginsUrl = "plugins"

@@ -3,13 +3,13 @@ package mango
 import (
 	"encoding/json"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/facebookgo/stackerr"
 	"github.com/gdamore/mangos"
 	"github.com/gdamore/mangos/protocol/pair"
 	"github.com/gdamore/mangos/transport/tcp"
 	"github.com/gdamore/mangos/transport/tlstcp"
+	"golang.org/x/net/context"
 )
 
 func send(s mangos.Socket, obj interface{}) error {

@@ -3,9 +3,9 @@ package mango
 import (
 	"crypto/tls"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/gdamore/mangos"
+	"golang.org/x/net/context"
 )
 
 type server struct {
