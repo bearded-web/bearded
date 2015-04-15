@@ -6,8 +6,21 @@ go:
 services:
   - mongodb
 
+env:
+  global:
+  - COVERALLS_SERVICE_NAME="travis-ci"
+  - COVERALLS_REPO_TOKEN="8MDyHbWvMm7BtO2ifhq3FWek3RQuoFnCD"
+
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - go get github.com/modocache/gover
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+
 script:
  - make travis
 
 notifications:
   email: false
+  slack:
+    secure: VW1ponaB/366LxBQMSTPR8tCcXdsP//WudXDhoBNCdCcyEMhI5lZ7AwUsv2P7UcxJzrZaZ5DWsGdeltZStcYAnphiGsA8OArJeMZ/FZ0ys3QtRjPt1CyK8qFGs4YEcA5J2hh0KgDabgmwCbXP/nQrsjWyVgiBjqVnEsbSv5WLcs=
