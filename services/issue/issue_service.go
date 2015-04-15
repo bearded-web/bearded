@@ -51,18 +51,18 @@ func (s *IssueService) Register(container *restful.Container) {
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
 
-	r = ws.POST("").To(s.create)
-	addDefaults(r)
-	r.Doc("create")
-	r.Operation("create")
-	r.Writes(issue.TargetIssue{})
-	r.Reads(issue.TargetIssue{})
-	r.Do(services.Returns(http.StatusCreated))
-	r.Do(services.ReturnsE(
-		http.StatusBadRequest,
-		http.StatusConflict,
-	))
-	ws.Route(r)
+	//	r = ws.POST("").To(s.create)
+	//	addDefaults(r)
+	//	r.Doc("create")
+	//	r.Operation("create")
+	//	r.Writes(issue.TargetIssue{})
+	//	r.Reads(issue.TargetIssue{})
+	//	r.Do(services.Returns(http.StatusCreated))
+	//	r.Do(services.ReturnsE(
+	//		http.StatusBadRequest,
+	//		http.StatusConflict,
+	//	))
+	//	ws.Route(r)
 
 	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakeIssue(s.get))
 	addDefaults(r)
@@ -82,7 +82,7 @@ func (s *IssueService) Register(container *restful.Container) {
 	r.Operation("update")
 	r.Param(ws.PathParameter(ParamId, ""))
 	r.Writes(issue.TargetIssue{})
-	r.Reads(issue.TargetIssue{})
+	r.Reads(TargetIssueEntity{})
 	r.Do(services.Returns(
 		http.StatusOK,
 		http.StatusNotFound))
@@ -159,14 +159,14 @@ func (s *IssueService) list(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(result)
 }
 
-func (s *IssueService) get(_ *restful.Request, resp *restful.Response, pl *issue.TargetIssue) {
-	resp.WriteEntity(pl)
+func (s *IssueService) get(_ *restful.Request, resp *restful.Response, issueObj *issue.TargetIssue) {
+	resp.WriteEntity(issueObj)
 }
 
-func (s *IssueService) update(req *restful.Request, resp *restful.Response, pl *issue.TargetIssue) {
+func (s *IssueService) update(req *restful.Request, resp *restful.Response, issueObj *issue.TargetIssue) {
 	// TODO (m0sth8): Check permissions
 
-	raw := &issue.TargetIssue{}
+	raw := &TargetIssueEntity{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
@@ -176,9 +176,20 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, pl *
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	raw.Id = pl.Id
+	if raw.Confirmed != nil {
+		issueObj.Confirmed = *raw.Confirmed
+	}
+	if raw.False != nil {
+		issueObj.False = *raw.False
+	}
+	if raw.Resolved != nil {
+		issueObj.Resolved = *raw.Resolved
+	}
+	if raw.Muted != nil {
+		issueObj.Muted = *raw.Muted
+	}
 
-	if err := mgr.Issues.Update(raw); err != nil {
+	if err := mgr.Issues.Update(issueObj); err != nil {
 		if mgr.IsNotFound(err) {
 			resp.WriteErrorString(http.StatusNotFound, "Not found")
 			return
@@ -195,7 +206,7 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, pl *
 	}
 
 	resp.WriteHeader(http.StatusOK)
-	resp.WriteEntity(raw)
+	resp.WriteEntity(issueObj)
 }
 
 func (s *IssueService) delete(_ *restful.Request, resp *restful.Response, obj *issue.TargetIssue) {
