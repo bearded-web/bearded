@@ -2,7 +2,6 @@
 
 set -o errexit
 set -o pipefail
-readonly GOPATH="${GOPATH%%:*}"
 
 main() {
   _cd_into_top_level
@@ -17,20 +16,14 @@ _cd_into_top_level() {
 _generate_coverage_files() {
   for dir in $(find . -maxdepth 10 -not -path './.git*' -not -path '*/_*' -type d); do
     if ls $dir/*.go &>/dev/null ; then
-      go test -coverprofile=$dir/profile.coverprofile $dir || fail=1
+      go test -covermode=count -coverprofile=$dir/profile.coverprofile $dir || fail=1
     fi
   done
 }
 
-_install_gover() {
-  if [[ ! -x "${GOPATH}/bin/gover" ]] ; then
-    go get -u github.com/modocache/gover
-  fi
-}
 
 _combine_coverage_reports() {
-  _install_gover
-  ${GOPATH}/bin/gover
+  gover
 }
 
 main "$@"
