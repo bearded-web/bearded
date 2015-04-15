@@ -14,7 +14,7 @@ test:
 coverage:
 	@echo "+ $@"
 	@./coverage.sh
-	@goveralls -coverprofile=gover.coverprofile -repotoken $COVERALLS_REPO_TOKEN
+	@goveralls -coverprofile=gover.coverprofile -service=travis-ci
 
 lint:
 	@echo "+ $@"
