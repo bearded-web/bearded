@@ -3,7 +3,7 @@ package utils
 import (
 	"time"
 
-	"code.google.com/p/go.net/context"
+	"golang.org/x/net/context"
 )
 
 func JustTimeout(parent context.Context, duration time.Duration) context.Context {

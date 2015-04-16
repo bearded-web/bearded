@@ -125,4 +125,16 @@ func UpdateMulti(r *report.Report) {
 			UpdateMulti(rep)
 		}
 	}
+	UpdateIssues(r)
+}
+
+func UpdateIssues(r *report.Report) {
+	if r.Type != report.TypeIssues {
+		return
+	}
+	for _, issueObj := range r.Issues {
+		if issueObj.UniqId == "" {
+			issueObj.UniqId = issueObj.GenerateUniqId()
+		}
+	}
 }

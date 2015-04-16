@@ -6,11 +6,6 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "code.google.com/p/go.net/context",
-			"Comment": "null-240",
-			"Rev": "937a34c9de13c766c814510f76bca091dee06028"
-		},
-		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-16-g38a6ff9",
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
@@ -112,6 +107,10 @@
 			"Rev": "8814969dbe11ffd1486a38def8214462a9db61ab"
 		},
 		{
+			"ImportPath": "github.com/mikespook/gorbac",
+			"Rev": "108e1951d54311d7385fb245082ebf1936ec55b8"
+		},
+		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "46e1db27972f44c7722f23195ba6a8d2c2f3a0a3"
 		},
@@ -148,6 +147,10 @@
 		{
 			"ImportPath": "golang.org/x/crypto/blowfish",
 			"Rev": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "6460565bec1e8891e29ff478184c71b9e443ac36"
 		},
 		{
 			"ImportPath": "gopkg.in/mgo.v2",

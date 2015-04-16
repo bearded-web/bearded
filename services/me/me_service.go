@@ -45,11 +45,17 @@ func (s *MeService) Register(container *restful.Container) {
 	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.info)
-	// docs
 	r.Doc("info")
-	//	r.Notes("This endpoint is available only for authenticated users")
 	r.Operation("info")
 	r.Writes(me.Info{}) // on the response
+	r.Do(services.Returns(http.StatusOK))
+	addDefaults(r)
+	ws.Route(r)
+
+	r = ws.PUT("/password").To(s.changePassword)
+	r.Doc("changePassword")
+	r.Operation("changePassword")
+	r.Reads(ChangePasswordEntity{})
 	r.Do(services.Returns(http.StatusOK))
 	addDefaults(r)
 	ws.Route(r)
@@ -91,4 +97,53 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteEntity(info)
+}
+
+func (s *MeService) changePassword(req *restful.Request, resp *restful.Response) {
+	// TODO (m0sth8): add captcha support
+	raw := &ChangePasswordEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	u := filters.GetUser(req)
+
+	// verify old password
+	verified, err := s.PassCtx().Verify(raw.Old, u.Password)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+		return
+	}
+	if !verified {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("old password is incorrect"))
+		return
+	}
+	// TODO (m0sth8): validate new password (length, symbols etc); extract
+	if len(raw.New) < 7 {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("new password must be more than 6 symbols"))
+		return
+	}
+
+	pass, err := s.PassCtx().Encrypt(raw.New)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+		return
+	}
+	u.Password = pass
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	err = mgr.Users.Update(u)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+	resp.WriteHeader(http.StatusOK)
 }

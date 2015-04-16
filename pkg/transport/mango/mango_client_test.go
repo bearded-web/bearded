@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/pkg/transport"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/context"
 )
 
 func TestMangoClientLoop(t *testing.T) {

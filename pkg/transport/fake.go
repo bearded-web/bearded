@@ -1,6 +1,6 @@
 package transport
 
-import "code.google.com/p/go.net/context"
+import "golang.org/x/net/context"
 
 // Fake transport helps while developing or for mocking
 // if you don't want to implement all Transport interface methods

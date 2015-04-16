@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"code.google.com/p/go.net/context"
 	"github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
 	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 

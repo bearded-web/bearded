@@ -3,9 +3,9 @@ package script
 import (
 	"fmt"
 
-	"code.google.com/p/go.net/context"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
+	"golang.org/x/net/context"
 )
 
 // fake client helps to make a mock objects if you don't want implement all methods ClientV1 interface

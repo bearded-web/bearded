@@ -286,8 +286,11 @@ func (s *TargetService) commentsAdd(req *restful.Request, resp *restful.Response
 	resp.WriteEntity(obj)
 }
 
-func (s *TargetService) TakeTarget(fn func(*restful.Request,
-	*restful.Response, *target.Target, *project.Project)) restful.RouteFunction {
+// Helpers
+
+type TargetFunction func(*restful.Request, *restful.Response, *target.Target, *project.Project)
+
+func (s *TargetService) TakeTarget(fn TargetFunction) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		// TODO (m0sth8): check permissions for the user for the project of this target
 		id := req.PathParameter(ParamId)

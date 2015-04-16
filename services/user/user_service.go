@@ -175,7 +175,7 @@ func (s *UserService) get(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) {
-	// TODO (m0sth8): Check permissions
+	// TODO (m0sth8): Check permissions for admins
 	userId := req.PathParameter("user-id")
 	if !s.IsId(userId) {
 		resp.WriteServiceError(http.StatusBadRequest, services.IdHexErr)

@@ -18,7 +18,7 @@ const (
 	// error codes related to auth
 	CodeAuthReq    CodeErr = 60
 	CodeAuthFailed CodeErr = 61
-	CodeAuthForbid CodeErr = 61
+	CodeAuthForbid CodeErr = 62
 )
 
 var (
