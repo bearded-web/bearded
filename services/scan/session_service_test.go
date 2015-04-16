@@ -10,6 +10,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/scan"
@@ -24,6 +25,8 @@ import (
 )
 
 func TestSessionCreate(t *testing.T) {
+	logrus.SetLevel(logrus.PanicLevel)
+
 	mongo, dbName, err := tests.RandomTestMongoUp()
 	if err != nil {
 		t.Fatal(err)

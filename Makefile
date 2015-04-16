@@ -1,16 +1,20 @@
-.PHONY: all test lint vet fmt travis
+.PHONY: all test lint vet fmt travis coverage
 
 
 all: test vet fmt
 
 
-travis: test fmt
+travis: test fmt coverage
 
 
 test:
 	@echo "+ $@"
 	@go test -v -cover ./...
 
+coverage:
+	@echo "+ $@"
+	@./coverage.sh
+	@goveralls -coverprofile=gover.coverprofile -service=travis-ci
 
 lint:
 	@echo "+ $@"

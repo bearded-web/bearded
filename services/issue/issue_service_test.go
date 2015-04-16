@@ -102,7 +102,6 @@ func TestSessionCreate(t *testing.T) {
 			})
 
 			c.Convey("Set issue status confirmed", func() {
-				println(mgr.FromId(targetIssue.Id))
 				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
 					Status: Status{
 						Confirmed: utils.BoolP(false),
@@ -116,8 +115,6 @@ func TestSessionCreate(t *testing.T) {
 			})
 
 			c.Convey("Set issue status muted", func() {
-				println(mgr.FromId(targetIssue.Id))
-
 				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
 					Status: Status{
 						Muted: utils.BoolP(true),
@@ -131,8 +128,6 @@ func TestSessionCreate(t *testing.T) {
 			})
 
 			c.Convey("Set issue status false", func() {
-				println(mgr.FromId(targetIssue.Id))
-
 				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
 					Status: Status{
 						False: utils.BoolP(true),
