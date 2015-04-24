@@ -112,10 +112,6 @@
 			"Rev": "8814969dbe11ffd1486a38def8214462a9db61ab"
 		},
 		{
-			"ImportPath": "github.com/mikespook/gorbac",
-			"Rev": "108e1951d54311d7385fb245082ebf1936ec55b8"
-		},
-		{
 			"ImportPath": "github.com/satori/go.uuid",
 			"Rev": "46e1db27972f44c7722f23195ba6a8d2c2f3a0a3"
 		},
