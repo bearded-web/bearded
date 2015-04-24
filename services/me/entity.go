@@ -1,6 +1,7 @@
 package me
 
 type ChangePasswordEntity struct {
-	Old string `json:"old"`
-	New string `json:"new"`
+	Token string `json:"token,omitempty" description:"reset password token"`
+	Old   string `json:"old,omitempty"`
+	New   string `json:"new"`
 }

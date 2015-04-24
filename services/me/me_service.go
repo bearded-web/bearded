@@ -11,6 +11,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
+	"github.com/bearded-web/bearded/pkg/passlib/reset"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -111,21 +112,43 @@ func (s *MeService) changePassword(req *restful.Request, resp *restful.Response)
 
 	u := filters.GetUser(req)
 
-	// verify old password
-	verified, err := s.PassCtx().Verify(raw.Old, u.Password)
-	if err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
-		return
-	}
-	if !verified {
-		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("old password is incorrect"))
-		return
-	}
-	// TODO (m0sth8): validate new password (length, symbols etc); extract
-	if len(raw.New) < 7 {
-		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("new password must be more than 6 symbols"))
-		return
+	if len(raw.Token) > 0 {
+		// TODO (m0sth8: take variables from config
+		secret := []byte("12345678910")
+
+		getUser := func(email string) ([]byte, error) {
+			if email != u.Email {
+				return nil, reset.ErrWrongSignature
+			}
+			return []byte(u.Password), nil
+		}
+
+		_, err := reset.VerifyToken(raw.Token, getUser, secret)
+		if err != nil {
+			if err == reset.ErrExpiredToken {
+				resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Token expired, try again"))
+
+			}
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Wrong token, try again"))
+			return
+		}
+	} else {
+		// verify old password
+		verified, err := s.PassCtx().Verify(raw.Old, u.Password)
+		if err != nil {
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+			return
+		}
+		if !verified {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("old password is incorrect"))
+			return
+		}
+		// TODO (m0sth8): validate new password (length, symbols etc); extract
+		if len(raw.New) < 7 {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("new password must be more than 6 symbols"))
+			return
+		}
 	}
 
 	pass, err := s.PassCtx().Encrypt(raw.New)

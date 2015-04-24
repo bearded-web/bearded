@@ -17,3 +17,7 @@ type registerEntity struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+type resetPasswordEntity struct {
+	Email string `json:"email" valid:"email,required"`
+}

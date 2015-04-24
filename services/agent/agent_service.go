@@ -108,6 +108,7 @@ func (s *AgentService) Register(container *restful.Container) {
 	r.Doc("approve")
 	r.Operation("approve")
 	r.Param(ws.PathParameter(ParamId, ""))
+	r.Reads(struct{}{})
 	r.Writes(agent.Agent{})
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
