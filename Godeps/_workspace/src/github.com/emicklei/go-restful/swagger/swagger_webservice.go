@@ -5,11 +5,12 @@ import (
 
 	"github.com/emicklei/go-restful"
 	// "github.com/emicklei/hopwatch"
-	"log"
 	"net/http"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/emicklei/go-restful/log"
 )
 
 type SwaggerService struct {
@@ -24,7 +25,10 @@ func newSwaggerService(config Config) *SwaggerService {
 }
 
 // LogInfo is the function that is called when this package needs to log. It defaults to log.Printf
-var LogInfo = log.Printf
+var LogInfo = func(format string, v ...interface{}) {
+	// use the restful package-wide logger
+	log.Printf(format, v...)
+}
 
 // InstallSwaggerService add the WebService that provides the API documentation of all services
 // conform the Swagger documentation specifcation. (https://github.com/wordnik/swagger-core/wiki).
@@ -71,6 +75,11 @@ func RegisterSwaggerService(config Config, wsContainer *restful.Container) {
 				sws.apiDeclarationMap[each.RootPath()] = sws.composeDeclaration(each, each.RootPath())
 			}
 		}
+	}
+
+	// if specified then call the PostBuilderHandler
+	if config.PostBuildHandler != nil {
+		config.PostBuildHandler(sws.apiDeclarationMap)
 	}
 
 	// Check paths for UI serving
@@ -129,7 +138,7 @@ func enableCORS(req *restful.Request, resp *restful.Response, chain *restful.Fil
 }
 
 func (sws SwaggerService) getListing(req *restful.Request, resp *restful.Response) {
-	listing := ResourceListing{SwaggerVersion: swaggerVersion}
+	listing := ResourceListing{SwaggerVersion: swaggerVersion, ApiVersion: sws.config.ApiVersion}
 	for k, v := range sws.apiDeclarationMap {
 		ref := Resource{Path: k}
 		if len(v.Apis) > 0 { // use description of first (could still be empty)
@@ -180,14 +189,13 @@ func (sws SwaggerService) composeDeclaration(ws *restful.WebService, pathPrefix 
 		rootParams = append(rootParams, asSwaggerParameter(param.Data()))
 	}
 	// aggregate by path
-	pathToRoutes := map[string][]restful.Route{}
+	pathToRoutes := newOrderedRouteMap()
 	for _, other := range ws.Routes() {
 		if strings.HasPrefix(other.Path, pathPrefix) {
-			routes := pathToRoutes[other.Path]
-			pathToRoutes[other.Path] = append(routes, other)
+			pathToRoutes.Add(other.Path, other)
 		}
 	}
-	for path, routes := range pathToRoutes {
+	pathToRoutes.Do(func(path string, routes []restful.Route) {
 		api := Api{Path: strings.TrimSuffix(path, "/"), Description: ws.Documentation()}
 		for _, route := range routes {
 			operation := Operation{
@@ -217,7 +225,7 @@ func (sws SwaggerService) composeDeclaration(ws *restful.WebService, pathPrefix 
 			api.Operations = append(api.Operations, operation)
 		}
 		decl.Apis = append(decl.Apis, api)
-	}
+	})
 	return decl
 }
 
@@ -291,7 +299,7 @@ func (sws SwaggerService) addModelFromSampleTo(operation *Operation, isResponse 
 		}
 		operation.Type = modelName
 	}
-	modelBuilder{models}.addModel(reflect.TypeOf(sample), "")
+	modelBuilder{models}.addModelFrom(sample)
 }
 
 func asSwaggerParameter(param restful.ParameterData) Parameter {
