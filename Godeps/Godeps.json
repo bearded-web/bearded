@@ -11,6 +11,11 @@
 			"Rev": "38a6ff9215d472ce953bb9aa37b5327715c0f940"
 		},
 		{
+			"ImportPath": "github.com/asaskevich/govalidator",
+			"Comment": "v1",
+			"Rev": "68d5221a67affc98529c25b1fbfeb69212a4dc8b"
+		},
+		{
 			"ImportPath": "github.com/codegangsta/negroni",
 			"Comment": "v0.1-55-g1dd3ab0",
 			"Rev": "1dd3ab0ff59e13f5b73dcbf70703710aebe50d2f"
