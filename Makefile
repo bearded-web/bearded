@@ -4,33 +4,33 @@
 all: test vet fmt
 
 
-travis: test fmt coverage
+travis: test fmt vet coverage
 
 
 test:
 	@echo "+ $@"
-	@go test -v -cover ./...
+	go test -v -cover ./...
 
 coverage:
 	@echo "+ $@"
 	@./coverage.sh
-	@goveralls -coverprofile=gover.coverprofile -service=travis-ci
+	-goveralls -coverprofile=gover.coverprofile -service=travis-ci
 
 lint:
 	@echo "+ $@"
-	@test -z "$$(golint ./... | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
+	test -z "$$(golint ./... | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
 
 
 vet:
 	@echo "+ $@"
-	@go vet ./...
+	go vet ./...
 
 
 fmt:
 	@echo "+ $@"
-	@./checkfmt.sh .
+	./checkfmt.sh .
 
 updep:
 	@echo "+ $@"
 
-	@GOOS=linux godep save ./...
+	GOOS=linux godep save ./...

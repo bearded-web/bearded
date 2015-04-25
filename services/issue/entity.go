@@ -9,7 +9,7 @@ type Status struct {
 	False     *bool           `json:"false,omitempty"`
 	Muted     *bool           `json:"muted,omitempty"`
 	Resolved  *bool           `json:"resolved,omitempty"`
-	Severity  *issue.Severity `json:"severity,omitempty", description:"one of [high medium low info]"`
+	Severity  *issue.Severity `json:"severity,omitempty" description:"one of [high medium low info]"`
 }
 
 type TargetIssueEntity struct {

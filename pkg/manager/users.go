@@ -80,7 +80,8 @@ func (m *UserManager) GetById(id bson.ObjectId) (*user.User, error) {
 
 func (m *UserManager) GetByEmail(email string) (*user.User, error) {
 	u := &user.User{}
-	if err := m.col.Find(bson.D{{Name: "email", Value: email}}).One(u); err != nil {
+	// []bson.DocElem is a workaround for go vet, read more here https://github.com/golang/go/issues/9171
+	if err := m.col.Find(bson.D([]bson.DocElem{{Name: "email", Value: email}})).One(u); err != nil {
 		return nil, err
 	}
 	return u, nil
