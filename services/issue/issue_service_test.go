@@ -79,7 +79,7 @@ func TestSessionCreate(t *testing.T) {
 				Target:  targetObj.Id,
 				Project: projectObj.Id,
 				Issue: issue.Issue{
-					UniqId: "1",
+					UniqId:   "1",
 					Severity: issue.SeverityInfo,
 				},
 				Status: issue.Status{
