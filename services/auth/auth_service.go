@@ -13,6 +13,7 @@ import (
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/passlib/reset"
+	"github.com/bearded-web/bearded/pkg/validate"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -182,8 +183,18 @@ func (s *AuthService) register(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	// TODO (m0sth8): validate email and password
 	// TODO (m0sth8): add captcha support
+
+	// check email
+	if valid, err := govalidator.ValidateStruct(raw); !valid {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+	// check password
+	if valid, reason := validate.Password(raw.Password); !valid {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Password %s", reason))
+		return
+	}
 
 	mgr := s.Manager()
 	defer mgr.Close()
@@ -303,5 +314,4 @@ func (s *AuthService) checkResetToken(req *restful.Request, resp *restful.Respon
 	session.Set(filters.SessionUserKey, u.Id.Hex())
 
 	redirect(req, resp, token)
-
 }
