@@ -1,14 +1,18 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/filters"
+	"github.com/bearded-web/bearded/pkg/passlib/reset"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -61,6 +65,25 @@ func (s *AuthService) Register(container *restful.Container) {
 	r.Notes("Returns 200 ok if user is authenticated")
 	r.Filter(authRequired)
 	r.Do(services.Returns(http.StatusOK))
+	addDefaults(r)
+	ws.Route(r)
+
+	// registration actions
+	r = ws.POST("reset-password").To(s.resetPassword)
+	r.Doc("reset user password")
+	r.Operation("resetPassword")
+	r.Reads(resetPasswordEntity{})
+	r.Returns(http.StatusCreated, "Token created", "")
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	addDefaults(r)
+	ws.Route(r)
+
+	// registration actions
+	r = ws.GET("reset-password").To(s.checkResetToken)
+	r.Param(ws.QueryParameter("token", "token for password reset"))
+	r.Doc("check reset token")
+	r.Operation("checkResetToken")
+	r.Returns(http.StatusTemporaryRedirect, "Status", "")
 	addDefaults(r)
 	ws.Route(r)
 
@@ -193,4 +216,92 @@ func (s *AuthService) register(req *restful.Request, resp *restful.Response) {
 	session.Set(filters.SessionUserKey, u.Id.Hex())
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(sessionEntity{Token: "not ready"})
+}
+
+func (s *AuthService) resetPassword(req *restful.Request, resp *restful.Response) {
+
+	raw := &resetPasswordEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Warn(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	if ok, err := govalidator.ValidateStruct(raw); !ok {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	// TODO (m0sth8): add captcha support
+	u, err := mgr.Users.GetByEmail(raw.Email)
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Email is not found"))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	// TODO (m0sth8: take variables from config
+	dur := time.Hour * 24
+	secret := []byte("12345678910")
+
+	// generate and send token
+	token := reset.NewToken(u.Email, dur, []byte(u.Password), secret)
+	println(token)
+
+	resp.ResponseWriter.WriteHeader(http.StatusCreated)
+
+}
+
+func (s *AuthService) checkResetToken(req *restful.Request, resp *restful.Response) {
+	token := req.QueryParameter("token")
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	// TODO (m0sth8: take variables from config
+	secret := []byte("12345678910")
+
+	redirectErr := func(req *restful.Request, resp *restful.Response, errMsg string) {
+		http.Redirect(resp.ResponseWriter, req.Request, fmt.Sprintf("/#/reset-end?error=%s", errMsg), http.StatusTemporaryRedirect)
+	}
+
+	redirect := func(req *restful.Request, resp *restful.Response, token string) {
+		http.Redirect(resp.ResponseWriter, req.Request, fmt.Sprintf("/#/reset-end?token=%s", token), http.StatusTemporaryRedirect)
+	}
+	var u *user.User
+	getUser := func(email string) ([]byte, error) {
+		var err error
+		u, err = mgr.Users.GetByEmail(email)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(u.Password), err
+	}
+
+	_, err := reset.VerifyToken(token, getUser, secret)
+	if err != nil {
+		if err == reset.ErrExpiredToken {
+			redirectErr(req, resp, "Token expired, try again")
+		}
+		redirectErr(req, resp, "Wrong token, try again")
+		return
+	}
+	if u == nil {
+		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+		return
+	}
+	// is that a good way to login user here?
+	session := filters.GetSession(req)
+	session.Set(filters.SessionUserKey, u.Id.Hex())
+
+	redirect(req, resp, token)
+
 }
