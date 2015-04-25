@@ -4,7 +4,7 @@ import "net/http"
 
 type HttpBody struct {
 	ContentEncoding string `json:"contentEncoding"`
-	Content         []byte `json:"content,string"`
+	Content         string `json:"content"`
 }
 
 type HttpEntity struct {
