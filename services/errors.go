@@ -1,6 +1,9 @@
 package services
 
-import "github.com/emicklei/go-restful"
+import (
+	"fmt"
+	"github.com/emicklei/go-restful"
+)
 
 type CodeErr int
 
@@ -36,8 +39,8 @@ func NewError(c CodeErr, msg string) restful.ServiceError {
 	return restful.NewError(int(c), msg)
 }
 
-func NewBadReq(msg string) restful.ServiceError {
-	return NewError(CodeWrongData, msg)
+func NewBadReq(msg string, args ...interface{}) restful.ServiceError {
+	return NewError(CodeWrongData, fmt.Sprintf(msg, args...))
 }
 
 func NewAppErr(msg string) restful.ServiceError {

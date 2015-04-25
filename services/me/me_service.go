@@ -12,6 +12,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib/reset"
+	"github.com/bearded-web/bearded/pkg/validate"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -144,11 +145,12 @@ func (s *MeService) changePassword(req *restful.Request, resp *restful.Response)
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("old password is incorrect"))
 			return
 		}
-		// TODO (m0sth8): validate new password (length, symbols etc); extract
-		if len(raw.New) < 7 {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("new password must be more than 6 symbols"))
-			return
-		}
+
+	}
+
+	if valid, reason := validate.Password(raw.New); !valid {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("New password %s", reason))
+		return
 	}
 
 	pass, err := s.PassCtx().Encrypt(raw.New)
