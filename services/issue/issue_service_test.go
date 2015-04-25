@@ -80,6 +80,7 @@ func TestSessionCreate(t *testing.T) {
 				Project: projectObj.Id,
 				Issue: issue.Issue{
 					UniqId: "1",
+					Severity: issue.SeverityInfo,
 				},
 				Status: issue.Status{
 					Confirmed: true,
@@ -90,6 +91,7 @@ func TestSessionCreate(t *testing.T) {
 			c.So(targetIssue.Muted, c.ShouldEqual, false)
 			c.So(targetIssue.False, c.ShouldEqual, false)
 			c.So(targetIssue.Resolved, c.ShouldEqual, false)
+			c.So(targetIssue.Severity, c.ShouldEqual, issue.SeverityInfo)
 
 			c.Convey("Get list of all issues", func() {
 				res, issues := getIssues(t, ts.URL, nil)
@@ -151,6 +153,28 @@ func TestSessionCreate(t *testing.T) {
 				c.So(issue.Muted, c.ShouldEqual, false)
 				c.So(issue.False, c.ShouldEqual, false)
 				c.So(issue.Resolved, c.ShouldEqual, true)
+			})
+
+			c.Convey("Set issue severity to high", func() {
+				high := issue.SeverityHigh
+				res, issueObj := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					Status: Status{
+						Severity: &high,
+					},
+				})
+				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
+				c.So(issueObj.Severity, c.ShouldEqual, issue.SeverityHigh)
+			})
+
+			c.Convey("Set issue severity to bla", func() {
+				bla := issue.Severity("bla")
+				res, issueObj := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					Status: Status{
+						Severity: &bla,
+					},
+				})
+				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
+				c.So(issueObj.Severity, c.ShouldEqual, issue.SeverityInfo)
 			})
 
 			c.Convey("Set all issue status", func() {

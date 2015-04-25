@@ -188,6 +188,11 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, issu
 	if raw.Muted != nil {
 		issueObj.Muted = *raw.Muted
 	}
+	if raw.Severity != nil {
+		if isValidSeverity(*raw.Severity) {
+			issueObj.Severity = *raw.Severity
+		}
+	}
 
 	if err := mgr.Issues.Update(issueObj); err != nil {
 		if mgr.IsNotFound(err) {
