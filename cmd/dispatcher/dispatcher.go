@@ -28,6 +28,7 @@ import (
 	"github.com/bearded-web/bearded/services/scan"
 	"github.com/bearded-web/bearded/services/target"
 	"github.com/bearded-web/bearded/services/user"
+	"github.com/bearded-web/bearded/services/vulndb"
 )
 
 var Dispatcher = cli.Command{
@@ -102,6 +103,7 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 		feed.New(base),
 		file.New(base),
 		issue.New(base),
+		vulndb.New(base),
 	}
 
 	// initialize services
