@@ -89,6 +89,14 @@ type TargetIssue struct {
 	Status `json:",inline" bson:",inline"`
 }
 
+func (i *TargetIssue) AddUserReportActivity(userId bson.ObjectId) {
+	i.Activities = append(i.Activities, &Activity{
+		Created: time.Now().UTC(),
+		Type:    ActivityReported,
+		User:    userId,
+	})
+}
+
 func (i *TargetIssue) AddReportActivity(reportId, scanId, sessionId bson.ObjectId) {
 	i.Activities = append(i.Activities, &Activity{
 		Created: time.Now().UTC(),

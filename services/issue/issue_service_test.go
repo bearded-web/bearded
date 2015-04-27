@@ -223,6 +223,8 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Muted, c.ShouldEqual, false)
 				c.So(issueObj.False, c.ShouldEqual, false)
 				c.So(issueObj.Resolved, c.ShouldEqual, false)
+				c.So(issueObj.Activities[0].Type, c.ShouldEqual, issue.ActivityReported)
+				c.So(issueObj.Activities[0].User, c.ShouldEqual, u.Id)
 			})
 			// TODO (m0sth8): test errors for creation
 		})

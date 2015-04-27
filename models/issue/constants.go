@@ -44,7 +44,7 @@ func (t Severity) Convert(text string) (interface{}, error) {
 type ActivityType string
 
 const (
-	ActivityReported  = ActivityType("reported")  // the issue was reported by plugin
+	ActivityReported  = ActivityType("reported")  // the issue was reported by plugin or user
 	ActivityConfirmed = ActivityType("confirmed") // the issue was confirmed by someone
 	ActivityMuted     = ActivityType("muted")     // go away! I'll fix you later
 	ActivityUnmuted   = ActivityType("unmuted")

@@ -170,13 +170,17 @@ func (s *IssueService) create(req *restful.Request, resp *restful.Response) {
 
 	//	current user should have a permission to create issue there
 	u := filters.GetUser(req)
-	mgr.Permission.HasProjectAccess(p, u)
+	if !mgr.Permission.HasProjectAccess(p, u) {
+		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+		return
+	}
 
 	newObj := &issue.TargetIssue{
 		Project: p.Id,
 		Target:  t.Id,
 	}
 	updateTargetIssue(raw, newObj)
+	newObj.AddUserReportActivity(u.Id)
 
 	obj, err := mgr.Issues.Create(newObj)
 	if err != nil {
