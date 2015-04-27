@@ -22,6 +22,10 @@ type Project struct {
 	Members []*Member `json:"members" bson:"members"`
 }
 
+func (p *Project) String() string {
+	return p.Id.Hex()
+}
+
 type ProjectList struct {
 	pagination.Meta `json:",inline"`
 	Results         []*Project `json:"results"`

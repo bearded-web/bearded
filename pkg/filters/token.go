@@ -9,7 +9,7 @@ import (
 
 func AuthTokenFilter(mgr *manager.Manager) restful.FilterFunction {
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
-		// TODO (m0sth8): there should be an oauth token verification
+		// TODO (m0sth8): HIGH! there should be an oauth token verification
 		func() {
 			// Temporary hack for agents, will be deleted after oauth integration
 			authorization := req.Request.Header.Get("Authorization")

@@ -27,6 +27,8 @@ type Manager struct {
 	Comments *CommentManager
 	Issues   *IssueManager
 
+	Permission *PermissionManager
+
 	managers []ManagerInterface
 }
 

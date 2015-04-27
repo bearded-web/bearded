@@ -157,6 +157,10 @@
 			"ImportPath": "gopkg.in/mgo.v2",
 			"Comment": "r2015.01.24",
 			"Rev": "c6a7dce14133ccac2dcac3793f1d6e2ef048503a"
+		},
+		{
+			"ImportPath": "gopkg.in/validator.v2",
+			"Rev": "8e445b9dc14ab1a1a78cc1f712df991307173ee6"
 		}
 	]
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/emicklei/go-restful"
@@ -25,24 +26,34 @@ import (
 	"github.com/bearded-web/bearded/services"
 )
 
-func TestSessionCreate(t *testing.T) {
+var (
+	testMgr *manager.Manager
+)
+
+func TestMain(m *testing.M) {
 	mongo, dbName, err := tests.RandomTestMongoUp()
 	if err != nil {
-		t.Fatal(err)
+		println(err)
+		os.Exit(1)
 	}
 	defer tests.RandomTestMongoDown(mongo, dbName)
+	testMgr = manager.New(mongo.DB(dbName))
+	os.Exit(m.Run())
 
-	mgr := manager.New(mongo.DB(dbName))
+}
+
+func TestTargetIssues(t *testing.T) {
+	testMgr := testMgr
 
 	// create and auth user
 	sess := filters.NewSession()
-	u, err := mgr.Users.Create(&user.User{})
+	u, err := testMgr.Users.Create(&user.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	sess.Set(filters.SessionUserKey, u.Id.Hex())
 
-	service := New(services.New(mgr, nil, scheduler.NewFake()))
+	service := New(services.New(testMgr, nil, scheduler.NewFake()))
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
 	wsContainer.Filter(filters.SessionFilterMock(sess))
@@ -52,14 +63,14 @@ func TestSessionCreate(t *testing.T) {
 	defer ts.Close()
 
 	c.Convey("Given empty issues collections", t, func() {
-		_, err = mongo.DB(dbName).C("issues").RemoveAll(bson.M{})
+		_, err = testMgr.Issues.RemoveAll(bson.M{})
 		c.So(err, c.ShouldBeNil)
-		projectObj, err := mgr.Projects.Create(&project.Project{
+		projectObj, err := testMgr.Projects.Create(&project.Project{
 			Name:  "default",
 			Owner: u.Id,
 		})
 		c.So(err, c.ShouldBeNil)
-		targetObj, err := mgr.Targets.Create(&target.Target{
+		targetObj, err := testMgr.Targets.Create(&target.Target{
 			Project: projectObj.Id,
 			Type:    target.TypeWeb,
 		})
@@ -75,11 +86,10 @@ func TestSessionCreate(t *testing.T) {
 		})
 
 		c.Convey("Given target issue", func() {
-			targetIssue, err := mgr.Issues.Create(&issue.TargetIssue{
+			targetIssue, err := testMgr.Issues.Create(&issue.TargetIssue{
 				Target:  targetObj.Id,
 				Project: projectObj.Id,
 				Issue: issue.Issue{
-					UniqId:   "1",
 					Severity: issue.SeverityInfo,
 				},
 				Status: issue.Status{
@@ -104,61 +114,61 @@ func TestSessionCreate(t *testing.T) {
 			})
 
 			c.Convey("Set issue status confirmed", func() {
-				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					StatusEntity: StatusEntity{
 						Confirmed: utils.BoolP(false),
 					},
 				})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
-				c.So(issue.Confirmed, c.ShouldEqual, false)
-				c.So(issue.Muted, c.ShouldEqual, false)
-				c.So(issue.False, c.ShouldEqual, false)
-				c.So(issue.Resolved, c.ShouldEqual, false)
+				c.So(issueObj.Confirmed, c.ShouldEqual, false)
+				c.So(issueObj.Muted, c.ShouldEqual, false)
+				c.So(issueObj.False, c.ShouldEqual, false)
+				c.So(issueObj.Resolved, c.ShouldEqual, false)
 			})
 
 			c.Convey("Set issue status muted", func() {
-				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					StatusEntity: StatusEntity{
 						Muted: utils.BoolP(true),
 					},
 				})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
-				c.So(issue.Confirmed, c.ShouldEqual, true)
-				c.So(issue.Muted, c.ShouldEqual, true)
-				c.So(issue.False, c.ShouldEqual, false)
-				c.So(issue.Resolved, c.ShouldEqual, false)
+				c.So(issueObj.Confirmed, c.ShouldEqual, true)
+				c.So(issueObj.Muted, c.ShouldEqual, true)
+				c.So(issueObj.False, c.ShouldEqual, false)
+				c.So(issueObj.Resolved, c.ShouldEqual, false)
 			})
 
 			c.Convey("Set issue status false", func() {
-				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					StatusEntity: StatusEntity{
 						False: utils.BoolP(true),
 					},
 				})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
-				c.So(issue.Confirmed, c.ShouldEqual, true)
-				c.So(issue.Muted, c.ShouldEqual, false)
-				c.So(issue.False, c.ShouldEqual, true)
-				c.So(issue.Resolved, c.ShouldEqual, false)
+				c.So(issueObj.Confirmed, c.ShouldEqual, true)
+				c.So(issueObj.Muted, c.ShouldEqual, false)
+				c.So(issueObj.False, c.ShouldEqual, true)
+				c.So(issueObj.Resolved, c.ShouldEqual, false)
 			})
 
 			c.Convey("Set issue status resolved", func() {
-				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					StatusEntity: StatusEntity{
 						Resolved: utils.BoolP(true),
 					},
 				})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
-				c.So(issue.Confirmed, c.ShouldEqual, true)
-				c.So(issue.Muted, c.ShouldEqual, false)
-				c.So(issue.False, c.ShouldEqual, false)
-				c.So(issue.Resolved, c.ShouldEqual, true)
+				c.So(issueObj.Confirmed, c.ShouldEqual, true)
+				c.So(issueObj.Muted, c.ShouldEqual, false)
+				c.So(issueObj.False, c.ShouldEqual, false)
+				c.So(issueObj.Resolved, c.ShouldEqual, true)
 			})
 
 			c.Convey("Set issue severity to high", func() {
 				high := issue.SeverityHigh
-				res, issueObj := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					IssueEntity: IssueEntity{
 						Severity: &high,
 					},
 				})
@@ -168,8 +178,8 @@ func TestSessionCreate(t *testing.T) {
 
 			c.Convey("Set issue severity to bla", func() {
 				bla := issue.Severity("bla")
-				res, issueObj := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id), &TargetIssueEntity{
+					IssueEntity: IssueEntity{
 						Severity: &bla,
 					},
 				})
@@ -178,25 +188,51 @@ func TestSessionCreate(t *testing.T) {
 			})
 
 			c.Convey("Set all issue status", func() {
-				res, issue := updateIssue(t, ts.URL, mgr.FromId(targetIssue.Id), &TargetIssueEntity{
-					Status: Status{
-						Muted:     utils.BoolP(true),
-						Resolved:  utils.BoolP(true),
-						False:     utils.BoolP(true),
-						Confirmed: utils.BoolP(false),
-					},
-				})
+				res, issueObj := updateIssue(t, ts.URL, testMgr.FromId(targetIssue.Id),
+					&TargetIssueEntity{
+						StatusEntity: StatusEntity{
+							Muted:     utils.BoolP(true),
+							Resolved:  utils.BoolP(true),
+							False:     utils.BoolP(true),
+							Confirmed: utils.BoolP(false),
+						},
+					})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
-				c.So(issue.Confirmed, c.ShouldEqual, false)
-				c.So(issue.Muted, c.ShouldEqual, true)
-				c.So(issue.False, c.ShouldEqual, true)
-				c.So(issue.Resolved, c.ShouldEqual, true)
+				c.So(issueObj.Confirmed, c.ShouldEqual, false)
+				c.So(issueObj.Muted, c.ShouldEqual, true)
+				c.So(issueObj.False, c.ShouldEqual, true)
+				c.So(issueObj.Resolved, c.ShouldEqual, true)
 			})
 
+			c.Convey("Create issue ", func() {
+				res, issueObj, err := createIssue(t, ts.URL, &TargetIssueEntity{
+					IssueEntity: IssueEntity{
+						Summary: utils.StringP("First issue"),
+					},
+					Target: testMgr.FromId(targetObj.Id),
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				c.So(res.StatusCode, c.ShouldEqual, http.StatusCreated)
+				c.So(issueObj.UniqId, c.ShouldEqual, testMgr.FromId(issueObj.Id))
+				c.So(issueObj.Summary, c.ShouldEqual, "First issue")
+				c.So(issueObj.Target, c.ShouldEqual, targetObj.Id)
+				c.So(issueObj.Project, c.ShouldEqual, projectObj.Id)
+				c.So(issueObj.Confirmed, c.ShouldEqual, false)
+				c.So(issueObj.Muted, c.ShouldEqual, false)
+				c.So(issueObj.False, c.ShouldEqual, false)
+				c.So(issueObj.Resolved, c.ShouldEqual, false)
+			})
+			// TODO (m0sth8): test errors for creation
 		})
 
 	})
 
+}
+
+func TestIssuePermissions(t *testing.T) {
+	// TODO (m0sth8): implement
 }
 
 // Helpers
@@ -252,7 +288,35 @@ func updateIssue(t *testing.T, baseUrl string, id string, entity *TargetIssueEnt
 		return resp, issueObj
 	}
 	return resp, nil
+}
 
+func createIssue(t *testing.T, baseUrl string, entity *TargetIssueEntity) (*http.Response, *issue.TargetIssue, error) {
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/issues", baseUrl))
+	if err != nil {
+		return nil, nil, err
+	}
+	buf := bytes.NewBuffer(nil)
+	err = json.NewEncoder(buf).Encode(entity)
+	if err != nil {
+		return nil, nil, err
+	}
+	req, _ := http.NewRequest("POST", u.String(), buf)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp.StatusCode == http.StatusCreated {
+		issueObj := &issue.TargetIssue{}
+		err = json.NewDecoder(resp.Body).Decode(issueObj)
+		if err != nil {
+			return nil, nil, err
+		}
+		return resp, issueObj, nil
+	}
+	return resp, nil, nil
 }
 
 func shouldBeBadRequest(t *testing.T, res *http.Response, code services.CodeErr, message string) {

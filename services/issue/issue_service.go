@@ -7,8 +7,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
+	"gopkg.in/mgo.v2/bson"
+	"gopkg.in/validator.v2"
 
 	"github.com/bearded-web/bearded/models/issue"
+	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
@@ -28,9 +31,10 @@ func New(base *services.BaseService) *IssueService {
 }
 
 func addDefaults(r *restful.RouteBuilder) {
-	//	r.Notes("Authorization required")
+	r.Notes("Authorization required")
 	r.Do(services.ReturnsE(
-		//		http.StatusUnauthorized,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
 		http.StatusInternalServerError,
 	))
 }
@@ -41,6 +45,7 @@ func (s *IssueService) Register(container *restful.Container) {
 	ws.Doc("Manage Issues")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
 	addDefaults(r)
@@ -51,18 +56,18 @@ func (s *IssueService) Register(container *restful.Container) {
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
 
-	//	r = ws.POST("").To(s.create)
-	//	addDefaults(r)
-	//	r.Doc("create")
-	//	r.Operation("create")
-	//	r.Writes(issue.TargetIssue{})
-	//	r.Reads(issue.TargetIssue{})
-	//	r.Do(services.Returns(http.StatusCreated))
-	//	r.Do(services.ReturnsE(
-	//		http.StatusBadRequest,
-	//		http.StatusConflict,
-	//	))
-	//	ws.Route(r)
+	r = ws.POST("").To(s.create)
+	addDefaults(r)
+	r.Doc("create")
+	r.Operation("create")
+	r.Writes(issue.TargetIssue{})
+	r.Reads(TargetIssueEntity{})
+	r.Do(services.Returns(http.StatusCreated))
+	r.Do(services.ReturnsE(
+		http.StatusBadRequest,
+		http.StatusConflict,
+	))
+	ws.Route(r)
 
 	r = ws.GET(fmt.Sprintf("{%s}", ParamId)).To(s.TakeIssue(s.get))
 	addDefaults(r)
@@ -107,18 +112,73 @@ func (s *IssueService) Register(container *restful.Container) {
 
 func (s *IssueService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions
-	raw := &issue.TargetIssue{}
+	raw := &TargetIssueEntity{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.WrongEntityErr,
+		)
+		return
+	}
+	// check target field, it must be present
+	if !s.IsId(raw.Target) {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Target is wrong"),
+		)
+		return
+	}
+	// validate other fields
+	if err := validator.WithTag("creating").Validate(raw); err != nil {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Validation error: %s", err.Error()),
+		)
 		return
 	}
 
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	obj, err := mgr.Issues.Create(raw)
+	// load target and project
+	t, err := mgr.Targets.GetById(mgr.ToId(raw.Target))
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Target not found"))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	p, err := mgr.Projects.GetById(t.Project)
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			// This situation is really strange
+			logrus.Errorf("Target %s is existed, but his project %s isn't",
+				raw.Target, mgr.FromId(t.Project))
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project not found"))
+			return
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	//	current user should have a permission to create issue there
+	u := filters.GetUser(req)
+	mgr.Permission.HasProjectAccess(p, u)
+
+	newObj := &issue.TargetIssue{
+		Project: p.Id,
+		Target:  t.Id,
+	}
+	updateTargetIssue(raw, newObj)
+
+	obj, err := mgr.Issues.Create(newObj)
 	if err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
@@ -176,23 +236,8 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, issu
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	if raw.Confirmed != nil {
-		issueObj.Confirmed = *raw.Confirmed
-	}
-	if raw.False != nil {
-		issueObj.False = *raw.False
-	}
-	if raw.Resolved != nil {
-		issueObj.Resolved = *raw.Resolved
-	}
-	if raw.Muted != nil {
-		issueObj.Muted = *raw.Muted
-	}
-	if raw.Severity != nil {
-		if isValidSeverity(*raw.Severity) {
-			issueObj.Severity = *raw.Severity
-		}
-	}
+	// update issue object from entity
+	updateTargetIssue(raw, issueObj)
 
 	if err := mgr.Issues.Update(issueObj); err != nil {
 		if mgr.IsNotFound(err) {
@@ -235,7 +280,6 @@ func (s *IssueService) TakeIssue(fn func(*restful.Request,
 		defer mgr.Close()
 
 		obj, err := mgr.Issues.GetById(mgr.ToId(id))
-		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
 				resp.WriteErrorString(http.StatusNotFound, "Not found")
@@ -245,6 +289,39 @@ func (s *IssueService) TakeIssue(fn func(*restful.Request,
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
+
+		if !s.hasProjectPermission(req, resp, obj.Project) {
+			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+			return
+		}
+
+		mgr.Close()
 		fn(req, resp, obj)
 	}
+}
+
+func (s *IssueService) hasProjectPermission(req *restful.Request, resp *restful.Response,
+	projectId bson.ObjectId) bool {
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	p, err := mgr.Projects.GetById(projectId)
+	if err != nil {
+		if mgr.IsNotFound(err) {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project not found"))
+			return false
+		}
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return false
+	}
+
+	//	current user should have a permission to create issue there
+	u := filters.GetUser(req)
+	if !mgr.Permission.HasProjectAccess(p, u) {
+		logrus.Warnf("User %s try to access to project %s", u, p)
+		return false
+	}
+	return true
 }
