@@ -20,7 +20,7 @@ type User struct {
 }
 
 func (u *User) String() string {
-	return fmt.Sprintf("%x %s", u.Id, u.Email)
+	return fmt.Sprintf("%s %s", u.Id.Hex(), u.Email)
 }
 
 // Id in hex

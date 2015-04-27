@@ -79,6 +79,12 @@ func (m *IssueManager) Create(raw *issue.TargetIssue) (*issue.TargetIssue, error
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
+	if len(raw.Severity) == 0 {
+		raw.Severity = issue.SeverityInfo
+	}
+	if len(raw.UniqId) == 0 {
+		raw.UniqId = raw.Id.Hex()
+	}
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}
@@ -92,4 +98,12 @@ func (m *IssueManager) Update(obj *issue.TargetIssue) error {
 
 func (m *IssueManager) Remove(obj *issue.TargetIssue) error {
 	return m.col.RemoveId(obj.Id)
+}
+
+func (m *IssueManager) RemoveAll(query bson.M) (int, error) {
+	info, err := m.col.RemoveAll(query)
+	if info != nil {
+		return info.Removed, err
+	}
+	return 0, err
 }

@@ -39,7 +39,7 @@ func AuthRequiredFilter(mgr *manager.Manager) restful.FilterFunction {
 
 		if err != nil {
 			if mgr.IsNotFound(err) {
-				// it seem's like this user was deleted, so logout him forcibly
+				// it seems like this user was deleted, so logout him forcibly
 				session.Del(SessionUserKey)
 				resp.WriteServiceError(http.StatusUnauthorized, services.AuthReqErr)
 				return
