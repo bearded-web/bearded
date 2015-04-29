@@ -1,4 +1,4 @@
-.PHONY: all test lint vet fmt travis coverage
+.PHONY: all test lint vet fmt travis coverage checkfmt prepare updep
 
 NO_COLOR=\033[0m
 OK_COLOR=\033[32;01m
@@ -8,9 +8,9 @@ PKGSDIRS=$(shell find -L . -type f -name "*.go" -not -path "./Godeps/*")
 
 all: test vet checkfmt
 
-
 travis: test checkfmt vet coverage
 
+prepare: updep fmt test vet checkfmt
 
 test:
 	@echo "$(OK_COLOR)Test packages$(NO_COLOR)"
@@ -50,3 +50,4 @@ updep:
 	GOOS=linux godep update github.com/...
 	GOOS=linux godep update gopkg.in/...
 	GOOS=linux godep update golang.org/...
+
