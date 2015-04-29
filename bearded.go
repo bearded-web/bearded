@@ -47,7 +47,7 @@ func main() {
 	app.Email = Email
 	app.Name = Name
 	app.Commands = []cli.Command{
-		dispatcher.Dispatcher,
+		dispatcher.New(),
 		utils.Plugins,
 		utils.Plans,
 		agent.Agent,

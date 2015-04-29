@@ -11,6 +11,9 @@ import (
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 	"gopkg.in/mgo.v2"
 
+	"github.com/bearded-web/bearded/pkg/config"
+	"github.com/bearded-web/bearded/pkg/config/flags"
+	"github.com/bearded-web/bearded/pkg/config/loader"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
@@ -31,52 +34,27 @@ import (
 	"github.com/bearded-web/bearded/services/vulndb"
 )
 
-var Dispatcher = cli.Command{
-	Name:   "dispatcher",
-	Usage:  "Start Dispatcher",
-	Action: dispatcherAction,
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:   "bind-addr",
-			Value:  "127.0.0.1:3003",
-			EnvVar: "BEARDED_BIND_ADDR",
-			Usage:  "http address for binding api server",
+func New() cli.Command {
+	cmd := cli.Command{
+		Name:   "dispatcher",
+		Usage:  "Start Dispatcher",
+		Action: dispatcherAction,
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:   "config",
+				EnvVar: "BEARDED_CONFIG",
+				Usage:  "path to config",
+			},
 		},
-		cli.StringFlag{
-			Name:   "mongo-addr",
-			Value:  "127.0.0.1",
-			EnvVar: "BEARDED_MONGO_ADDR",
-			Usage:  MongoUsage,
-		},
-		cli.StringFlag{
-			Name:   "mongo-db",
-			Value:  "bearded",
-			EnvVar: "BEARDED_MONGO_DB",
-			Usage:  "Mongodb database",
-		},
-		cli.StringFlag{
-			Name:   "frontend",
-			Value:  "../frontend/dist/",
-			EnvVar: "BEARDED_FRONTEND",
-			Usage:  "path to frontend to serve static",
-		},
-		cli.BoolFlag{
-			Name:   "frontend-off",
-			EnvVar: "BEARDED_FRONTEND_OFF",
-			Usage:  "do not serve frontend files",
-		},
-		cli.BoolFlag{
-			Name:  "with-agent",
-			Usage: "Run agent inside the dispatcher",
-		},
-	},
+	}
+	cfg := config.NewDispatcher()
+	cmd.Flags = append(cmd.Flags, flags.GenerateFlags(cfg, flags.Opts{
+		EnvPrefix: "BEARDED",
+	})...)
+	return cmd
 }
 
-func init() {
-	Dispatcher.Flags = append(Dispatcher.Flags, swaggerFlags()...)
-}
-
-func initServices(wsContainer *restful.Container, db *mgo.Database) error {
+func initServices(wsContainer *restful.Container, cfg *config.Dispatcher, db *mgo.Database) error {
 	// manager
 	mgr := manager.New(db)
 	if err := mgr.Init(); err != nil {
@@ -120,34 +98,54 @@ func initServices(wsContainer *restful.Container, db *mgo.Database) error {
 	return nil
 }
 
-//type MgoLogger struct {
-//}
-//
-//func (m *MgoLogger) Output(calldepth int, s string) error {
-//	logrus.Debug(s)
-//	return nil
-//}
+type MgoLogger struct {
+}
+
+func (m *MgoLogger) Output(calldepth int, s string) error {
+	logrus.Debug(s)
+	return nil
+}
 
 func dispatcherAction(ctx *cli.Context) {
-	if ctx.GlobalBool("debug") {
-		logrus.Info("Debug mode is enabled")
+	cfg := config.NewDispatcher()
+	if cfgPath := ctx.String("config"); cfgPath != "" {
+		logrus.Infof("Load config from %s", cfgPath)
+		err := loader.LoadFromFile(cfgPath, cfg)
+		if err != nil {
+			logrus.Fatalf("Couldn't load config: %s", err)
+			return
+		}
 	}
 
+
+	logrus.Info("Load config from flags")
+	err := flags.ParseFlags(cfg, ctx, flags.Opts{
+		EnvPrefix: "BEARDED",
+	})
+	if err != nil {
+		logrus.Fatal(err)
+	}
+	if cfg.Debug = ctx.GlobalBool("debug"); cfg.Debug {
+		logrus.Info("Debug mode is enabled")
+	}
+	// TODO (m0sth8): validate config
+
 	// initialize mongodb session
-	mongoAddr := ctx.String("mongo-addr")
+	mongoAddr := cfg.Mongo.Addr
 	logrus.Infof("Init mongodb on %s", mongoAddr)
 	session, err := mgo.Dial(mongoAddr)
 	if err != nil {
-		panic(err)
+		logrus.Fatal(err)
+		return
 	}
 	defer session.Close()
 	logrus.Infof("Successfull")
-	dbName := ctx.String("mongo-db")
+	dbName := cfg.Mongo.Database
 	logrus.Infof("Set mongo database %s", dbName)
 
-	if ctx.GlobalBool("debug") {
-		//		mgo.SetLogger(&MgoLogger{)
-		//		mgo.SetDebug(true)
+	if cfg.Debug {
+		mgo.SetLogger(&MgoLogger{})
+		mgo.SetDebug(true)
 
 		// see what happens inside the package restful
 		// TODO (m0sth8): set output to logrus
@@ -174,24 +172,21 @@ func dispatcherAction(ctx *cli.Context) {
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni
 
 	// Initialize and register services in container
-	err = initServices(wsContainer, session.DB(dbName))
+	err = initServices(wsContainer, cfg, session.DB(dbName))
 	if err != nil {
-		panic(err)
+		logrus.Fatal(err)
 	}
 
 	// Swagger should be initialized after services registration
-	if !ctx.Bool("swagger-disabled") {
-		services.Swagger(wsContainer,
-			ctx.String("swagger-api-path"),
-			ctx.String("swagger-path"),
-			ctx.String("swagger-filepath"))
+	if cfg.Swagger.Enable {
+		services.Swagger(wsContainer, cfg.Swagger)
 	}
 
-	// We user negroni as middleware framework.
+	// Use negroni as middleware framework.
 	app := negroni.New()
 	recovery := negroni.NewRecovery() // TODO (m0sth8): create recovery with ServiceError response
 
-	if ctx.GlobalBool("debug") {
+	if cfg.Debug {
 		app.Use(negroni.NewLogger())
 		// TODO (m0sth8): set output to logrus
 		// existed middleware https://github.com/meatballhat/negroni-logrus
@@ -202,21 +197,21 @@ func dispatcherAction(ctx *cli.Context) {
 
 	// TODO (m0sth8): add secure middleware
 
-	if !ctx.Bool("frontend-off") {
-		logrus.Infof("Frontend served from %s directory", ctx.String("frontend"))
-		app.Use(negroni.NewStatic(http.Dir(ctx.String("frontend"))))
+	if !cfg.Frontend.Disable {
+		logrus.Infof("Frontend served from %s directory", cfg.Frontend.Path)
+		app.Use(negroni.NewStatic(http.Dir(cfg.Frontend.Path)))
 	}
 
 	app.UseHandler(wsContainer) // set wsContainer as main handler
 
-	if ctx.Bool("with-agent") {
+	if cfg.Agent.Enable {
 		if err := RunInternalAgent(app); err != nil {
 			logrus.Error(err)
 		}
 	}
 
-	// Start negroini middleware with our restful container
-	bindAddr := ctx.String("bind-addr")
+	// Start negroni middleware with our restful container
+	bindAddr := cfg.Api.BindAddr
 	server := &http.Server{Addr: bindAddr, Handler: app}
 	logrus.Infof("Listening on %s", bindAddr)
 	logrus.Fatal(server.ListenAndServe())
