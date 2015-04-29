@@ -12,7 +12,7 @@ type StatusEntity struct {
 }
 
 type IssueEntity struct {
-	Summary    *string            `json:"summary" creating:"nonzero,min=3,max=120"`
+	Summary    *string            `json:"summary,omitempty" creating:"nonzero,min=3,max=120"`
 	VulnType   *int               `json:"vulnType,omitempty" bson:"vulnType" description:"vulnerability type from vulndb"`
 	Severity   *issue.Severity    `json:"severity,omitempty" description:"one of [high medium low info]"`
 	References []*issue.Reference `json:"references,omitempty" bson:"references" description:"information about vulnerability"`
@@ -21,7 +21,7 @@ type IssueEntity struct {
 }
 
 type TargetIssueEntity struct {
-	Target string `json:"target" creating:"nonzero,bsonId"`
+	Target string `json:"target,omitempty" creating:"nonzero,bsonId"`
 
 	StatusEntity `json:",inline"`
 	IssueEntity  `json:",inline"`
