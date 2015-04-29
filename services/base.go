@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
@@ -11,13 +12,17 @@ type BaseService struct {
 	manager   *manager.Manager
 	passCtx   *passlib.Context
 	scheduler scheduler.Scheduler
+	mailer    email.Mailer
 }
 
-func New(mgr *manager.Manager, passCtx *passlib.Context, sch scheduler.Scheduler) *BaseService {
+func New(mgr *manager.Manager, passCtx *passlib.Context,
+	sch scheduler.Scheduler, mailer email.Mailer) *BaseService {
+
 	return &BaseService{
 		manager:   mgr,
 		passCtx:   passCtx,
 		scheduler: sch,
+		mailer:    mailer,
 	}
 }
 
@@ -37,6 +42,10 @@ func (s *BaseService) PassCtx() *passlib.Context {
 
 func (s *BaseService) Scheduler() scheduler.Scheduler {
 	return s.scheduler
+}
+
+func (s *BaseService) Mailer() email.Mailer {
+	return s.mailer
 }
 
 func (s *BaseService) Init() error {

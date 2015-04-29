@@ -14,6 +14,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/config/flags"
 	"github.com/bearded-web/bearded/pkg/config/loader"
+	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
@@ -54,7 +55,9 @@ func New() cli.Command {
 	return cmd
 }
 
-func initServices(wsContainer *restful.Container, cfg *config.Dispatcher, db *mgo.Database) error {
+func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
+	db *mgo.Database, mailer email.Mailer) error {
+
 	// manager
 	mgr := manager.New(db)
 	if err := mgr.Init(); err != nil {
@@ -67,7 +70,7 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher, db *mg
 	sch := scheduler.NewMemoryScheduler(mgr.Copy())
 
 	// services
-	base := services.New(mgr, passCtx, sch)
+	base := services.New(mgr, passCtx, sch, mailer)
 	all := []services.ServiceInterface{
 		auth.New(base),
 		plugin.New(base),
@@ -142,10 +145,16 @@ func dispatcherAction(ctx *cli.Context) {
 	dbName := cfg.Mongo.Database
 	logrus.Infof("Set mongo database %s", dbName)
 
+	// initialize mailer
+	mailer, err := email.New(cfg.Email)
+	if err != nil {
+		logrus.Fatalf("Cannot initialize mailer: %s", err.Error())
+		return
+	}
+
 	if cfg.Debug {
 		mgo.SetLogger(&MgoLogger{})
 		mgo.SetDebug(true)
-
 		// see what happens inside the package restful
 		// TODO (m0sth8): set output to logrus
 		restful.TraceLogger(log.New(os.Stdout, "[restful] ", log.LstdFlags|log.Lshortfile))
@@ -171,7 +180,7 @@ func dispatcherAction(ctx *cli.Context) {
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni
 
 	// Initialize and register services in container
-	err = initServices(wsContainer, cfg, session.DB(dbName))
+	err = initServices(wsContainer, cfg, session.DB(dbName), mailer)
 	if err != nil {
 		logrus.Fatal(err)
 	}
