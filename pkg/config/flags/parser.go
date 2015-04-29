@@ -2,10 +2,11 @@ package flags
 
 import (
 	"fmt"
-	"github.com/fatih/structs"
-	"github.com/m0sth8/cli"
 	"reflect"
 	"strings"
+
+	"github.com/fatih/structs"
+	"github.com/m0sth8/cli"
 )
 
 func ParseFlags(cfg interface{}, ctx *cli.Context, opts ...Opts) error {

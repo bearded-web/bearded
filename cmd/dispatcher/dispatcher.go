@@ -117,7 +117,6 @@ func dispatcherAction(ctx *cli.Context) {
 		}
 	}
 
-
 	logrus.Info("Load config from flags")
 	err := flags.ParseFlags(cfg, ctx, flags.Opts{
 		EnvPrefix: "BEARDED",
@@ -135,7 +134,7 @@ func dispatcherAction(ctx *cli.Context) {
 	logrus.Infof("Init mongodb on %s", mongoAddr)
 	session, err := mgo.Dial(mongoAddr)
 	if err != nil {
-		logrus.Fatal(err)
+		logrus.Fatalf("Cannot connect to mongodb: %s", err.Error())
 		return
 	}
 	defer session.Close()

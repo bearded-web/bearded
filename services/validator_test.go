@@ -1,9 +1,10 @@
 package services
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/validator.v2"
-	"testing"
 )
 
 func TestBsonIdValidator(t *testing.T) {

@@ -1,8 +1,9 @@
 package file
 
 import (
-	"github.com/bearded-web/bearded/pkg/utils"
 	"io"
+
+	"github.com/bearded-web/bearded/pkg/utils"
 )
 
 type Meta struct {

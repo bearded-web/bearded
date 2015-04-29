@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/hex"
 	"fmt"
+
 	"gopkg.in/validator.v2"
 )
 

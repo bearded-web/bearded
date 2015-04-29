@@ -1,11 +1,12 @@
 package flags
 
 import (
+	"os"
+	"testing"
+
 	"github.com/m0sth8/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func TestParseFlag(t *testing.T) {

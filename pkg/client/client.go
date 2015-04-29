@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -17,7 +18,6 @@ import (
 	"github.com/google/go-querystring/query"
 	"golang.org/x/net/context"
 	"gopkg.in/mgo.v2/bson"
-	"mime/multipart"
 )
 
 const (

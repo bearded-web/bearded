@@ -4,6 +4,7 @@ import (
 	"testing"
 	//	c "github.com/smartystreets/goconvey/convey"
 	"bytes"
+
 	"github.com/bearded-web/bearded/models/file"
 	"github.com/bearded-web/bearded/pkg/tests"
 	"github.com/stretchr/testify/assert"

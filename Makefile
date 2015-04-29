@@ -1,37 +1,51 @@
 .PHONY: all test lint vet fmt travis coverage
 
+NO_COLOR=\033[0m
+OK_COLOR=\033[32;01m
+ERROR_COLOR=\033[31;01m
+WARN_COLOR=\033[33;01m
+PKGSDIRS=$(shell find -L . -type f -name "*.go" -not -path "./Godeps/*")
 
-all: test vet fmt
+all: test vet checkfmt
 
 
-travis: test fmt vet coverage
+travis: test checkfmt vet coverage
 
 
 test:
-	@echo "+ $@"
-	go test -v -cover ./...
+	@echo "$(OK_COLOR)Test packages$(NO_COLOR)"
+	@go test -v -cover ./...
 
 coverage:
-	@echo "+ $@"
+	@echo "$(OK_COLOR)Make coverage report$(NO_COLOR)"
 	@./coverage.sh
 	-goveralls -coverprofile=gover.coverprofile -service=travis-ci
 
 lint:
-	@echo "+ $@"
+	@echo "$(OK_COLOR)Run lint$(NO_COLOR)"
 	test -z "$$(golint ./... | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
 
-
 vet:
-	@echo "+ $@"
-	go vet ./...
+	@echo "$(OK_COLOR)Run vet$(NO_COLOR)"
+	@go vet ./...
 
+
+checkfmt:
+	@echo "$(OK_COLOR)Check formats$(NO_COLOR)"
+	@./checkfmt.sh .
 
 fmt:
-	@echo "+ $@"
-	./checkfmt.sh .
+	@echo "$(OK_COLOR)Formatting$(NO_COLOR)"
+	@echo $(PKGSDIRS) | xargs -I '{p}' -n1 goimports -w {p}
+
+tools:
+	@echo "$(OK_COLOR)Install tools$(NO_COLOR)"
+	go get github.com/tools/godep
+	go get golang.org/x/tools/cmd/goimports
+	go get github.com/golang/lint
 
 updep:
-	@echo "+ $@"
+	@echo "$(OK_COLOR)Update dependencies$(NO_COLOR)"
 	GOOS=linux godep save ./...
 	GOOS=linux godep update github.com/...
 	GOOS=linux godep update gopkg.in/...
