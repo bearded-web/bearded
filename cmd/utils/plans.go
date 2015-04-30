@@ -3,14 +3,13 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
-	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/pkg/client"
+	"github.com/bearded-web/bearded/pkg/utils/load"
 )
 
 var Plans = cli.Command{
@@ -36,6 +35,10 @@ var Plans = cli.Command{
 				cli.BoolFlag{
 					Name:  "update",
 					Usage: "Update plan if existed",
+				},
+				cli.StringFlag{
+					Name:  "format",
+					Usage: "Specify file format, by default format is taken from ext",
 				},
 			},
 		},
@@ -86,24 +89,15 @@ func plansLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 		os.Exit(1)
 	}
 	filename := ctx.Args()[0]
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		if !os.IsExist(err) {
-			fmt.Printf("File %s is not existed\n", filename)
-			os.Exit(1)
-		}
-		panic(err)
-	}
-	plans := []*plan.Plan{}
-	if err := json.Unmarshal(data, &plans); err != nil {
-		panic(err)
-	}
+	data := ExtraData{}
+	load.FromFile(filename, &data, load.Opts{Format: load.Format(ctx.String("format"))})
+
 	update := ctx.Bool("update")
 	if update {
 		fmt.Println("Autoupdate is enabled")
 	}
-	fmt.Printf("Found %d plans\n", len(plans))
-	for i, p := range plans {
+	fmt.Printf("Found %d plans\n", len(data.Plans))
+	for i, p := range data.Plans {
 		fmt.Printf("%d) %s\n", i, p)
 		fmt.Printf("Creating..\n")
 
