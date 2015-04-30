@@ -1,4 +1,4 @@
-package loader
+package load
 
 import (
 	"io"
@@ -6,10 +6,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-func init() {
-	loaders[".toml"] = LoadToml
-	loaders[".tml"] = LoadToml
-}
+const TomlFormat = Format("toml")
 
 func LoadToml(r io.Reader, dst interface{}) error {
 	_, err := toml.DecodeReader(r, dst)
