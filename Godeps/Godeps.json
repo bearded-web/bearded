@@ -71,8 +71,8 @@
 		},
 		{
 			"ImportPath": "github.com/emicklei/go-restful",
-			"Comment": "v1.1.3-42-g03f8ad5",
-			"Rev": "03f8ad5589baf3c67a448fd9354da27419db712d"
+			"Comment": "v1.1.3-44-gba727e9",
+			"Rev": "ba727e9a825015dc5082d9ce6a3287d5f5ecd0e8"
 		},
 		{
 			"ImportPath": "github.com/facebookgo/stack",
