@@ -26,7 +26,8 @@ type Agent struct {
 }
 
 type Email struct {
-	Smtp Smtp
+	Backend string `desc:"one of: [console|smtp]"`
+	Smtp    Smtp
 }
 
 type Smtp struct {
@@ -71,6 +72,7 @@ func NewDispatcher() *Dispatcher {
 			Database: "bearded",
 		},
 		Email: Email{
+			Backend: "console",
 			Smtp: Smtp{
 				Addr: "127.0.0.1",
 				Port: 587,

@@ -159,6 +159,14 @@
 			"Rev": "6460565bec1e8891e29ff478184c71b9e443ac36"
 		},
 		{
+			"ImportPath": "gopkg.in/alexcesaro/quotedprintable.v1",
+			"Rev": "dacd4576c5aafefb89134351dfcf4fbe213cd998"
+		},
+		{
+			"ImportPath": "gopkg.in/gomail.v1",
+			"Rev": "b4e3113e2dd2e703e92453e15e2161224f12e1fa"
+		},
+		{
 			"ImportPath": "gopkg.in/mgo.v2",
 			"Comment": "r2015.01.24",
 			"Rev": "c6a7dce14133ccac2dcac3793f1d6e2ef048503a"

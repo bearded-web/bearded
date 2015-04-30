@@ -15,6 +15,7 @@ import (
 	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/scheduler"
@@ -47,7 +48,7 @@ func TestSessionCreate(t *testing.T) {
 	}
 	sess.Set(filters.SessionUserKey, u.Id.Hex())
 
-	scanService := New(services.New(mgr, nil, scheduler.NewFake()))
+	scanService := New(services.New(mgr, nil, scheduler.NewFake(), email.NewConsoleBackend()))
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
 	wsContainer.Filter(filters.SessionFilterMock(sess))

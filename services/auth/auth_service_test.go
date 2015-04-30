@@ -13,6 +13,7 @@ import (
 	c "github.com/smartystreets/goconvey/convey"
 
 	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
@@ -39,7 +40,7 @@ func TestResetPassword(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	service := New(services.New(mgr, passCtx, scheduler.NewFake()))
+	service := New(services.New(mgr, passCtx, scheduler.NewFake(), email.NewConsoleBackend()))
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
 	service.Register(wsContainer)
