@@ -1,5 +1,7 @@
 package config
 
+import "github.com/bearded-web/bearded/pkg/utils"
+
 type Dispatcher struct {
 	Debug bool `flag:"-"`
 
@@ -14,6 +16,12 @@ type Dispatcher struct {
 
 type Api struct {
 	BindAddr string `desc:"http address for binding api server"`
+	Host     string `desc:"host for website, required for building urls"`
+
+	ResetPasswordSecret   string `flag:"-" desc:"secret required for reset token generation"`
+	ResetPasswordDuration int    `desc:"lifetime for reset token in seconds"`
+
+	SystemEmail string `desc:"for sending system emails, like password reseting"`
 }
 
 type Frontend struct {
@@ -60,7 +68,11 @@ func NewDispatcher() *Dispatcher {
 	return &Dispatcher{
 		Debug: false,
 		Api: Api{
-			BindAddr: "127.0.0.1:3003",
+			BindAddr:              "127.0.0.1:3003",
+			Host:                  "http://127.0.0.1:3003",
+			ResetPasswordSecret:   utils.RandomString(32),
+			ResetPasswordDuration: 86400,
+			SystemEmail:           "admin@localhost",
 		},
 		Swagger: Swagger{
 			ApiPath:  "/apidocs.json",

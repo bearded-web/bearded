@@ -70,7 +70,7 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
 	sch := scheduler.NewMemoryScheduler(mgr.Copy())
 
 	// services
-	base := services.New(mgr, passCtx, sch, mailer)
+	base := services.New(mgr, passCtx, sch, mailer, cfg.Api)
 	all := []services.ServiceInterface{
 		auth.New(base),
 		plugin.New(base),

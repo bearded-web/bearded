@@ -11,6 +11,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/user"
+	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/passlib/reset"
 	"github.com/bearded-web/bearded/pkg/validate"
@@ -259,13 +260,24 @@ func (s *AuthService) resetPassword(req *restful.Request, resp *restful.Response
 		return
 	}
 
-	// TODO (m0sth8: take variables from config
-	dur := time.Hour * 24
-	secret := []byte("12345678910")
-
-	// generate and send token
-	token := reset.NewToken(u.Email, dur, []byte(u.Password), secret)
-	println(token)
+	reqUrl := req.Request.URL
+	// TODO (m0sth8): send email in worker
+	go func() {
+		cfg := s.ApiCfg()
+		dur := time.Second * time.Duration(cfg.ResetPasswordDuration)
+		token := reset.NewToken(u.Email, dur, []byte(u.Password), []byte(cfg.ResetPasswordSecret))
+		msg := email.NewMessage()
+		msg.SetHeader("From", cfg.SystemEmail)
+		msg.SetHeader("To", u.Email, u.Email)
+		msg.SetHeader("Subject", "Reset password in bearded-web service")
+		reqUrlVal := reqUrl.Query()
+		reqUrlVal.Add("token", token)
+		reqUrl.RawQuery = reqUrlVal.Encode()
+		msg.SetBody("text/html", fmt.Sprintf("Please go to url: %s%s", cfg.Host, reqUrl.String()))
+		if err := s.Mailer().Send(msg); err != nil {
+			logrus.Error(err)
+		}
+	}()
 
 	resp.ResponseWriter.WriteHeader(http.StatusCreated)
 
@@ -278,7 +290,6 @@ func (s *AuthService) checkResetToken(req *restful.Request, resp *restful.Respon
 	defer mgr.Close()
 
 	// TODO (m0sth8: take variables from config
-	secret := []byte("12345678910")
 
 	redirectErr := func(req *restful.Request, resp *restful.Response, errMsg string) {
 		http.Redirect(resp.ResponseWriter, req.Request, fmt.Sprintf("/#/reset-end?error=%s", errMsg), http.StatusTemporaryRedirect)
@@ -297,7 +308,9 @@ func (s *AuthService) checkResetToken(req *restful.Request, resp *restful.Respon
 		return []byte(u.Password), err
 	}
 
-	_, err := reset.VerifyToken(token, getUser, secret)
+	cfg := s.ApiCfg()
+
+	_, err := reset.VerifyToken(token, getUser, []byte(cfg.ResetPasswordSecret))
 	if err != nil {
 		if err == reset.ErrExpiredToken {
 			redirectErr(req, resp, "Token expired, try again")

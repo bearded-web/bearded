@@ -14,7 +14,7 @@ prepare: updep fmt test vet checkfmt
 
 test:
 	@echo "$(OK_COLOR)Test packages$(NO_COLOR)"
-	@go test -v -cover ./...
+	@go test -v ./...
 
 coverage:
 	@echo "$(OK_COLOR)Make coverage report$(NO_COLOR)"
