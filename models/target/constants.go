@@ -5,11 +5,11 @@ import "encoding/json"
 type TargetType string
 
 const (
-	TypeWeb    TargetType = "web"
-	TypeMobile TargetType = "mobile"
+	TypeWeb     TargetType = "web"
+	TypeAndroid TargetType = "andorid"
 )
 
-var targetTypes = []interface{}{TypeWeb, TypeMobile}
+var targetTypes = []interface{}{TypeWeb, TypeAndroid}
 
 // It's a hack to show custom type as string in swagger
 func (t TargetType) MarshalJSON() ([]byte, error) {

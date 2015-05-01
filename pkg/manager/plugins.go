@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
@@ -19,9 +20,10 @@ type PluginManager struct {
 }
 
 type PluginFltr struct {
-	Name    string            `fltr:"name,in"`
-	Version string            `fltr:"version,in,nin,gte,gt,lte,lte"`
-	Type    plugin.PluginType `fltr:"type,in,nin"`
+	Name       string            `fltr:"name,in"`
+	Version    string            `fltr:"version,in,nin,gte,gt,lte,lte"`
+	Type       plugin.PluginType `fltr:"type,in,nin"`
+	TargetType target.TargetType `fltr:"targetType,in"`
 }
 
 func (s *PluginManager) Init() error {

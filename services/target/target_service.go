@@ -17,6 +17,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
+	"gopkg.in/validator.v2"
 )
 
 const ParamId = "target-id"
@@ -138,7 +139,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	}
 	// TODO (m0sth8): add validation and extract it to manager
 	if raw.Type == target.TypeWeb {
-		if raw.Web == nil || raw.Web.Domain == "" { // TODO (m0sth8): check domain format
+		if raw.Web == nil || raw.Web.Domain == "" {
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.domain is required for target.type=web"))
 			return
 		}
@@ -152,6 +153,20 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 			return
 		}
 		raw.Web.Domain = addr.String()
+	}
+	if raw.Type == target.TypeAndroid {
+		// TODO (m0sth8): check metadata for files (check if file existed, set right md5, size etc)
+		if raw.Android == nil {
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.android is required for target.type=android"))
+			return
+		}
+		if err := validator.WithTag("mobile").Validate(raw); err != nil {
+			resp.WriteServiceError(
+				http.StatusBadRequest,
+				services.NewBadReq("Validation error: %s", err.Error()),
+			)
+			return
+		}
 	}
 
 	user := filters.GetUser(req)
@@ -171,7 +186,8 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	if proj.Owner != user.Id {
+	if !mgr.Permission.HasProjectAccess(proj, user) {
+		logrus.Warnf("User %s try to access to project %s", user, proj)
 		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}

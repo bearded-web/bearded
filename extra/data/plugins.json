@@ -4,6 +4,7 @@
             "name": "barbudo/wappalyzer",
             "version": "0.0.2",
             "type": "util",
+            "targetType": "web",
             "weight": "middle",
             "desc": {
                 "title": "Wappalyzer",
@@ -18,6 +19,7 @@
             "name": "barbudo/retirejs",
             "version": "0.0.2",
             "type": "util",
+            "targetType": "web",
             "weight": "middle",
             "desc": {
                 "title": "Retirejs",
@@ -32,6 +34,7 @@
             "name": "barbudo/wpscan",
             "version": "0.0.2",
             "type": "util",
+            "targetType": "web",
             "weight": "heavy",
             "desc": {
                 "title": "Wpscan",
@@ -46,6 +49,7 @@
             "name": "barbudo/w3af",
             "version": "0.0.2",
             "type": "util",
+            "targetType": "web",
             "weight": "heavy",
             "desc": {
                 "title": "W3af",
@@ -60,6 +64,7 @@
             "name": "barbudo/w3af-script",
             "version": "0.0.2",
             "type": "script",
+            "targetType": "web",
             "weight": "heavy",
             "desc": {
                 "title": "W3af script",
@@ -74,6 +79,7 @@
             "name": "barbudo/wappalyzer-script",
             "version": "0.0.2",
             "type": "script",
+            "targetType": "web",
             "weight": "light",
             "desc": {
                 "title": "Wappalyzer script",
@@ -88,6 +94,7 @@
             "name": "barbudo/test",
             "version": "0.0.2",
             "type": "util",
+            "targetType": "web",
             "weight": "middle",
             "desc": {
                 "title": "Test",
@@ -102,6 +109,7 @@
             "name": "barbudo/wpscan-script",
             "version": "0.0.2",
             "type": "script",
+            "targetType": "web",
             "weight": "middle",
             "desc": {
                 "title": "Wpscan script",
@@ -117,6 +125,7 @@
             "name": "barbudo/retirejs-script",
             "version": "0.0.2",
             "type": "script",
+            "targetType": "web",
             "weight": "light",
             "desc": {
                 "title": "Retirejs script",
