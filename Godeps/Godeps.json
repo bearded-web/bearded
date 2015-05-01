@@ -156,7 +156,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "6460565bec1e8891e29ff478184c71b9e443ac36"
+			"Rev": "a8c61998a557a37435f719980da368469c10bfed"
 		},
 		{
 			"ImportPath": "gopkg.in/alexcesaro/quotedprintable.v1",

@@ -63,7 +63,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Doc("create")
 	r.Operation("create")
 	r.Writes(target.Target{})
-	r.Reads(target.Target{})
+	r.Reads(TargetEntity{})
 	r.Do(services.Returns(http.StatusCreated))
 	r.Do(services.ReturnsE(http.StatusConflict))
 	addDefaults(r)
@@ -130,17 +130,28 @@ func (s *TargetService) Register(container *restful.Container) {
 func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
-	raw := &target.Target{}
+	new := &target.Target{}
+	raw := &TargetEntity{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	// TODO (m0sth8): add validation and extract it to manager
-	if raw.Type == target.TypeWeb {
-		if raw.Web == nil || raw.Web.Domain == "" {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.domain is required for target.type=web"))
+	if err := validator.WithTag("creating").Validate(raw); err != nil {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Validation error: %s", err.Error()),
+		)
+		return
+	}
+	switch raw.Type {
+	case target.TypeWeb:
+		if err := validator.WithTag("cweb").Validate(raw); err != nil {
+			resp.WriteServiceError(
+				http.StatusBadRequest,
+				services.NewBadReq("Validation error: %s", err.Error()),
+			)
 			return
 		}
 		addr, err := url.Parse(raw.Web.Domain)
@@ -152,22 +163,32 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("scheme must be http or https"))
 			return
 		}
-		raw.Web.Domain = addr.String()
-	}
-	if raw.Type == target.TypeAndroid {
-		// TODO (m0sth8): check metadata for files (check if file existed, set right md5, size etc)
-		if raw.Android == nil {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.android is required for target.type=android"))
-			return
+		new.Web = &target.WebTarget{
+			Domain: addr.String(),
 		}
-		if err := validator.WithTag("mobile").Validate(raw); err != nil {
+	case target.TypeAndroid:
+		if err := validator.WithTag("cmobile").Validate(raw); err != nil {
 			resp.WriteServiceError(
 				http.StatusBadRequest,
 				services.NewBadReq("Validation error: %s", err.Error()),
 			)
 			return
 		}
+
+		new.Android = &target.AndroidTarget{
+			Name: raw.Android.Name,
+		}
+		if raw.Android.File != nil {
+			// TODO (m0sth8): HIGH! check file permissions
+			// TODO (m0sth8): check metadata for files (check if file existed, set true md5, size etc)
+			new.Android.File = raw.Android.File
+		}
+	default:
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Unknown target type"))
+		return
 	}
+	new.Type = raw.Type
+	// TODO (m0sth8): add validation and extract it to manager
 
 	user := filters.GetUser(req)
 
@@ -175,10 +196,10 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	// TODO (m0sth8): check if the user has permission to add a target to the project
-	proj, err := mgr.Projects.GetById(raw.Project)
+	proj, err := mgr.Projects.GetById(mgr.ToId(raw.Project))
 	if err != nil {
 		if mgr.IsNotFound(err) {
-			resp.WriteServiceError(http.StatusForbidden, services.NewError(services.CodeAuthForbid, "project doesn't exist"))
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project doesn't exist"))
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
@@ -191,8 +212,9 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}
+	new.Project = proj.Id
 
-	obj, err := mgr.Targets.Create(raw)
+	obj, err := mgr.Targets.Create(new)
 	if err != nil {
 		//		if mgr.IsDup(err) {
 		//			resp.WriteServiceError(

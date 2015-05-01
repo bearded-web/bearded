@@ -30,13 +30,9 @@ type WebTarget struct {
 	Domain string `json:"domain"`
 }
 
-type MobileTarget struct {
+type AndroidTarget struct {
 	Name string     `json:"name" description:"target name, 80 symbols max" mobile:"nonzero,max=80"`
 	File *file.Meta `json:"file" description:"apk file metadata"`
-}
-
-type AndroidTarget struct {
-	MobileTarget `json:",inline" bson:",inline"`
 }
 
 type TargetList struct {
