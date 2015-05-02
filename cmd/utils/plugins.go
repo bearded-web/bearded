@@ -3,14 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	//	"github.com/codegangpsta/cli"
-	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
-
-	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/pkg/client"
+	"github.com/bearded-web/bearded/pkg/utils/load"
+	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 )
 
 var Plugins = cli.Command{
@@ -40,6 +38,10 @@ var Plugins = cli.Command{
 				cli.BoolFlag{
 					Name:  "disable",
 					Usage: "Set plugin as disabled",
+				},
+				cli.StringFlag{
+					Name:  "format",
+					Usage: "Specify file format, by default format is taken from ext",
 				},
 			},
 		},
@@ -89,25 +91,16 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 		os.Exit(1)
 	}
 	filename := ctx.Args()[0]
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		if !os.IsExist(err) {
-			fmt.Printf("File %s is not existed\n", filename)
-			os.Exit(1)
-		}
-		panic(err)
-	}
-	plugins := []*plugin.Plugin{}
-	if err := json.Unmarshal(data, &plugins); err != nil {
-		panic(err)
-	}
+	data := ExtraData{}
+	load.FromFile(filename, &data, load.Opts{Format: load.Format(ctx.String("format"))})
+
 	update := ctx.Bool("update")
 	if update {
 		fmt.Println("Autoupdate is enabled")
 	}
 
-	fmt.Printf("Found %d plugins\n", len(plugins))
-	for i, p := range plugins {
+	fmt.Printf("Found %d plugins\n", len(data.Plugins))
+	for i, p := range data.Plugins {
 		fmt.Printf("%d) %s\n", i, p)
 		fmt.Printf("Creating..\n")
 		if !ctx.Bool("disable") {
@@ -146,7 +139,5 @@ func pluginsLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 			}
 		}
 		fmt.Println("Successful")
-		//		fmt.Printf("%s\n", created)
 	}
-
 }

@@ -1,109 +1,111 @@
-[
-    {
-        "name": "detectWeb",
-        "desc": "Detect web technologies used by the site with wappalyzer and nmap",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/wappalyzer-script:0.0.2",
-                "name": "Detect technologies",
-                "desc": "Detect usage of JavaScript libraries and technologies",
-                "conf": {}
-            },
-            {
-                "plugin": "barbudo/retirejs-script:0.0.2",
-                "name": "Detect vulnerable js",
-                "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
-                "conf": {}
-            }
-        ]
-    },
-    {
-        "name": "test",
-        "desc": "Test script",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/test:0.0.2",
-                "name": "TEST",
-                "desc": "fuf",
-                "conf": {
-                    "commandArgs": "{{ .Target }}",
-                    "takeFiles": [
-                        {"path": "/extra/run.sh", "name": "run.sh"}
-                    ],
-                    "sharedFiles": [
-                        {"path": "file.txt", "text": "data in file"}
-                    ]
+{
+    "plans": [
+        {
+            "name": "detectWeb",
+            "desc": "Detect web technologies used by the site with wappalyzer and nmap",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/wappalyzer-script:0.0.2",
+                    "name": "Detect technologies",
+                    "desc": "Detect usage of JavaScript libraries and technologies",
+                    "conf": {}
+                },
+                {
+                    "plugin": "barbudo/retirejs-script:0.0.2",
+                    "name": "Detect vulnerable js",
+                    "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
+                    "conf": {}
                 }
-            }
-        ]
-    },
-    {
-        "name": "detectJs",
-        "desc": "Detect web technologies used by the site with wappalyzer and retirejs",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/wappalyzer:0.0.2",
-                "name": "Detect technologies",
-                "desc": "Use wappalyzer in phantomjs to detect web technologies used by the site",
-                "conf": {
-                    "commandArgs": "{{ .Target }}"
+            ]
+        },
+        {
+            "name": "test",
+            "desc": "Test script",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/test:0.0.2",
+                    "name": "TEST",
+                    "desc": "fuf",
+                    "conf": {
+                        "commandArgs": "{{ .Target }}",
+                        "takeFiles": [
+                            {"path": "/extra/run.sh", "name": "run.sh"}
+                        ],
+                        "sharedFiles": [
+                            {"path": "file.txt", "text": "data in file"}
+                        ]
+                    }
                 }
-            },
-            {
-                "plugin": "barbudo/retirejs:0.0.2",
-                "name": "Detect vulnerable js",
-                "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
-                "conf": {
-                    "commandArgs": "{{ .Target }}"
+            ]
+        },
+        {
+            "name": "detectJs",
+            "desc": "Detect web technologies used by the site with wappalyzer and retirejs",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/wappalyzer:0.0.2",
+                    "name": "Detect technologies",
+                    "desc": "Use wappalyzer in phantomjs to detect web technologies used by the site",
+                    "conf": {
+                        "commandArgs": "{{ .Target }}"
+                    }
+                },
+                {
+                    "plugin": "barbudo/retirejs:0.0.2",
+                    "name": "Detect vulnerable js",
+                    "desc": "Detect usage of JavaScript libraries with known vulnerabilities",
+                    "conf": {
+                        "commandArgs": "{{ .Target }}"
+                    }
                 }
-            }
-        ]
-    },
-    {
-        "name": "Cms scan",
-        "desc": "Detect cms used by the site and scan for vulnerabilities",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/wpscan-script:0.0.2",
-                "name": "Detect wordpress",
-                "desc": "Detect usage of wordpress and show known vulnerabilities",
-                "conf": {}
-            }
-        ]
-    },
-    {
-        "name": "Wordpress full scan",
-        "desc": "Scan wordpress in heavy mode",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/wpscan:0.0.2",
-                "name": "Detect wordpress",
-                "desc": "Detect usage of wordpress and show known vulnerabilities",
-                "conf": {
-                    "commandArgs": "--url {{ .Target }} --follow-redirection --batch --no-color --enumerate"
+            ]
+        },
+        {
+            "name": "Cms scan",
+            "desc": "Detect cms used by the site and scan for vulnerabilities",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/wpscan-script:0.0.2",
+                    "name": "Detect wordpress",
+                    "desc": "Detect usage of wordpress and show known vulnerabilities",
+                    "conf": {}
                 }
-            }
-        ]
-    },
-    {
-        "name": "W3af base profile scan",
-        "desc": "Scan web target with w3af base profile",
-        "targetType": "web",
-        "workflow": [
-            {
-                "plugin": "barbudo/w3af-script:0.0.2",
-                "name": "W3af scan",
-                "desc": "Scan web target with w3af base profile",
-                "conf": {
-                    "formData": "{\"data\":\"[misc-settings]\\nmaxDiscoveryTime = 3\\nmaxThreads = 0\\nfuzzFCExt = txt\\nfuzzURLParts = True\\nautoDependencies = True\\nfuzzFormComboValues = t\\n\\n[audit.xss]\\n[audit.sqli]\\n[crawl.web_spider]\\n[output.console]\\nverbose = False\\n\\n[target]\\ntarget = {{ .Target }}\",\"type\":\"plan\"}"
+            ]
+        },
+        {
+            "name": "Wordpress full scan",
+            "desc": "Scan wordpress in heavy mode",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/wpscan:0.0.2",
+                    "name": "Detect wordpress",
+                    "desc": "Detect usage of wordpress and show known vulnerabilities",
+                    "conf": {
+                        "commandArgs": "--url {{ .Target }} --follow-redirection --batch --no-color --enumerate"
+                    }
                 }
-            }
-        ]
-    }
+            ]
+        },
+        {
+            "name": "W3af base profile scan",
+            "desc": "Scan web target with w3af base profile",
+            "targetType": "web",
+            "workflow": [
+                {
+                    "plugin": "barbudo/w3af-script:0.0.2",
+                    "name": "W3af scan",
+                    "desc": "Scan web target with w3af base profile",
+                    "conf": {
+                        "formData": "{\"data\":\"[misc-settings]\\nmaxDiscoveryTime = 3\\nmaxThreads = 0\\nfuzzFCExt = txt\\nfuzzURLParts = True\\nautoDependencies = True\\nfuzzFormComboValues = t\\n\\n[audit.xss]\\n[audit.sqli]\\n[crawl.web_spider]\\n[output.console]\\nverbose = False\\n\\n[target]\\ntarget = {{ .Target }}\",\"type\":\"plan\"}"
+                    }
+                }
+            ]
+        }
 
-]
+    ]
+}

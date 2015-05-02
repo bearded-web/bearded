@@ -17,6 +17,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/services"
+	"gopkg.in/validator.v2"
 )
 
 const ParamId = "target-id"
@@ -62,7 +63,7 @@ func (s *TargetService) Register(container *restful.Container) {
 	r.Doc("create")
 	r.Operation("create")
 	r.Writes(target.Target{})
-	r.Reads(target.Target{})
+	r.Reads(TargetEntity{})
 	r.Do(services.Returns(http.StatusCreated))
 	r.Do(services.ReturnsE(http.StatusConflict))
 	addDefaults(r)
@@ -108,20 +109,18 @@ func (s *TargetService) Register(container *restful.Container) {
 		http.StatusNotFound))
 	ws.Route(r)
 
-	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
-	//	// docs
-	//	r.Doc("update")
-	//	r.Operation("update")
-	//	r.Param(ws.PathParameter(ParamId, ""))
-	//	r.Writes(target.Target{})
-	//	r.Reads(target.Target{})
-	//	r.Do(services.Returns(
-	//		http.StatusOK,
-	//		http.StatusNotFound))
-	//	r.Do(services.ReturnsE(
-	//		http.StatusBadRequest,
-	//		http.StatusInternalServerError))
-	//	ws.Route(r)
+	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.TakeTarget(s.update))
+	// docs
+	r.Doc("update")
+	r.Operation("update")
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Writes(target.Target{})
+	r.Reads(TargetEntity{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
 
 	container.Add(ws)
 }
@@ -129,17 +128,28 @@ func (s *TargetService) Register(container *restful.Container) {
 func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions for the user, he is might be blocked or removed
 
-	raw := &target.Target{}
+	new := &target.Target{}
+	raw := &TargetEntity{}
 
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	// TODO (m0sth8): add validation and extract it to manager
-	if raw.Type == target.TypeWeb {
-		if raw.Web == nil || raw.Web.Domain == "" { // TODO (m0sth8): check domain format
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("web.domain is required for target.type=web"))
+	if err := validator.WithTag("create").Validate(raw); err != nil {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Validation error: %s", err.Error()),
+		)
+		return
+	}
+	switch raw.Type {
+	case target.TypeWeb:
+		if err := validator.WithTag("cweb").Validate(raw); err != nil {
+			resp.WriteServiceError(
+				http.StatusBadRequest,
+				services.NewBadReq("Validation error: %s", err.Error()),
+			)
 			return
 		}
 		addr, err := url.Parse(raw.Web.Domain)
@@ -151,8 +161,32 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("scheme must be http or https"))
 			return
 		}
-		raw.Web.Domain = addr.String()
+		new.Web = &target.WebTarget{
+			Domain: addr.String(),
+		}
+	case target.TypeAndroid:
+		if err := validator.WithTag("cmobile").Validate(raw); err != nil {
+			resp.WriteServiceError(
+				http.StatusBadRequest,
+				services.NewBadReq("Validation error: %s", err.Error()),
+			)
+			return
+		}
+
+		new.Android = &target.AndroidTarget{
+			Name: raw.Android.Name,
+		}
+		if raw.Android.File != nil {
+			// TODO (m0sth8): HIGH! check file permissions
+			// TODO (m0sth8): check metadata for files (check if file existed, set true md5, size etc)
+			new.Android.File = raw.Android.File
+		}
+	default:
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Unknown target type"))
+		return
 	}
+	new.Type = raw.Type
+	// TODO (m0sth8): add validation and extract it to manager
 
 	user := filters.GetUser(req)
 
@@ -160,10 +194,10 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 	defer mgr.Close()
 
 	// TODO (m0sth8): check if the user has permission to add a target to the project
-	proj, err := mgr.Projects.GetById(raw.Project)
+	proj, err := mgr.Projects.GetById(mgr.ToId(raw.Project))
 	if err != nil {
 		if mgr.IsNotFound(err) {
-			resp.WriteServiceError(http.StatusForbidden, services.NewError(services.CodeAuthForbid, "project doesn't exist"))
+			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project doesn't exist"))
 			return
 		}
 		logrus.Error(stackerr.Wrap(err))
@@ -171,19 +205,15 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	if proj.Owner != user.Id {
+	if !mgr.Permission.HasProjectAccess(proj, user) {
+		logrus.Warnf("User %s try to access to project %s", user, proj)
 		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}
+	new.Project = proj.Id
 
-	obj, err := mgr.Targets.Create(raw)
+	obj, err := mgr.Targets.Create(new)
 	if err != nil {
-		//		if mgr.IsDup(err) {
-		//			resp.WriteServiceError(
-		//				http.StatusConflict,
-		//				services.NewError(services.CodeDuplicate, "target with this name and owner is existed"))
-		//			return
-		//		}
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
@@ -194,7 +224,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
-	// TODO (m0sth8): check project existence and permissions
+	// TODO (m0sth8): HIGH check project existence and permissions
 	query, err := fltr.FromRequest(req, manager.TargetFltr{})
 	if err != nil {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
@@ -230,6 +260,52 @@ func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *
 	mgr.Targets.Remove(obj)
 
 	resp.WriteHeader(http.StatusNoContent)
+}
+
+func (s *TargetService) update(req *restful.Request, resp *restful.Response, obj *target.Target, p *project.Project) {
+
+	updated := false
+	raw := &TargetEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+	if err := validator.WithTag("update").Validate(raw); err != nil {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Validation error: %s", err.Error()),
+		)
+		return
+	}
+	// update file for android target
+	if obj.Type == target.TypeAndroid {
+		if raw.Android != nil && raw.Android.File != nil && raw.Android.File.Id != obj.Android.File.Id {
+			// TODO (m0sth8): HIGH! check file permissions
+			obj.Android.File = raw.Android.File
+			updated = true
+		}
+	}
+
+	if updated {
+		mgr := s.Manager()
+		defer mgr.Close()
+
+		err := mgr.Targets.Update(obj)
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				resp.WriteErrorString(http.StatusNotFound, "Not found")
+				return
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+			return
+		}
+	}
+
+	resp.WriteEntity(obj)
+
 }
 
 func (s *TargetService) comments(_ *restful.Request, resp *restful.Response, obj *target.Target, _ *project.Project) {

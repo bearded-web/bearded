@@ -11,6 +11,7 @@ type Meta struct {
 	Name        string `json:"name"`
 	Size        int    `json:"size,omitempty"`
 	ContentType string `json:"contentType"`
+	MD5         string `json:"md5,omitempty"`
 }
 
 type File struct {

@@ -13,12 +13,12 @@ import (
 
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/config/flags"
-	"github.com/bearded-web/bearded/pkg/config/loader"
 	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
+	"github.com/bearded-web/bearded/pkg/utils/load"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/agent"
 	"github.com/bearded-web/bearded/services/auth"
@@ -45,6 +45,11 @@ func New() cli.Command {
 				Name:   "config",
 				EnvVar: "BEARDED_CONFIG",
 				Usage:  "path to config",
+			},
+			cli.StringFlag{
+				Name:   "config-format",
+				EnvVar: "BEARDED_CONFIG_FORMAT",
+				Usage:  "Specify config format, by default format is taken from ext",
 			},
 		},
 	}
@@ -113,7 +118,7 @@ func dispatcherAction(ctx *cli.Context) {
 	cfg := config.NewDispatcher()
 	if cfgPath := ctx.String("config"); cfgPath != "" {
 		logrus.Infof("Load config from %s", cfgPath)
-		err := loader.LoadFromFile(cfgPath, cfg)
+		err := load.FromFile(cfgPath, cfg)
 		if err != nil {
 			logrus.Fatalf("Couldn't load config: %s", err)
 			return

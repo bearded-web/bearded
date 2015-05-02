@@ -28,6 +28,7 @@ func (m *FileManager) GetById(id string) (*file.File, error) {
 	if err = f.GetMeta(meta); err != nil {
 		return nil, stackerr.Wrap(err)
 	}
+	meta.MD5 = f.MD5()
 	return &file.File{Meta: meta, ReadCloser: f}, nil
 }
 
@@ -56,5 +57,6 @@ func (m *FileManager) Create(r io.Reader, metaInfo *file.Meta) (*file.Meta, erro
 	if err = f.Close(); err != nil {
 		return nil, stackerr.Wrap(err)
 	}
+	meta.MD5 = f.MD5()
 	return meta, nil
 }

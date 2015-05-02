@@ -256,6 +256,7 @@ func (s *ScanService) sessionReportCreate(req *restful.Request, resp *restful.Re
 	mgr := s.Manager()
 	defer mgr.Close()
 
+	// TODO (m0sth8): for raw reports check metadata for files (check if file esisted, set right md5, size etc)
 	rep, err := mgr.Reports.Create(raw)
 
 	if err != nil {

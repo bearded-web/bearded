@@ -1,129 +1,140 @@
-[
-    {
-        "name": "barbudo/wappalyzer",
-        "version": "0.0.2",
-        "type": "util",
-        "weight": "middle",
-        "desc": {
-            "title": "Wappalyzer",
-            "info": "Wappalyzer is a library that uncovers the technologies used on websites. It detects content management systems, eCommerce platforms, web servers, JavaScript frameworks, analytics tools and many more.",
-            "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer/"
+{
+    "plugins": [
+        {
+            "name": "barbudo/wappalyzer",
+            "version": "0.0.2",
+            "type": "util",
+            "targetType": "web",
+            "weight": "middle",
+            "desc": {
+                "title": "Wappalyzer",
+                "info": "Wappalyzer is a library that uncovers the technologies used on websites. It detects content management systems, eCommerce platforms, web servers, JavaScript frameworks, analytics tools and many more.",
+                "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer/"
+            },
+            "container": {
+                "image": "barbudo/wappalyzer"
+            }
         },
-        "container": {
-            "image": "barbudo/wappalyzer"
+        {
+            "name": "barbudo/retirejs",
+            "version": "0.0.2",
+            "type": "util",
+            "targetType": "web",
+            "weight": "middle",
+            "desc": {
+                "title": "Retirejs",
+                "info": "Detect usage of JavaScript libraries with known vulnerabilities",
+                "url": "https://registry.hub.docker.com/u/barbudo/retirejs/"
+            },
+            "container": {
+                "image": "barbudo/retirejs"
+            }
+        },
+        {
+            "name": "barbudo/wpscan",
+            "version": "0.0.2",
+            "type": "util",
+            "targetType": "web",
+            "weight": "heavy",
+            "desc": {
+                "title": "Wpscan",
+                "info": "WPScan is a black box WordPress vulnerability scanner.",
+                "url": "https://registry.hub.docker.com/u/barbudo/wpscan/"
+            },
+            "container": {
+                "image": "barbudo/wpscan"
+            }
+        },
+        {
+            "name": "barbudo/w3af",
+            "version": "0.0.2",
+            "type": "util",
+            "targetType": "web",
+            "weight": "heavy",
+            "desc": {
+                "title": "W3af",
+                "info": "W3af is a black box web vulnerability scanner.",
+                "url": "https://registry.hub.docker.com/u/barbudo/w3af/"
+            },
+            "container": {
+                "image": "barbudo/w3af"
+            }
+        },
+        {
+            "name": "barbudo/w3af-script",
+            "version": "0.0.2",
+            "type": "script",
+            "targetType": "web",
+            "weight": "heavy",
+            "desc": {
+                "title": "W3af script",
+                "info": "W3af is a black box web vulnerability scanner.",
+                "url": "https://registry.hub.docker.com/u/barbudo/w3af-script/"
+            },
+            "container": {
+                "image": "barbudo/w3af-script"
+            }
+        },
+        {
+            "name": "barbudo/wappalyzer-script",
+            "version": "0.0.2",
+            "type": "script",
+            "targetType": "web",
+            "weight": "light",
+            "desc": {
+                "title": "Wappalyzer script",
+                "info": "Detect usage of JavaScript libraries and technologies",
+                "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer-script/"
+            },
+            "container": {
+                "image": "barbudo/wappalyzer-script"
+            }
+        },
+        {
+            "name": "barbudo/test",
+            "version": "0.0.2",
+            "type": "util",
+            "targetType": "web",
+            "weight": "middle",
+            "desc": {
+                "title": "Test",
+                "info": "Just test script",
+                "url": ""
+            },
+            "container": {
+                "image": "barbudo/test-script"
+            }
+        },
+        {
+            "name": "barbudo/wpscan-script",
+            "version": "0.0.2",
+            "type": "script",
+            "targetType": "web",
+            "weight": "middle",
+            "desc": {
+                "title": "Wpscan script",
+                "info": "WPScan is a black box WordPress vulnerability scanner.",
+                "url": "https://registry.hub.docker.com/u/barbudo/wpscan-script/"
+            },
+            "container": {
+                "image": "barbudo/wpscan-script"
+            },
+            "formSchema": "{\"type\":\"object\",\"description\":\"A family\",\"properties\":{\"mother\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"father\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"children\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]}}},\"required\":[\"mother\",\"father\",\"children\"]}"
+        },
+        {
+            "name": "barbudo/retirejs-script",
+            "version": "0.0.2",
+            "type": "script",
+            "targetType": "web",
+            "weight": "light",
+            "desc": {
+                "title": "Retirejs script",
+                "info": "Detect usage of JavaScript libraries with known vulnerabilities",
+                "url": "https://registry.hub.docker.com/u/barbudo/retirejs-script/"
+            },
+            "container": {
+                "image": "barbudo/retirejs-script"
+            }
         }
-    },
-    {
-        "name": "barbudo/retirejs",
-        "version": "0.0.2",
-        "type": "util",
-        "weight": "middle",
-        "desc": {
-            "title": "Retirejs",
-            "info": "Detect usage of JavaScript libraries with known vulnerabilities",
-            "url": "https://registry.hub.docker.com/u/barbudo/retirejs/"
-        },
-        "container": {
-            "image": "barbudo/retirejs"
-        }
-    },
-    {
-        "name": "barbudo/wpscan",
-        "version": "0.0.2",
-        "type": "util",
-        "weight": "heavy",
-        "desc": {
-            "title": "Wpscan",
-            "info": "WPScan is a black box WordPress vulnerability scanner.",
-            "url": "https://registry.hub.docker.com/u/barbudo/wpscan/"
-        },
-        "container": {
-            "image": "barbudo/wpscan"
-        }
-    },
-    {
-        "name": "barbudo/w3af",
-        "version": "0.0.2",
-        "type": "util",
-        "weight": "heavy",
-        "desc": {
-            "title": "W3af",
-            "info": "W3af is a black box web vulnerability scanner.",
-            "url": "https://registry.hub.docker.com/u/barbudo/w3af/"
-        },
-        "container": {
-            "image": "barbudo/w3af"
-        }
-    },
-    {
-        "name": "barbudo/w3af-script",
-        "version": "0.0.2",
-        "type": "script",
-        "weight": "heavy",
-        "desc": {
-            "title": "W3af script",
-            "info": "W3af is a black box web vulnerability scanner.",
-            "url": "https://registry.hub.docker.com/u/barbudo/w3af-script/"
-        },
-        "container": {
-            "image": "barbudo/w3af-script"
-        }
-    },
-    {
-        "name": "barbudo/wappalyzer-script",
-        "version": "0.0.2",
-        "type": "script",
-        "weight": "light",
-        "desc": {
-            "title": "Wappalyzer script",
-            "info": "Detect usage of JavaScript libraries and technologies",
-            "url": "https://registry.hub.docker.com/u/barbudo/wappalyzer-script/"
-        },
-        "container": {
-            "image": "barbudo/wappalyzer-script"
-        }
-    },
-    {
-        "name": "barbudo/test",
-        "version": "0.0.2",
-        "type": "util",
-        "weight": "middle",
-        "desc": {
-            "title": "Test",
-            "info": "Just test script",
-            "url": ""
-        },
-        "container": {
-            "image": "barbudo/test-script"
-        }
-    },
-    {
-        "name": "barbudo/wpscan-script",
-        "version": "0.0.2",
-        "type": "script",
-        "weight": "middle",
-        "desc": {
-            "title": "Wpscan script",
-            "info": "WPScan is a black box WordPress vulnerability scanner.",
-            "url": "https://registry.hub.docker.com/u/barbudo/wpscan-script/"
-        },
-        "container": {
-            "image": "barbudo/wpscan-script"
-        },
-        "formSchema": "{\"type\":\"object\",\"description\":\"A family\",\"properties\":{\"mother\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"father\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]},\"children\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"},\"surname\":{\"type\":\"string\"}},\"required\":[\"name\",\"surname\"]}}},\"required\":[\"mother\",\"father\",\"children\"]}"
-    },
-    {
-        "name": "barbudo/retirejs-script",
-        "version": "0.0.2",
-        "type": "script",
-        "weight": "light",
-        "desc": {
-            "title": "Retirejs script",
-            "info": "Detect usage of JavaScript libraries with known vulnerabilities",
-            "url": "https://registry.hub.docker.com/u/barbudo/retirejs-script/"
-        },
-        "container": {
-            "image": "barbudo/retirejs-script"
-        }
-    }
-]
+    ]
+}

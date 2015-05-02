@@ -7,6 +7,8 @@ import (
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 	"golang.org/x/net/context"
 
+	"github.com/bearded-web/bearded/models/plan"
+	"github.com/bearded-web/bearded/models/plugin"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/utils"
 )
@@ -39,4 +41,9 @@ func takeApi(fn func(*cli.Context, *client.Client, Timeout)) func(*cli.Context) 
 		}
 		fn(ctx, api, timeout)
 	}
+}
+
+type ExtraData struct {
+	Plugins []*plugin.Plugin
+	Plans   []*plan.Plan
 }

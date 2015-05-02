@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/pagination"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -36,6 +37,8 @@ type Plugin struct {
 	Created    time.Time     `json:"created,omitempty" description:"when plugin is created"`
 	Updated    time.Time     `json:"updated,omitempty" description:"when plugin is updated"`
 	FormSchema string        `json:"formSchema" bson:"formSchema" description:"json schema form description"`
+
+	TargetType target.TargetType `json:"targetType" bson:"targetType" description:"available only for target with this type"`
 
 	//	Requirements []*Required   `json:"requirements,omitempty" description:"other plugins required for running"`
 	Enabled bool `json:"enabled" description:"is plugin enabled for running"`
