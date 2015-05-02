@@ -1,6 +1,6 @@
 # Bearded (WIP)
 
-[![travis](https://travis-ci.org/bearded-web/bearded.svg)](https://travis-ci.org/bearded-web/bearded)  [![Coverage Status](https://coveralls.io/repos/bearded-web/bearded/badge.svg?branch=feature%2Fcoverall)](https://coveralls.io/r/bearded-web/bearded?branch=feature%2Fcoverall)
+[![travis](https://travis-ci.org/bearded-web/bearded.svg)](https://travis-ci.org/bearded-web/bearded)  [![Coverage Status](https://coveralls.io/repos/bearded-web/bearded/badge.svg?branch=develop)](https://coveralls.io/r/bearded-web/bearded?branch=develop)
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bearded-web/bearded?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
