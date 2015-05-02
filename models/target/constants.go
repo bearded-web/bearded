@@ -6,7 +6,7 @@ type TargetType string
 
 const (
 	TypeWeb     TargetType = "web"
-	TypeAndroid TargetType = "andorid"
+	TypeAndroid TargetType = "android"
 )
 
 var targetTypes = []interface{}{TypeWeb, TypeAndroid}

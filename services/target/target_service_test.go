@@ -72,8 +72,9 @@ func TestTargetService(t *testing.T) {
 		c.So(err, c.ShouldBeNil)
 
 		c.Convey("Get list of all targets", func() {
-			res, issues := getTargets(t, ts.URL, nil)
+			res, issues, err := getTargets(ts.URL, nil)
 			c.Convey("Response should be empty", func() {
+				c.So(err, c.ShouldBeNil)
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
 				c.So(issues.Count, c.ShouldEqual, 0)
 				c.So(len(issues.Results), c.ShouldEqual, 0)
@@ -151,7 +152,9 @@ func TestTargetService(t *testing.T) {
 				Project: testMgr.FromId(projectObj.Id),
 				Android: &AndroidTargetEntity{
 					Name: "First",
-					File: &file.Meta{},
+					File: &file.Meta{
+						Id: "file id",
+					},
 				},
 			}
 			c.Convey("With correct data", func() {
@@ -162,6 +165,19 @@ func TestTargetService(t *testing.T) {
 					c.So(tgt.Type, c.ShouldEqual, target.TypeAndroid)
 					c.So(tgt.Project, c.ShouldEqual, projectObj.Id)
 					c.So(tgt.Android.Name, c.ShouldEqual, "First")
+					c.So(tgt.Android.File.Id, c.ShouldEqual, "file id")
+					c.Convey("Update it with new file", func() {
+						te.Android.File.Id = "file id2"
+						te.Android.Name = "First2"
+						res, tgt2, err := updateTarget(ts.URL, testMgr.FromId(tgt.Id), te)
+						c.So(err, c.ShouldBeNil)
+						c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
+						c.So(tgt2.Type, c.ShouldEqual, target.TypeAndroid)
+						c.So(tgt2.Project, c.ShouldEqual, projectObj.Id)
+						c.So(tgt2.Android.Name, c.ShouldEqual, "First")
+						c.So(tgt2.Android.File.Id, c.ShouldEqual, "file id2")
+
+					})
 				})
 			})
 			c.Convey("Without name", func() {
@@ -183,10 +199,10 @@ func TestTargetService(t *testing.T) {
 
 // Helpers
 
-func getTargets(t *testing.T, baseUrl string, val url.Values) (*http.Response, *target.TargetList) {
+func getTargets(baseUrl string, val url.Values) (*http.Response, *target.TargetList, error) {
 	u, err := url.Parse(fmt.Sprintf("%s/api/v1/targets", baseUrl))
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
 	if val != nil || len(val) > 0 {
 		u.RawQuery = val.Encode()
@@ -197,44 +213,44 @@ func getTargets(t *testing.T, baseUrl string, val url.Values) (*http.Response, *
 	resp, err := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
 	targets := &target.TargetList{}
 	err = json.NewDecoder(resp.Body).Decode(targets)
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
-	return resp, targets
+	return resp, targets, nil
 }
 
-//func updateTarget(baseUrl string, id string, entity *TargetIssueEntity) (*http.Response, *issue.TargetIssue) {
-//	u, err := url.Parse(fmt.Sprintf("%s/api/v1/issues/%s", baseUrl, id))
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	buf := bytes.NewBuffer(nil)
-//	err = json.NewEncoder(buf).Encode(entity)
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	req, _ := http.NewRequest("PUT", u.String(), buf)
-//	req.Header.Set("Content-Type", "application/json")
-//	req.Header.Set("Accept", "application/json")
-//	resp, err := http.DefaultClient.Do(req)
-//	defer resp.Body.Close()
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	if resp.StatusCode == http.StatusOK {
-//		issueObj := &issue.TargetIssue{}
-//		err = json.NewDecoder(resp.Body).Decode(issueObj)
-//		if err != nil {
-//			t.Fatal(err)
-//		}
-//		return resp, issueObj
-//	}
-//	return resp, nil
-//}
+func updateTarget(baseUrl string, id string, entity *TargetEntity) (*http.Response, *target.Target, error) {
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/targets/%s", baseUrl, id))
+	if err != nil {
+		return nil, nil, err
+	}
+	buf := bytes.NewBuffer(nil)
+	err = json.NewEncoder(buf).Encode(entity)
+	if err != nil {
+		return nil, nil, err
+	}
+	req, _ := http.NewRequest("PUT", u.String(), buf)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp.StatusCode == http.StatusOK {
+		obj := &target.Target{}
+		err = json.NewDecoder(resp.Body).Decode(obj)
+		if err != nil {
+			return nil, nil, err
+		}
+		return resp, obj, nil
+	}
+	return resp, nil, nil
+}
 
 func createTarget(baseUrl string, entity *TargetEntity) (*http.Response, *target.Target, error) {
 	u, err := url.Parse(fmt.Sprintf("%s/api/v1/targets", baseUrl))

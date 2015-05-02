@@ -15,12 +15,12 @@ type WebTargetEntity struct {
 
 type AndroidTargetEntity struct {
 	Name string     `json:"name,omitempty" description:"target name, 80 symbols max" cmobile:"nonzero" validate:"max=80"`
-	File *file.Meta `json:"file" description:"apk file metadata"`
+	File *file.Meta `json:"file,omitempty" description:"apk file metadata"`
 }
 
 type TargetEntity struct {
-	Type    target.TargetType    `json:"type,omitempty" description:"one of [web|android]" creating:"nonzero"`
+	Type    target.TargetType    `json:"type,omitempty" description:"one of [web|android]" create:"nonzero"`
 	Web     *WebTargetEntity     `json:"web,omitempty" description:"information about web target" cweb:"nonzero"`
 	Android *AndroidTargetEntity `json:"android,omitempty" description:"information about android target" cmobile:"nonzero"`
-	Project string               `json:"project,omitempty" creating:"nonzero,bsonId"`
+	Project string               `json:"project,omitempty" create:"nonzero,bsonId"`
 }

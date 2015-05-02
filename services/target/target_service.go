@@ -109,20 +109,18 @@ func (s *TargetService) Register(container *restful.Container) {
 		http.StatusNotFound))
 	ws.Route(r)
 
-	//	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.update)
-	//	// docs
-	//	r.Doc("update")
-	//	r.Operation("update")
-	//	r.Param(ws.PathParameter(ParamId, ""))
-	//	r.Writes(target.Target{})
-	//	r.Reads(target.Target{})
-	//	r.Do(services.Returns(
-	//		http.StatusOK,
-	//		http.StatusNotFound))
-	//	r.Do(services.ReturnsE(
-	//		http.StatusBadRequest,
-	//		http.StatusInternalServerError))
-	//	ws.Route(r)
+	r = ws.PUT(fmt.Sprintf("{%s}", ParamId)).To(s.TakeTarget(s.update))
+	// docs
+	r.Doc("update")
+	r.Operation("update")
+	r.Param(ws.PathParameter(ParamId, ""))
+	r.Writes(target.Target{})
+	r.Reads(TargetEntity{})
+	r.Do(services.Returns(
+		http.StatusOK,
+		http.StatusNotFound))
+	r.Do(services.ReturnsE(http.StatusBadRequest))
+	ws.Route(r)
 
 	container.Add(ws)
 }
@@ -138,7 +136,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
 		return
 	}
-	if err := validator.WithTag("creating").Validate(raw); err != nil {
+	if err := validator.WithTag("create").Validate(raw); err != nil {
 		resp.WriteServiceError(
 			http.StatusBadRequest,
 			services.NewBadReq("Validation error: %s", err.Error()),
@@ -216,12 +214,6 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 
 	obj, err := mgr.Targets.Create(new)
 	if err != nil {
-		//		if mgr.IsDup(err) {
-		//			resp.WriteServiceError(
-		//				http.StatusConflict,
-		//				services.NewError(services.CodeDuplicate, "target with this name and owner is existed"))
-		//			return
-		//		}
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
@@ -232,7 +224,7 @@ func (s *TargetService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *TargetService) list(req *restful.Request, resp *restful.Response) {
-	// TODO (m0sth8): check project existence and permissions
+	// TODO (m0sth8): HIGH check project existence and permissions
 	query, err := fltr.FromRequest(req, manager.TargetFltr{})
 	if err != nil {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
@@ -268,6 +260,52 @@ func (s *TargetService) delete(_ *restful.Request, resp *restful.Response, obj *
 	mgr.Targets.Remove(obj)
 
 	resp.WriteHeader(http.StatusNoContent)
+}
+
+func (s *TargetService) update(req *restful.Request, resp *restful.Response, obj *target.Target, p *project.Project) {
+
+	updated := false
+	raw := &TargetEntity{}
+
+	if err := req.ReadEntity(raw); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+	if err := validator.WithTag("update").Validate(raw); err != nil {
+		resp.WriteServiceError(
+			http.StatusBadRequest,
+			services.NewBadReq("Validation error: %s", err.Error()),
+		)
+		return
+	}
+	// update file for android target
+	if obj.Type == target.TypeAndroid {
+		if raw.Android != nil && raw.Android.File != nil && raw.Android.File.Id != obj.Android.File.Id {
+			// TODO (m0sth8): HIGH! check file permissions
+			obj.Android.File = raw.Android.File
+			updated = true
+		}
+	}
+
+	if updated {
+		mgr := s.Manager()
+		defer mgr.Close()
+
+		err := mgr.Targets.Update(obj)
+		if err != nil {
+			if mgr.IsNotFound(err) {
+				resp.WriteErrorString(http.StatusNotFound, "Not found")
+				return
+			}
+			logrus.Error(stackerr.Wrap(err))
+			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+			return
+		}
+	}
+
+	resp.WriteEntity(obj)
+
 }
 
 func (s *TargetService) comments(_ *restful.Request, resp *restful.Response, obj *target.Target, _ *project.Project) {
