@@ -17,7 +17,7 @@ type Extra struct {
 
 type Reference struct {
 	Url   string `json:"url"`
-	Title string `json:"title"`
+	Title string `json:"title,omitempty"`
 }
 
 type Issue struct {

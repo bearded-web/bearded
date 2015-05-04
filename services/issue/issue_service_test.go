@@ -211,6 +211,35 @@ func TestTargetIssues(t *testing.T) {
 				res, issueObj, err := createIssue(t, ts.URL, &TargetIssueEntity{
 					IssueEntity: IssueEntity{
 						Summary: utils.StringP("First issue"),
+						Vector: &VectorEntity{
+							Url: "http://vector.url",
+							HttpTransactions: []*HttpTransactionEntity{
+								&HttpTransactionEntity{
+									Id:     10,
+									Url:    "http://vector.url?data=",
+									Params: []string{"param1", "param2"},
+									Method: "POST",
+									Request: &HttpMyEntity{
+										Status: "POST URL HTTP 1.0",
+										Body: &issue.HttpBody{
+											Content: "Content",
+										},
+										Header: []*HeaderMyEntity{
+											&HeaderMyEntity{
+												Key:    "key1",
+												Values: []string{"val1", "val2"},
+											},
+										},
+									},
+									Response: &HttpMyEntity{
+										Status: "200 OK",
+										Body: &issue.HttpBody{
+											Content: "response content",
+										},
+									},
+								},
+							},
+						},
 					},
 					Target: testMgr.FromId(targetObj.Id),
 				})
@@ -228,6 +257,18 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Resolved, c.ShouldEqual, false)
 				c.So(issueObj.Activities[0].Type, c.ShouldEqual, issue.ActivityReported)
 				c.So(issueObj.Activities[0].User, c.ShouldEqual, u.Id)
+				c.So(issueObj.Vector.Url, c.ShouldEqual, "http://vector.url")
+				c.So(len(issueObj.Vector.HttpTransactions), c.ShouldEqual, 1)
+				hTr := issueObj.Vector.HttpTransactions[0]
+				c.So(hTr.Url, c.ShouldEqual, "http://vector.url?data=")
+				c.So(hTr.Id, c.ShouldEqual, 10)
+				c.So(hTr.Params[0], c.ShouldEqual, "param1")
+				c.So(hTr.Method, c.ShouldEqual, "POST")
+				c.So(hTr.Request.Status, c.ShouldEqual, "POST URL HTTP 1.0")
+				c.So(hTr.Request.Body.Content, c.ShouldEqual, "Content")
+				c.So(hTr.Request.Header.Get("key1"), c.ShouldEqual, "val1")
+				c.So(hTr.Response.Status, c.ShouldEqual, "200 OK")
+				c.So(hTr.Response.Body.Content, c.ShouldEqual, "response content")
 			})
 			// TODO (m0sth8): test errors for creation
 		})

@@ -26,5 +26,3 @@ type Vector struct {
 	Url              string             `json:"url,omitempty" description:"where this issue is happened"`
 	HttpTransactions []*HttpTransaction `json:"httpTransactions,omitempty" bson:"httpTransactions"`
 }
-
-type Vectors []*Vector
