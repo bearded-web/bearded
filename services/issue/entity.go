@@ -37,6 +37,9 @@ type HttpMyEntity struct {
 }
 
 func (he *HttpMyEntity) Transform() *issue.HttpEntity {
+	if v == nil {
+		return nil
+	}
 	dst := &issue.HttpEntity{
 		Status: he.Status,
 		Body:   he.Body,
