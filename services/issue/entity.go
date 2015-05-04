@@ -37,7 +37,7 @@ type HttpMyEntity struct {
 }
 
 func (he *HttpMyEntity) Transform() *issue.HttpEntity {
-	if v == nil {
+	if he == nil {
 		return nil
 	}
 	dst := &issue.HttpEntity{
