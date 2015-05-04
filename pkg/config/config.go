@@ -12,6 +12,7 @@ type Dispatcher struct {
 	Email    Email
 	Api      Api
 	//	Log      Log
+	TplsPath string `desc:path to templates files`
 }
 
 type Api struct {
@@ -34,8 +35,8 @@ type Agent struct {
 }
 
 type Email struct {
-	Backend string `desc:"one of: [console|smtp]"`
-	Smtp    Smtp
+	Backend  string `desc:"one of: [console|smtp]"`
+	Smtp     Smtp
 }
 
 type Smtp struct {
@@ -90,5 +91,6 @@ func NewDispatcher() *Dispatcher {
 				Port: 587,
 			},
 		},
+		TplsPath: "./extra/templates",
 	}
 }
