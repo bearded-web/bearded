@@ -18,6 +18,10 @@ type HeaderMyEntity struct {
 	Values []string `json:"values,omitempty"`
 }
 
+type CommentEntity struct {
+	Text string `json:"text" description:"raw markdown text"`
+}
+
 func TransformHeader(he []*HeaderMyEntity) http.Header {
 	h := http.Header{}
 	for _, heElem := range he {
