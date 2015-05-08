@@ -294,6 +294,62 @@ func (s *IssueService) delete(_ *restful.Request, resp *restful.Response, obj *i
 	resp.WriteHeader(http.StatusNoContent)
 }
 
+func (s *IssueService) comments(_ *restful.Request, resp *restful.Response, obj *issue.TargetIssue) {
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	results, count, err := mgr.Comments.FilterBy(&manager.CommentFltr{Type: comment.Issue, Link: obj.Id})
+
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	result := &comment.CommentList{
+		Meta:    pagination.Meta{Count: count},
+		Results: results,
+	}
+	resp.WriteEntity(result)
+}
+
+func (s *IssueService) commentsAdd(req *restful.Request, resp *restful.Response, t *issue.TargetIssue) {
+	ent := &CommentEntity{}
+	if err := req.ReadEntity(ent); err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
+		return
+	}
+
+	if len(ent.Text) == 0 {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Text is required"))
+		return
+	}
+
+	u := filters.GetUser(req)
+	raw := &comment.Comment{
+		Owner: u.Id,
+		Type:  comment.Issue,
+		Link:  t.Id,
+		Text:  ent.Text,
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	obj, err := mgr.Comments.Create(raw)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	resp.WriteHeader(http.StatusCreated)
+	resp.WriteEntity(obj)
+}
+
+// Helpers
+
 func (s *IssueService) TakeIssue(fn func(*restful.Request,
 	*restful.Response, *issue.TargetIssue)) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
@@ -351,58 +407,4 @@ func (s *IssueService) hasProjectPermission(req *restful.Request, resp *restful.
 		return false
 	}
 	return true
-}
-
-func (s *IssueService) comments(_ *restful.Request, resp *restful.Response, obj *issue.TargetIssue) {
-	mgr := s.Manager()
-	defer mgr.Close()
-
-	results, count, err := mgr.Comments.FilterBy(&manager.CommentFltr{Type: comment.Issue, Link: obj.Id})
-
-	if err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-
-	result := &comment.CommentList{
-		Meta:    pagination.Meta{Count: count},
-		Results: results,
-	}
-	resp.WriteEntity(result)
-}
-
-func (s *IssueService) commentsAdd(req *restful.Request, resp *restful.Response, t *issue.TargetIssue) {
-	ent := &CommentEntity{}
-	if err := req.ReadEntity(ent); err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
-		return
-	}
-
-	if len(ent.Text) == 0 {
-		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Text is required"))
-		return
-	}
-
-	u := filters.GetUser(req)
-	raw := &comment.Comment{
-		Owner: u.Id,
-		Type:  comment.Issue,
-		Link:  t.Id,
-		Text:  ent.Text,
-	}
-
-	mgr := s.Manager()
-	defer mgr.Close()
-
-	obj, err := mgr.Comments.Create(raw)
-	if err != nil {
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-
-	resp.WriteHeader(http.StatusCreated)
-	resp.WriteEntity(obj)
 }
