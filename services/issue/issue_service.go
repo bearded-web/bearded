@@ -357,7 +357,7 @@ func (s *IssueService) comments(_ *restful.Request, resp *restful.Response, obj 
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	results, count, err := mgr.Comments.FilterBy(&manager.CommentFltr{Type: comment.Scan, Link: obj.Id})
+	results, count, err := mgr.Comments.FilterBy(&manager.CommentFltr{Type: comment.Issue, Link: obj.Id})
 
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
@@ -388,7 +388,7 @@ func (s *IssueService) commentsAdd(req *restful.Request, resp *restful.Response,
 	u := filters.GetUser(req)
 	raw := &comment.Comment{
 		Owner: u.Id,
-		Type:  comment.Scan,
+		Type:  comment.Issue,
 		Link:  t.Id,
 		Text:  ent.Text,
 	}
