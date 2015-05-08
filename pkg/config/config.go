@@ -27,6 +27,8 @@ type Api struct {
 	ResetPasswordDuration int    `desc:"lifetime for reset token in seconds"`
 
 	SystemEmail string `desc:"for sending system emails, like password reseting"`
+
+	Raven string `desc:"sentry addr for frontend logging"`
 }
 
 type Frontend struct {
