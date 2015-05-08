@@ -6,6 +6,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
+	"github.com/bearded-web/bearded/pkg/template"
 	"github.com/emicklei/go-restful"
 )
 
@@ -15,6 +16,7 @@ type BaseService struct {
 	scheduler scheduler.Scheduler
 	mailer    email.Mailer
 	apiCfg    config.Api
+	Template  template.Renderer
 }
 
 func New(mgr *manager.Manager, passCtx *passlib.Context,

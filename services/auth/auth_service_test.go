@@ -12,14 +12,19 @@ import (
 	"github.com/emicklei/go-restful"
 	c "github.com/smartystreets/goconvey/convey"
 
+	"io/ioutil"
+	"time"
+
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
+	"github.com/bearded-web/bearded/pkg/template"
 	"github.com/bearded-web/bearded/pkg/tests"
 	"github.com/bearded-web/bearded/services"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResetPassword(t *testing.T) {
@@ -40,9 +45,10 @@ func TestResetPassword(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	emailBackend := email.NewMemoryBackend(100)
 	service := New(services.New(mgr, passCtx, scheduler.NewFake(),
-		email.NewConsoleBackend(), config.NewDispatcher().Api))
+		emailBackend, config.NewDispatcher().Api))
+	service.Template = template.New(&template.Opts{Directory: "testdata/templates"})
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
 	service.Register(wsContainer)
@@ -89,6 +95,17 @@ func TestResetPassword(t *testing.T) {
 			c.Convey("Then response is 201", func() {
 				c.So(err, c.ShouldBeNil)
 				c.So(resp.StatusCode, c.ShouldEqual, http.StatusCreated)
+				// wait for email
+				var body []byte
+				select {
+				case msg := <-emailBackend.Messages():
+					exportedMsg := msg.Export()
+					body, err = ioutil.ReadAll(exportedMsg.Body)
+					require.NoError(t, err)
+				case <-time.After(time.Second * 1):
+					t.Fatal("Timeout exceeded")
+				}
+				c.So(string(body), c.ShouldEqual, "Create new password")
 			})
 		})
 	})

@@ -40,6 +40,10 @@ func GenerateFlags(cfg interface{}, opts ...Opts) []cli.Flag {
 	}
 	flags := []cli.Flag{}
 	s := structs.New(cfg)
+	srcStruct := reflect.ValueOf(cfg)
+	if srcStruct.Kind() == reflect.Ptr {
+		srcStruct = reflect.Indirect(srcStruct)
+	}
 fields:
 	for _, field := range s.Fields() {
 		flagName := CamelToFlag(field.Name())
@@ -112,6 +116,32 @@ fields:
 				EnvPrefix: envPrefix,
 			}
 			flags = append(flags, GenerateFlags(field.Value(), opt)...)
+		case reflect.Slice:
+			realField := srcStruct.FieldByName(field.Name())
+			switch realField.Type().Elem().Kind() {
+			case reflect.String:
+				slice := &cli.StringSlice{}
+				for _, s := range field.Value().([]string) {
+					slice.Set(s)
+				}
+				f = cli.StringSliceFlag{
+					Name:   flagName,
+					EnvVar: envVar,
+					Usage:  usage,
+					Value:  slice,
+				}
+			case reflect.Int:
+				slice := &cli.IntSlice{}
+				for _, i := range field.Value().([]int) {
+					slice.Set(fmt.Sprintf("%d", i))
+				}
+				f = cli.IntSliceFlag{
+					Name:   flagName,
+					EnvVar: envVar,
+					Usage:  usage,
+					Value:  slice,
+				}
+			}
 		}
 
 		if f != nil {

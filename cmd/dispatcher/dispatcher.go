@@ -18,6 +18,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
+	"github.com/bearded-web/bearded/pkg/template"
 	"github.com/bearded-web/bearded/pkg/utils/load"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/agent"
@@ -61,7 +62,7 @@ func New() cli.Command {
 }
 
 func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
-	db *mgo.Database, mailer email.Mailer) error {
+	db *mgo.Database, mailer email.Mailer, tmpl *template.Template) error {
 
 	// manager
 	mgr := manager.New(db)
@@ -76,6 +77,7 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
 
 	// services
 	base := services.New(mgr, passCtx, sch, mailer, cfg.Api)
+	base.Template = tmpl
 	all := []services.ServiceInterface{
 		auth.New(base),
 		plugin.New(base),
@@ -136,6 +138,8 @@ func dispatcherAction(ctx *cli.Context) {
 		logrus.Info("Debug mode is enabled")
 	}
 	// TODO (m0sth8): validate config
+	logrus.Infof("Template path: %v", cfg.Template.Path)
+	tmpl := template.New(&template.Opts{Directory: cfg.Template.Path})
 
 	// initialize mongodb session
 	mongoAddr := cfg.Mongo.Addr
@@ -185,7 +189,7 @@ func dispatcherAction(ctx *cli.Context) {
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni
 
 	// Initialize and register services in container
-	err = initServices(wsContainer, cfg, session.DB(dbName), mailer)
+	err = initServices(wsContainer, cfg, session.DB(dbName), mailer, tmpl)
 	if err != nil {
 		logrus.Fatal(err)
 	}

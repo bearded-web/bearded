@@ -268,14 +268,24 @@ func (s *AuthService) resetPassword(req *restful.Request, resp *restful.Response
 		token := reset.NewToken(u.Email, dur, []byte(u.Password), []byte(cfg.ResetPasswordSecret))
 		msg := email.NewMessage()
 		msg.SetHeader("From", cfg.SystemEmail)
-		msg.SetHeader("To", u.Email, u.Email)
+		msg.SetHeader("To", u.Nickname, u.Email)
 		msg.SetHeader("Subject", "Reset password in bearded-web service")
 		reqUrlVal := reqUrl.Query()
 		reqUrlVal.Add("token", token)
 		reqUrl.RawQuery = reqUrlVal.Encode()
-		msg.SetBody("text/html", fmt.Sprintf("Please go to url: %s%s", cfg.Host, reqUrl.String()))
+		wr := msg.GetBodyWriter("text/html")
+		data := map[string]string{
+			"ReqUrl":     fmt.Sprintf("%s%s", cfg.Host, reqUrl.String()),
+			"Nickname":   u.Nickname,
+			"SystemMail": cfg.SystemEmail,
+		}
+		if err := s.Template.Render(wr, "email/reset-password", data); err != nil {
+			logrus.Error(err)
+			return
+		}
 		if err := s.Mailer().Send(msg); err != nil {
 			logrus.Error(err)
+			return
 		}
 	}()
 

@@ -12,6 +12,11 @@ type Dispatcher struct {
 	Email    Email
 	Api      Api
 	//	Log      Log
+	Template Template
+}
+
+type Template struct {
+	Path string `desc:"path to template files"`
 }
 
 type Api struct {
@@ -89,6 +94,9 @@ func NewDispatcher() *Dispatcher {
 				Addr: "127.0.0.1",
 				Port: 587,
 			},
+		},
+		Template: Template{
+			Path: "./extra/templates",
 		},
 	}
 }

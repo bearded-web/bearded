@@ -1,14 +1,19 @@
 package email
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestConsoleBackend(t *testing.T) {
+	buf := bytes.NewBuffer(nil)
 	c := NewConsoleBackend()
+	c.SetOutput(buf)
 	msg := NewMessage()
-	msg.SetHeader("From", "alex@example.com")
-	msg.SetHeader("To", "bob@example.com", "cora@example.com")
-	msg.SetAddressHeader("Cc", "dan@example.com", "Dan")
-	msg.SetHeader("Subject", "Hello!")
 	msg.SetBody("text/html", "Hello <b>Bob</b> and <i>Cora</i>!")
-	c.Send(msg)
+	err := c.Send(msg)
+	assert.NoError(t, err)
+	assert.Contains(t, buf.String(), "Hello <b>Bob</b> and <i>Cora</i>!")
 }

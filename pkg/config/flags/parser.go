@@ -73,6 +73,26 @@ fields:
 			}
 			realField := srcStruct.FieldByName(field.Name())
 			err = ParseFlags(realField.Addr().Interface(), ctx, opt)
+		case reflect.Slice:
+			realField := srcStruct.FieldByName(field.Name())
+			switch realField.Type().Elem().Kind() {
+			case reflect.String:
+				val := ctx.StringSlice(flagName)
+				if len(val) == 0 {
+					if !ctx.IsSet(flagName) {
+						continue fields
+					}
+				}
+				err = field.Set(val)
+			case reflect.Int:
+				val := ctx.IntSlice(flagName)
+				if len(val) == 0 {
+					if !ctx.IsSet(flagName) {
+						continue fields
+					}
+				}
+				err = field.Set(val)
+			}
 		}
 		if err != nil {
 			return fmt.Errorf("Flag %s parsing error: %s", flagName, err.Error())
