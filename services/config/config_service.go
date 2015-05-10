@@ -45,5 +45,9 @@ func (s *ConfigService) get(_ *restful.Request, resp *restful.Response) {
 		ent.Raven.Enable = true
 		ent.Raven.Address = cfg.Raven
 	}
+	if cfg.GA != "" {
+		ent.GA.Enable = true
+		ent.GA.Id = cfg.GA
+	}
 	resp.WriteEntity(ent)
 }

@@ -29,6 +29,7 @@ type Api struct {
 	SystemEmail string `desc:"for sending system emails, like password reseting"`
 
 	Raven string `desc:"sentry addr for frontend logging"`
+	GA    string `desc:"google analytics id"`
 }
 
 type Frontend struct {

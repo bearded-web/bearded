@@ -5,6 +5,12 @@ type Raven struct {
 	Address string `json:"address"`
 }
 
+type GA struct {
+	Enable bool   `json:"enable"`
+	Id     string `json:"id"`
+}
+
 type ConfigEntity struct {
 	Raven Raven `json:"raven"`
+	GA    GA    `json:"ga"`
 }
