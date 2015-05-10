@@ -33,15 +33,16 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	mongo, dbName, err := tests.RandomTestMongoUp()
-	if err != nil {
-		println(err)
-		os.Exit(1)
-	}
-	defer tests.RandomTestMongoDown(mongo, dbName)
-	testMgr = manager.New(mongo.DB(dbName))
-	os.Exit(m.Run())
-
+	os.Exit(func() int {
+		mongo, dbName, err := tests.RandomTestMongoUp()
+		if err != nil {
+			println(err)
+			os.Exit(1)
+		}
+		defer tests.RandomTestMongoDown(mongo, dbName)
+		testMgr = manager.New(mongo.DB(dbName))
+		return m.Run()
+	})
 }
 
 func TestTargetIssues(t *testing.T) {
