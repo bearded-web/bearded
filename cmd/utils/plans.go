@@ -121,14 +121,14 @@ func plansLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 					p.Id = planList.Results[0].Id
 					_, err = api.Plans.Update(timeout(), p)
 					if err != nil {
-						fmt.Printf("Plugin updating failed, because: %v", err)
+						fmt.Printf("Plugin updating failed, because: %v\n", err)
 						continue
 					}
 				} else {
 					continue
 				}
 			} else {
-				fmt.Printf("Plan wasn't created because: %v", err)
+				fmt.Printf("Plan wasn't created because: %v\n", err)
 				continue
 			}
 		}

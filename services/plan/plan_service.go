@@ -9,6 +9,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/plan"
+	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
@@ -28,9 +29,10 @@ func New(base *services.BaseService) *PlanService {
 }
 
 func addDefaults(r *restful.RouteBuilder) {
-	//	r.Notes("Authorization required")
+	r.Notes("Authorization required")
 	r.Do(services.ReturnsE(
-		//		http.StatusUnauthorized,
+		http.StatusUnauthorized,
+		http.StatusForbidden,
 		http.StatusInternalServerError,
 	))
 }
@@ -41,6 +43,8 @@ func (s *PlanService) Register(container *restful.Container) {
 	ws.Doc("Manage Plans")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthTokenFilter(s.BaseManager()))
+	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
 	addDefaults(r)

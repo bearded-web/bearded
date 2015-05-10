@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"os"
 	"time"
 
 	//	"github.com/codegangpsta/cli"
@@ -20,6 +21,11 @@ var ApiFlags = []cli.Flag{
 		EnvVar: "BEARDED_API_ADDR",
 		Usage:  "http address for connection to the api server",
 	},
+	cli.StringFlag{
+		Name:   "api-token",
+		EnvVar: "BEARDED_API_TOKEN",
+		Usage:  "token for communication with bearded server",
+	},
 	cli.IntFlag{
 		Name:   "api-timeout",
 		Value:  10,
@@ -38,6 +44,12 @@ func takeApi(fn func(*cli.Context, *client.Client, Timeout)) func(*cli.Context) 
 		api := client.NewClient(ctx.String("api-addr"), nil)
 		if ctx.GlobalBool("debug") {
 			api.Debug = true
+		}
+		if token := ctx.String("api-token"); token != "" {
+			api.Token = token
+		} else {
+			println("Please set up api-token[$BEARDED_API_TOKEN] flag")
+			os.Exit(1)
 		}
 		fn(ctx, api, timeout)
 	}
