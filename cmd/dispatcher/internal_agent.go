@@ -12,14 +12,14 @@ import (
 
 // Run agent inside current process
 // Start httptest local server
-func RunInternalAgent(app http.Handler) error {
+func RunInternalAgent(app http.Handler, token string) error {
 	ts := httptest.NewServer(app)
 	hostname, err := utils.GetHostname()
 	if err != nil {
 		return err
 	}
 	api := client.NewClient(fmt.Sprintf("%s/api/", ts.URL), nil)
-	api.Token = "agent-token"
+	api.Token = token
 	go func() {
 		agent.ServeAgent(hostname, api)
 	}()

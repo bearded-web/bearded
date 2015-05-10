@@ -14,6 +14,8 @@ import (
 	"github.com/bearded-web/bearded/pkg/utils"
 )
 
+const AgentEmail = "agent@local"
+
 type UserManager struct {
 	manager *Manager
 	col     *mgo.Collection // default collection
@@ -46,7 +48,7 @@ func (m *UserManager) Init() error {
 	}
 	// TODO (m0sth8): extract system users creation to project initialization
 	agent := &user.User{
-		Email:    "agent@barbudo.net",
+		Email:    AgentEmail,
 		Password: "",
 	}
 	if _, err := m.Create(agent); err != nil {

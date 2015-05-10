@@ -33,6 +33,7 @@ import (
 	"github.com/bearded-web/bearded/services/project"
 	"github.com/bearded-web/bearded/services/scan"
 	"github.com/bearded-web/bearded/services/target"
+	"github.com/bearded-web/bearded/services/token"
 	"github.com/bearded-web/bearded/services/user"
 	"github.com/bearded-web/bearded/services/vulndb"
 )
@@ -63,13 +64,7 @@ func New() cli.Command {
 }
 
 func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
-	db *mgo.Database, mailer email.Mailer, tmpl *template.Template) error {
-
-	// manager
-	mgr := manager.New(db)
-	if err := mgr.Init(); err != nil {
-		return err
-	}
+	mgr *manager.Manager, mailer email.Mailer, tmpl *template.Template) error {
 
 	// password manager for generation and verification passwords
 	passCtx := passlib.NewContext()
@@ -94,6 +89,7 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
 		issue.New(base),
 		vulndb.New(base),
 		configService.New(base),
+		token.New(base),
 	}
 
 	// initialize services
@@ -156,6 +152,13 @@ func dispatcherAction(ctx *cli.Context) {
 	dbName := cfg.Mongo.Database
 	logrus.Infof("Set mongo database %s", dbName)
 
+	// Initialize manager, indexes etc
+	mgr := manager.New(session.DB(dbName))
+	if err := mgr.Init(); err != nil {
+		logrus.Fatalf("Cannot initilize models: %s", err.Error())
+		return
+	}
+
 	// initialize mailer
 	mailer, err := email.New(cfg.Email)
 	if err != nil {
@@ -191,7 +194,7 @@ func dispatcherAction(ctx *cli.Context) {
 	wsContainer.DoNotRecover(true)                   // Disable recovering in restful cause we recover all panics in negroni
 
 	// Initialize and register services in container
-	err = initServices(wsContainer, cfg, session.DB(dbName), mailer, tmpl)
+	err = initServices(wsContainer, cfg, mgr, mailer, tmpl)
 	if err != nil {
 		logrus.Fatal(err)
 	}
@@ -224,8 +227,12 @@ func dispatcherAction(ctx *cli.Context) {
 	app.UseHandler(wsContainer) // set wsContainer as main handler
 
 	if cfg.Agent.Enable {
-		if err := RunInternalAgent(app); err != nil {
-			logrus.Error(err)
+		if tkn, err := getAgentToken(mgr); err != nil {
+			logrus.Errorf("Can't get agent token: %s", err)
+		} else {
+			if err := RunInternalAgent(app, tkn); err != nil {
+				logrus.Errorf("Can't run agent: %s", err)
+			}
 		}
 	}
 

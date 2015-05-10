@@ -46,6 +46,7 @@ func (s *IssueService) Register(container *restful.Container) {
 	ws.Doc("Manage Issues")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthTokenFilter(s.BaseManager()))
 	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)

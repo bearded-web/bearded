@@ -28,6 +28,10 @@ func (u *User) IdStr() string {
 	return fmt.Sprintf("%x", string(u.Id))
 }
 
+func (u *User) IsAdmin() bool {
+	return false
+}
+
 type UserList struct {
 	pagination.Meta `json:",inline"`
 	Results         []*User `json:"results"`
