@@ -152,7 +152,7 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 		req.Header.Add("Content-Type", "application/json")
 	}
 	if c.Token != "" {
-		req.Header.Add("Authorization", fmt.Sprintf("token %s", c.Token))
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", c.Token))
 	}
 
 	return req, nil

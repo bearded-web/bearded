@@ -52,6 +52,25 @@ func (m *TokenManager) GetById(id bson.ObjectId) (*token.Token, error) {
 	return u, m.manager.GetById(m.col, id, &u)
 }
 
+func (m *TokenManager) GetByHash(hash string) (*token.Token, error) {
+	t := &token.Token{}
+	query := &bson.M{"hash": hash}
+	return t, m.manager.GetBy(m.col, query, &t)
+}
+
+func (m *TokenManager) GetOrCreate(userId bson.ObjectId) (*token.Token, error) {
+	t := &token.Token{}
+	err := m.manager.GetBy(m.col, &bson.M{"user": userId}, &t, Opts{Limit: 1})
+	if err == nil {
+		return t, nil
+	}
+	if !m.manager.IsNotFound(err) {
+		return nil, err
+	}
+	t.User = userId
+	return m.Create(t)
+}
+
 func (m *TokenManager) FilterBy(f *TokenFltr, opts ...Opts) ([]*token.Token, int, error) {
 	query := fltr.GetQuery(f)
 	return m.FilterByQuery(query, opts...)

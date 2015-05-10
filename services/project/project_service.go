@@ -42,6 +42,7 @@ func (s *ProjectService) Register(container *restful.Container) {
 	ws.Doc("Manage Projects")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthTokenFilter(s.BaseManager()))
 	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)

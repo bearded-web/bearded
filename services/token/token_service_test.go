@@ -57,7 +57,7 @@ func TestTokens(t *testing.T) {
 	ts := httptest.NewServer(wsContainer)
 	defer ts.Close()
 
-	api := client.NewClient(fmt.Sprintf("%s/api/v1", ts.URL), nil)
+	api := client.NewClient(fmt.Sprintf("%s/api/", ts.URL), nil)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 

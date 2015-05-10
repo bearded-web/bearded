@@ -10,6 +10,7 @@ import (
 	"github.com/facebookgo/stackerr"
 
 	"github.com/bearded-web/bearded/models/agent"
+	"github.com/bearded-web/bearded/pkg/filters"
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
@@ -29,9 +30,9 @@ func New(base *services.BaseService) *AgentService {
 }
 
 func addDefaults(r *restful.RouteBuilder) {
-	//	r.Notes("Authorization required")
+	r.Notes("Authorization required")
 	r.Do(services.ReturnsE(
-		//		http.StatusUnauthorized,
+		http.StatusUnauthorized,
 		http.StatusInternalServerError,
 	))
 }
@@ -42,6 +43,8 @@ func (s *AgentService) Register(container *restful.Container) {
 	ws.Doc("Manage Agents")
 	ws.Consumes(restful.MIME_JSON)
 	ws.Produces(restful.MIME_JSON)
+	ws.Filter(filters.AuthTokenFilter(s.BaseManager()))
+	ws.Filter(filters.AuthRequiredFilter(s.BaseManager()))
 
 	r := ws.GET("").To(s.list)
 	addDefaults(r)
