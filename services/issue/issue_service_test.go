@@ -45,8 +45,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestTargetIssues(t *testing.T) {
-	testMgr := testMgr
-
 	// create and auth user
 	sess := filters.NewSession()
 	u, err := testMgr.Users.Create(&user.User{})

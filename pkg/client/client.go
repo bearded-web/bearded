@@ -52,6 +52,7 @@ type Client struct {
 	Agents  *AgentsService
 	Scans   *ScansService
 	Files   *FilesService
+	Tokens  *TokensService
 }
 
 // NewClient returns a new Bearded API client. If a nil httpClient is
@@ -73,6 +74,7 @@ func NewClient(baseUrl string, httpClient *http.Client) *Client {
 	c.Agents = &AgentsService{client: c}
 	c.Scans = &ScansService{client: c}
 	c.Files = &FilesService{client: c}
+	c.Tokens = &TokensService{client: c}
 	return c
 }
 
@@ -266,6 +268,16 @@ func (c *Client) Update(ctx context.Context, url string, id string, send interfa
 		return err
 	}
 	_, err = c.Do(ctx, req, payload)
+	return err
+}
+
+func (c *Client) Delete(ctx context.Context, url string, id string) error {
+	url = fmt.Sprintf("%s/%s", url, id)
+	req, err := c.NewRequest("DELETE", url, nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.Do(ctx, req, nil)
 	return err
 }
 

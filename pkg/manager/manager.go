@@ -26,6 +26,7 @@ type Manager struct {
 	Files    *FileManager
 	Comments *CommentManager
 	Issues   *IssueManager
+	Tokens   *TokenManager
 
 	Permission *PermissionManager
 
@@ -53,6 +54,7 @@ func New(db *mgo.Database) *Manager {
 	m.Files = &FileManager{manager: m, grid: db.GridFS("fs")}
 	m.Comments = &CommentManager{manager: m, col: db.C("comments")}
 	m.Issues = &IssueManager{manager: m, col: db.C("issues")}
+	m.Tokens = &TokenManager{manager: m, col: db.C("tokens")}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -67,6 +69,7 @@ func New(db *mgo.Database) *Manager {
 		m.Files,
 		m.Comments,
 		m.Issues,
+		m.Tokens,
 	)
 
 	return m
