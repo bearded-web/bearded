@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 		defer tests.RandomTestMongoDown(mongo, dbName)
 		testMgr = manager.New(mongo.DB(dbName))
 		return m.Run()
-	})
+	}())
 }
 
 func TestTargetIssues(t *testing.T) {
