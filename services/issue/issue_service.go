@@ -218,7 +218,19 @@ func (s *IssueService) create(req *restful.Request, resp *restful.Response) {
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
-
+	// TODO (m0sth8): extract to worker
+	func(mgr *manager.Manager) {
+		tgt, err := mgr.Targets.GetById(obj.Target)
+		if err != nil {
+			logrus.Error(stackerr.Wrap(err))
+			return
+		}
+		err = mgr.Targets.UpdateSummary(tgt)
+		if err != nil {
+			logrus.Error(stackerr.Wrap(err))
+			return
+		}
+	}(s.Manager())
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(obj)
 }
@@ -265,7 +277,7 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, issu
 	defer mgr.Close()
 
 	// update issue object from entity
-	updateTargetIssue(raw, issueObj)
+	rebuildSummary := updateTargetIssue(raw, issueObj)
 
 	if err := mgr.Issues.Update(issueObj); err != nil {
 		if mgr.IsNotFound(err) {
@@ -281,6 +293,21 @@ func (s *IssueService) update(req *restful.Request, resp *restful.Response, issu
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
+	}
+	if rebuildSummary {
+		// TODO (m0sth8): extract to worker
+		func(mgr *manager.Manager) {
+			tgt, err := mgr.Targets.GetById(issueObj.Target)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return
+			}
+			err = mgr.Targets.UpdateSummary(tgt)
+			if err != nil {
+				logrus.Error(stackerr.Wrap(err))
+				return
+			}
+		}(s.Manager())
 	}
 
 	resp.WriteHeader(http.StatusOK)

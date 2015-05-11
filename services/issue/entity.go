@@ -116,7 +116,9 @@ func isValidSeverity(sev issue.Severity) bool {
 }
 
 // Update all fields for dst with entity data if they present
-func updateTargetIssue(raw *TargetIssueEntity, dst *issue.TargetIssue) {
+// Return true if target should rebuild summary for issues
+func updateTargetIssue(raw *TargetIssueEntity, dst *issue.TargetIssue) bool {
+	rebuildSummary := false
 	if raw.Summary != nil {
 		dst.Summary = *raw.Summary
 	}
@@ -136,17 +138,22 @@ func updateTargetIssue(raw *TargetIssueEntity, dst *issue.TargetIssue) {
 		dst.Confirmed = *raw.Confirmed
 	}
 	if raw.False != nil {
+		rebuildSummary = true
 		dst.False = *raw.False
 	}
 	if raw.Resolved != nil {
+		rebuildSummary = true
 		dst.Resolved = *raw.Resolved
 	}
 	if raw.Muted != nil {
+		rebuildSummary = true
 		dst.Muted = *raw.Muted
 	}
 	if raw.Severity != nil {
 		if isValidSeverity(*raw.Severity) {
+			rebuildSummary = true
 			dst.Severity = *raw.Severity
 		}
 	}
+	return rebuildSummary
 }

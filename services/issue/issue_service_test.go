@@ -77,6 +77,7 @@ func TestTargetIssues(t *testing.T) {
 			Type:    target.TypeWeb,
 		})
 		c.So(err, c.ShouldBeNil)
+		c.So(len(targetObj.SummaryReport.Issues), c.ShouldEqual, 0)
 
 		c.Convey("Get list of all issues", func() {
 			res, issues := getIssues(t, ts.URL, nil)
@@ -104,6 +105,8 @@ func TestTargetIssues(t *testing.T) {
 			c.So(targetIssue.False, c.ShouldEqual, false)
 			c.So(targetIssue.Resolved, c.ShouldEqual, false)
 			c.So(targetIssue.Severity, c.ShouldEqual, issue.SeverityInfo)
+			err = testMgr.Targets.UpdateSummary(targetObj)
+			c.So(err, c.ShouldBeNil)
 
 			c.Convey("Get list of all issues", func() {
 				res, issues := getIssues(t, ts.URL, nil)
@@ -113,6 +116,10 @@ func TestTargetIssues(t *testing.T) {
 					c.So(len(issues.Results), c.ShouldEqual, 1)
 					c.So(issues.Results[0].Id, c.ShouldEqual, targetIssue.Id)
 				})
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 1)
+				c.So(targetObj2.SummaryReport.Issues[issue.SeverityInfo], c.ShouldEqual, 1)
 			})
 
 			c.Convey("Set issue status confirmed", func() {
@@ -126,6 +133,7 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Muted, c.ShouldEqual, false)
 				c.So(issueObj.False, c.ShouldEqual, false)
 				c.So(issueObj.Resolved, c.ShouldEqual, false)
+
 			})
 
 			c.Convey("Set issue status muted", func() {
@@ -139,6 +147,10 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Muted, c.ShouldEqual, true)
 				c.So(issueObj.False, c.ShouldEqual, false)
 				c.So(issueObj.Resolved, c.ShouldEqual, false)
+
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 0)
 			})
 
 			c.Convey("Set issue status false", func() {
@@ -152,6 +164,10 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Muted, c.ShouldEqual, false)
 				c.So(issueObj.False, c.ShouldEqual, true)
 				c.So(issueObj.Resolved, c.ShouldEqual, false)
+
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 0)
 			})
 
 			c.Convey("Set issue status resolved", func() {
@@ -165,6 +181,10 @@ func TestTargetIssues(t *testing.T) {
 				c.So(issueObj.Muted, c.ShouldEqual, false)
 				c.So(issueObj.False, c.ShouldEqual, false)
 				c.So(issueObj.Resolved, c.ShouldEqual, true)
+
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 0)
 			})
 
 			c.Convey("Set issue severity to high", func() {
@@ -176,6 +196,11 @@ func TestTargetIssues(t *testing.T) {
 				})
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusOK)
 				c.So(issueObj.Severity, c.ShouldEqual, issue.SeverityHigh)
+
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 1)
+				c.So(targetObj2.SummaryReport.Issues[issue.SeverityHigh], c.ShouldEqual, 1)
 			})
 
 			c.Convey("Set issue severity to bla", func() {
@@ -248,6 +273,7 @@ func TestTargetIssues(t *testing.T) {
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusCreated)
 				c.So(issueObj.UniqId, c.ShouldEqual, testMgr.FromId(issueObj.Id))
 				c.So(issueObj.Summary, c.ShouldEqual, "First issue")
+				c.So(issueObj.Severity, c.ShouldEqual, issue.SeverityInfo)
 				c.So(issueObj.Target, c.ShouldEqual, targetObj.Id)
 				c.So(issueObj.Project, c.ShouldEqual, projectObj.Id)
 				c.So(issueObj.Confirmed, c.ShouldEqual, false)
@@ -268,6 +294,11 @@ func TestTargetIssues(t *testing.T) {
 				c.So(hTr.Request.Header.Get("key1"), c.ShouldEqual, "val1")
 				c.So(hTr.Response.Status, c.ShouldEqual, "200 OK")
 				c.So(hTr.Response.Body.Content, c.ShouldEqual, "response content")
+
+				targetObj2, err := testMgr.Targets.GetById(targetObj.Id)
+				c.So(err, c.ShouldBeNil)
+				c.So(len(targetObj2.SummaryReport.Issues), c.ShouldEqual, 1)
+				c.So(targetObj2.SummaryReport.Issues[issue.SeverityInfo], c.ShouldEqual, 2)
 			})
 			// TODO (m0sth8): test errors for creation
 		})

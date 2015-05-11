@@ -4,11 +4,13 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/models/target"
 	"github.com/bearded-web/bearded/pkg/fltr"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	"github.com/bearded-web/bearded/pkg/utils"
 )
 
 type TargetFltr struct {
@@ -68,6 +70,9 @@ func (m *TargetManager) Create(raw *target.Target) (*target.Target, error) {
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
+	raw.SummaryReport = &target.SummaryReport{
+		Issues: map[issue.Severity]int{},
+	}
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}
@@ -86,9 +91,9 @@ func (m *TargetManager) Remove(obj *target.Target) error {
 func (m *TargetManager) UpdateSummary(obj *target.Target) error {
 	fltr := &IssueFltr{
 		Target:   obj.Id,
-		False:    false,
-		Resolved: false,
-		Muted:    false,
+		False:    utils.BoolP(false),
+		Resolved: utils.BoolP(false),
+		Muted:    utils.BoolP(false),
 	}
 	// TODO(m0sth8): get only severity/count through aggregation
 	issues, _, err := m.manager.Issues.FilterBy(fltr)
