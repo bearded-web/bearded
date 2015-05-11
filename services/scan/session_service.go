@@ -296,6 +296,9 @@ func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess
 	isIssuesAdded := false
 
 	for _, issueObj := range issues {
+		if issueObj.Severity == issue.SeverityError {
+			continue
+		}
 		targetIssue := &issue.TargetIssue{
 			Target:  sc.Target,
 			Project: sc.Project,
