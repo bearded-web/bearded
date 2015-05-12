@@ -36,7 +36,7 @@ func TestFilesDownload(t *testing.T) {
 	f := &FilesService{client: client}
 
 	{
-		buf, err := f.Download(utils.JustTimeout(bg, time.Millisecond*10), "1")
+		buf, err := f.Download(utils.JustTimeout(bg, time.Millisecond*100), "1")
 		require.NoError(t, err)
 		require.NotNil(t, buf)
 		data, err := ioutil.ReadAll(buf)
@@ -44,7 +44,7 @@ func TestFilesDownload(t *testing.T) {
 		require.Equal(t, "data 1", string(data))
 	}
 	{
-		_, err := f.Download(utils.JustTimeout(bg, time.Millisecond*10), "2")
+		_, err := f.Download(utils.JustTimeout(bg, time.Millisecond*100), "2")
 		require.Error(t, err)
 	}
 
