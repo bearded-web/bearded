@@ -10,9 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type SubStruct struct {
+	FieldName3 string
+}
+
 type TestStruct struct {
 	Field1     string
 	FieldName2 int
+	Sub        SubStruct
 }
 
 func TestLoaderFromReader(t *testing.T) {
@@ -29,7 +34,7 @@ func TestLoaderFromReader(t *testing.T) {
 	l.Loaders[JsonFormat] = LoadJson
 	err = l.FromReader(bytes.NewBufferString(data), dst, JsonFormat)
 	assert.NoError(t, err)
-	assert.Equal(t, &TestStruct{"value1", 10}, dst)
+	assert.Equal(t, &TestStruct{"value1", 10, SubStruct{}}, dst)
 }
 
 func TestLoaderFromFile(t *testing.T) {
@@ -39,7 +44,7 @@ func TestLoaderFromFile(t *testing.T) {
 	data := `{"field1": "value1","fieldname2": 10}`
 
 	// prepare file
-	expected := &TestStruct{"value1", 10}
+	expected := &TestStruct{"value1", 10, SubStruct{}}
 	dst := &TestStruct{}
 	tmpDir, err := ioutil.TempDir("", "test_bearded")
 	if err != nil {
@@ -83,16 +88,16 @@ func TestDefaultLoader(t *testing.T) {
 		hasError bool
 	}{
 		{"error format", JsonFormat, nil, true},
-		{`{"field1": "value1","fieldname2": 10}`, JsonFormat, &TestStruct{"value1", 10}, false},
+		{`{"field1": "value1","fieldname2": 10}`, JsonFormat, &TestStruct{"value1", 10, SubStruct{}}, false},
 
 		{"error format", TomlFormat, nil, true},
 		{`
 		field1 = "value1"
 		fieldname2 = 10
-		`, TomlFormat, &TestStruct{"value1", 10}, false},
+		`, TomlFormat, &TestStruct{"value1", 10, SubStruct{}}, false},
 
 		{"error format", YamlFormat, nil, true},
-		{"field1: value1\nfieldname2: 10", YamlFormat, &TestStruct{"value1", 10}, false},
+		{"field1: value1\nfieldname2: 10", YamlFormat, &TestStruct{"value1", 10, SubStruct{}}, false},
 	}
 	for _, td := range testData {
 		actual := &TestStruct{}

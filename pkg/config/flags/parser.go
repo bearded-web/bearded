@@ -37,6 +37,11 @@ fields:
 		if prefix != "" {
 			flagName = fmt.Sprintf("%s%s%s", prefix, flagDivider, flagName)
 		}
+		// if field in config already has non zero value, do not set default value from flags
+		if !field.IsZero() && !ctx.IsSet(flagName) && field.Kind() != reflect.Struct {
+			continue fields
+		}
+
 		var err error
 		switch field.Kind() {
 		case reflect.String:

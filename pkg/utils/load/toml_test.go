@@ -15,9 +15,11 @@ func TestToml(t *testing.T) {
 	}{
 		{"error format", nil, true},
 		{`
-		field1 = "value1"
-		fieldname2 = 10
-		`, &TestStruct{"value1", 10}, false},
+		Field1 = "value1"
+		FieldName2 = 10
+		[sub]
+		   FieldName3 = "value3"
+		`, &TestStruct{"value1", 10, SubStruct{FieldName3: "value3"}}, false},
 	}
 	for _, td := range testData {
 		actual := &TestStruct{}

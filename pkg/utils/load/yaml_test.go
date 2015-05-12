@@ -14,7 +14,7 @@ func TestYaml(t *testing.T) {
 		hasError bool
 	}{
 		{"error format", nil, true},
-		{"field1: value1\nfieldname2: 10", &TestStruct{"value1", 10}, false},
+		{"field1: value1\nfieldname2: 10", &TestStruct{"value1", 10, SubStruct{}}, false},
 	}
 	for _, td := range testData {
 		actual := &TestStruct{}
