@@ -55,6 +55,7 @@ func New(db *mgo.Database) *Manager {
 	m.Comments = &CommentManager{manager: m, col: db.C("comments")}
 	m.Issues = &IssueManager{manager: m, col: db.C("issues")}
 	m.Tokens = &TokenManager{manager: m, col: db.C("tokens")}
+	m.Permission = &PermissionManager{manager: m}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -88,7 +89,10 @@ func (m *Manager) Init() error {
 // Get copy of manager with copied session, don't forget to call Close after
 func (m *Manager) Copy() *Manager {
 	sess := m.db.Session.Copy()
-	return New(m.db.With(sess))
+	copy := New(m.db.With(sess))
+	// TODO (m0sth8): implement copy through the interface
+	m.Permission.Copy(copy.Permission)
+	return copy
 }
 
 // Clone works just like Copy, but also reuses the same socket as the original

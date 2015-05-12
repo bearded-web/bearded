@@ -20,8 +20,9 @@ type Template struct {
 }
 
 type Api struct {
-	BindAddr string `desc:"http address for binding api server"`
-	Host     string `desc:"host for website, required for building urls"`
+	BindAddr string   `desc:"http address for binding api server"`
+	Host     string   `desc:"host for website, required for building urls"`
+	Admins   []string `desc:"email list of users with admin permissions"`
 
 	ResetPasswordSecret   string `flag:"-" desc:"secret required for reset token generation"`
 	ResetPasswordDuration int    `desc:"lifetime for reset token in seconds"`

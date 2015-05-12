@@ -17,6 +17,8 @@ type User struct {
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
+
+	Admin bool `json:"admin" bson:"-"`
 }
 
 func (u *User) String() string {

@@ -163,6 +163,11 @@
 			"Rev": "dacd4576c5aafefb89134351dfcf4fbe213cd998"
 		},
 		{
+			"ImportPath": "gopkg.in/fatih/set.v0",
+			"Comment": "v0.1.0-3-g27c4092",
+			"Rev": "27c40922c40b43fe04554d8223a402af3ea333f3"
+		},
+		{
 			"ImportPath": "gopkg.in/gomail.v1",
 			"Rev": "b4e3113e2dd2e703e92453e15e2161224f12e1fa"
 		},

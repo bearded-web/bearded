@@ -158,6 +158,7 @@ func dispatcherAction(ctx *cli.Context) {
 		logrus.Fatalf("Cannot initilize models: %s", err.Error())
 		return
 	}
+	mgr.Permission.SetAdmins(cfg.Api.Admins)
 
 	// initialize mailer
 	mailer, err := email.New(cfg.Email)

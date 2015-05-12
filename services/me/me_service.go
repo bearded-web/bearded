@@ -94,6 +94,8 @@ func (s *MeService) info(req *restful.Request, resp *restful.Response) {
 		}
 	}
 
+	u.Admin = mgr.Permission.IsAdmin(u)
+
 	info := me.Info{
 		User:     u,
 		Projects: projects,

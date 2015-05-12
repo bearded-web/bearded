@@ -36,7 +36,7 @@ func (s *BaseService) Manager() *manager.Manager {
 	return s.manager.Copy()
 }
 
-// Get the original manager, don't close it
+// Get the original manager, don't close it!
 func (s *BaseService) BaseManager() *manager.Manager {
 	return s.manager
 }
