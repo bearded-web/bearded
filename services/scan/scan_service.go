@@ -385,6 +385,7 @@ type ScanFunction func(*restful.Request, *restful.Response, *scan.Scan)
 
 // Decorate restful.RouteFunction. Look for scan by ParamId
 // and add scan object in the end. If scan is not found then return Not Found.
+// Also check project permission for current user.
 func (s *ScanService) TakeScan(fn ScanFunction) restful.RouteFunction {
 	return func(req *restful.Request, resp *restful.Response) {
 		id := req.PathParameter(ParamId)
@@ -397,7 +398,6 @@ func (s *ScanService) TakeScan(fn ScanFunction) restful.RouteFunction {
 		defer mgr.Close()
 
 		obj, err := mgr.Scans.GetById(mgr.ToId(id))
-		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
 				resp.WriteErrorString(http.StatusNotFound, "Not found")
@@ -407,6 +407,15 @@ func (s *ScanService) TakeScan(fn ScanFunction) restful.RouteFunction {
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
+
+		sErr := services.Must(services.HasProjectIdPermission(mgr, filters.GetUser(req), obj.Project))
+		if sErr != nil {
+			sErr.Write(resp)
+			return
+		}
+
+		mgr.Close()
+
 		fn(req, resp, obj)
 	}
 }

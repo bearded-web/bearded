@@ -399,13 +399,15 @@ func (s *TargetService) TakeTarget(fn TargetFunction) restful.RouteFunction {
 			resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 			return
 		}
-		u := filters.GetUser(req)
-		admin := false
-		if !admin && p.Owner != u.Id && p.GetMember(u.Id) == nil {
-			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+
+		sErr := services.Must(services.HasProjectPermission(mgr, filters.GetUser(req), p))
+		if sErr != nil {
+			sErr.Write(resp)
 			return
 		}
+
 		mgr.Close()
+
 		fn(req, resp, t, p)
 	}
 }

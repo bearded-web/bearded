@@ -7,7 +7,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
-	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/validator.v2"
 
 	"github.com/bearded-web/bearded/models/comment"
@@ -178,29 +177,16 @@ func (s *IssueService) create(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	p, err := mgr.Projects.GetById(t.Project)
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			// This situation is really strange
-			logrus.Errorf("Target %s is existed, but his project %s isn't",
-				raw.Target, mgr.FromId(t.Project))
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project not found"))
-			return
-		}
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return
-	}
-
 	//	current user should have a permission to create issue there
 	u := filters.GetUser(req)
-	if !mgr.Permission.HasProjectAccess(p, u) {
-		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+
+	if sErr := services.Must(services.HasProjectIdPermission(mgr, u, t.Project)); sErr != nil {
+		sErr.Write(resp)
 		return
 	}
 
 	newObj := &issue.TargetIssue{
-		Project: p.Id,
+		Project: t.Project,
 		Target:  t.Id,
 	}
 	updateTargetIssue(raw, newObj)
@@ -401,38 +387,14 @@ func (s *IssueService) TakeIssue(fn func(*restful.Request,
 			return
 		}
 
-		if !s.hasProjectPermission(req, resp, obj.Project) {
-			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+		sErr := services.Must(services.HasProjectIdPermission(mgr, filters.GetUser(req), obj.Project))
+		if sErr != nil {
+			sErr.Write(resp)
 			return
 		}
 
 		mgr.Close()
+
 		fn(req, resp, obj)
 	}
-}
-
-func (s *IssueService) hasProjectPermission(req *restful.Request, resp *restful.Response,
-	projectId bson.ObjectId) bool {
-
-	mgr := s.Manager()
-	defer mgr.Close()
-
-	p, err := mgr.Projects.GetById(projectId)
-	if err != nil {
-		if mgr.IsNotFound(err) {
-			resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Project not found"))
-			return false
-		}
-		logrus.Error(stackerr.Wrap(err))
-		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
-		return false
-	}
-
-	//	current user should have a permission to create issue there
-	u := filters.GetUser(req)
-	if !mgr.Permission.HasProjectAccess(p, u) {
-		logrus.Warnf("User %s try to access to project %s", u, p)
-		return false
-	}
-	return true
 }

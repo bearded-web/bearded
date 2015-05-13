@@ -221,7 +221,6 @@ func (s *ProjectService) TakeProject(fn ProjectFunction) restful.RouteFunction {
 		defer mgr.Close()
 
 		p, err := mgr.Projects.GetById(mgr.ToId(id))
-		mgr.Close()
 		if err != nil {
 			if mgr.IsNotFound(err) {
 				resp.WriteErrorString(http.StatusNotFound, "Not found")
@@ -232,12 +231,13 @@ func (s *ProjectService) TakeProject(fn ProjectFunction) restful.RouteFunction {
 			return
 		}
 
-		u := filters.GetUser(req)
-		admin := false
-		if !admin && p.Owner != u.Id && p.GetMember(u.Id) == nil {
-			resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+		sErr := services.Must(services.HasProjectPermission(mgr, filters.GetUser(req), p))
+		if sErr != nil {
+			sErr.Write(resp)
 			return
 		}
+
+		mgr.Close()
 
 		fn(req, resp, p)
 	}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/emicklei/go-restful"
 )
@@ -46,4 +47,33 @@ func NewBadReq(msg string, args ...interface{}) restful.ServiceError {
 
 func NewAppErr(msg string) restful.ServiceError {
 	return NewError(CodeApp, msg)
+}
+
+type ErrResp struct {
+	Code int
+	Err  error
+}
+
+func (e *ErrResp) Write(rw *restful.Response) {
+	code := e.Code
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+	if sErr, casted := e.Err.(restful.ServiceError); casted {
+		rw.WriteServiceError(code, sErr)
+	} else {
+		rw.WriteError(code, e.Err)
+	}
+}
+
+func (e *ErrResp) Error() string {
+	code := e.Code
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+	errMsg := ""
+	if e.Err != nil {
+		errMsg = e.Err.Error()
+	}
+	return fmt.Sprintf("%d %s: %s", http.StatusBadRequest, http.StatusText(http.StatusBadRequest), errMsg)
 }

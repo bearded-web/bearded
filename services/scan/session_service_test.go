@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path"
 	"testing"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/plugin"
+	"github.com/bearded-web/bearded/models/project"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/config"
@@ -26,30 +28,41 @@ import (
 	c "github.com/smartystreets/goconvey/convey"
 )
 
+var (
+	testMgr *manager.Manager
+)
+
+func TestMain(m *testing.M) {
+	os.Exit(func() int {
+		mongo, dbName, err := tests.RandomTestMongoUp()
+		if err != nil {
+			println(err)
+			os.Exit(1)
+		}
+		defer tests.RandomTestMongoDown(mongo, dbName)
+		testMgr = manager.New(mongo.DB(dbName))
+		return m.Run()
+	}())
+}
+
 func TestSessionCreate(t *testing.T) {
 	logrus.SetLevel(logrus.PanicLevel)
 
-	mongo, dbName, err := tests.RandomTestMongoUp()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer tests.RandomTestMongoDown(mongo, dbName)
-
-	mgr := manager.New(mongo.DB(dbName))
-	err = loadFixtures(mgr)
+	testMgr := testMgr
+	err := loadFixtures(testMgr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// create and auth user
 	sess := filters.NewSession()
-	u, err := mgr.Users.Create(&user.User{})
+	u, err := testMgr.Users.Create(&user.User{})
 	if err != nil {
 		t.Fatal(err)
 	}
 	sess.Set(filters.SessionUserKey, u.Id.Hex())
 
-	scanService := New(services.New(mgr, nil, scheduler.NewFake(),
+	scanService := New(services.New(testMgr, nil, scheduler.NewFake(),
 		email.NewConsoleBackend(), config.NewDispatcher().Api))
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{})
@@ -68,23 +81,28 @@ func TestSessionCreate(t *testing.T) {
 	defer ts.Close()
 
 	c.Convey("Given base scan with sessions", t, func() {
+		projectObj, err := testMgr.Projects.Create(&project.Project{
+			Name:  "default",
+			Owner: u.Id,
+		})
+		c.So(err, c.ShouldBeNil)
 
-		baseScan, err := mgr.Scans.Create(&scan.Scan{
+		baseScan, err := testMgr.Scans.Create(&scan.Scan{
 			Status:  scan.StatusWorking,
-			Plan:    mgr.NewId(),
-			Target:  mgr.NewId(),
-			Owner:   mgr.NewId(),
-			Project: mgr.NewId(),
+			Plan:    testMgr.NewId(),
+			Target:  testMgr.NewId(),
+			Owner:   u.Id,
+			Project: projectObj.Id,
 			Sessions: []*scan.Session{
 				&scan.Session{
-					Id:     mgr.NewId(),
+					Id:     testMgr.NewId(),
 					Status: scan.StatusWorking,
-					Plugin: mgr.NewId(),
+					Plugin: testMgr.NewId(),
 				},
 			},
 		})
 		c.So(err, c.ShouldBeNil)
-		scanId := mgr.FromId(baseScan.Id)
+		scanId := testMgr.FromId(baseScan.Id)
 
 		parentSession := baseScan.Sessions[0]
 
@@ -120,14 +138,14 @@ func TestSessionCreate(t *testing.T) {
 		})
 
 		c.Convey("When create session with wrong scan", func() {
-			sess.Scan = mgr.NewId()
+			sess.Scan = testMgr.NewId()
 			res := sessionCreate(t, ts.URL, scanId, marshalSession(sess))
 			shouldBeBadRequest(t, res, services.CodeWrongData, "wrong scan id")
 		})
 
 		c.Convey("When scan is not in working state", func() {
 			baseScan.Status = scan.StatusFinished
-			if err := mgr.Scans.Update(baseScan); err != nil {
+			if err := testMgr.Scans.Update(baseScan); err != nil {
 				t.Fatal(err)
 				return
 			}
@@ -142,14 +160,14 @@ func TestSessionCreate(t *testing.T) {
 		})
 
 		c.Convey("When parent is not existed", func() {
-			sess.Parent = mgr.NewId()
+			sess.Parent = testMgr.NewId()
 			res := sessionCreate(t, ts.URL, scanId, marshalSession(sess))
 			shouldBeBadRequest(t, res, services.CodeWrongData, "parent not found")
 		})
 
 		c.Convey("When parent doesn't have working status", func() {
 			parentSession.Status = scan.StatusFinished
-			mgr.Scans.UpdateSession(baseScan, parentSession)
+			testMgr.Scans.UpdateSession(baseScan, parentSession)
 			res := sessionCreate(t, ts.URL, scanId, marshalSession(sess))
 			shouldBeBadRequest(t, res, services.CodeWrongData, "parent should have working status")
 		})
@@ -165,7 +183,7 @@ func TestSessionCreate(t *testing.T) {
 
 			c.Convey("Session returns and updated into db", func() {
 				c.So(res.StatusCode, c.ShouldEqual, http.StatusCreated)
-				baseScan, err := mgr.Scans.GetById(baseScan.Id)
+				baseScan, err := testMgr.Scans.GetById(baseScan.Id)
 				c.So(err, c.ShouldBeNil)
 				c.So(len(baseScan.Sessions), c.ShouldEqual, 1)
 				c.So(len(baseScan.Sessions[0].Children), c.ShouldEqual, 1)
