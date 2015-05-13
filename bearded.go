@@ -50,7 +50,7 @@ func main() {
 		dispatcher.New(),
 		utils.Plugins,
 		utils.Plans,
-		agent.Agent,
+		agent.New(),
 	}
 
 	app.Flags = append(app.Flags, []cli.Flag{

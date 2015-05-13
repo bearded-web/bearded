@@ -1,76 +1,61 @@
 package agent
 
 import (
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
-	"golang.org/x/net/context"
 	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
+	"github.com/bearded-web/bearded/cmd"
 	agentServer "github.com/bearded-web/bearded/pkg/agent"
 	"github.com/bearded-web/bearded/pkg/client"
-	"github.com/bearded-web/bearded/pkg/docker"
-	"github.com/bearded-web/bearded/pkg/utils"
+	"github.com/bearded-web/bearded/pkg/config"
+	"github.com/bearded-web/bearded/pkg/config/flags"
+	"github.com/bearded-web/bearded/pkg/utils/load"
 )
 
-var Agent = cli.Command{
-	Name:  "agent",
-	Usage: "Start agent",
-	Flags: []cli.Flag{
-		cli.StringFlag{
-			Name:   "api-addr",
-			Value:  "http://127.0.0.1:3003/api/",
-			EnvVar: "BEARDED_API_ADDR",
-			Usage:  "http address for connection to the api server",
+const EnvPrefix = "BEARDED_AGENT"
+
+func New() cli.Command {
+	agent := cli.Command{
+		Name:  "agent",
+		Usage: "Start agent",
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:   "config",
+				EnvVar: fmt.Sprintf("%s_CONFIG", EnvPrefix),
+				Usage:  "path to config",
+			},
 		},
-		cli.StringFlag{
-			Name:   "name",
-			EnvVar: "BEARDED_AGENT_NAME",
-			Usage:  "Unique agent name, set to fqdn if empty",
-		},
-		cli.StringFlag{
-			Name:   "token",
-			Value:  "agent-token", // TODO (m0sth8): remove test-token
-			EnvVar: "BEARDED_AGENT_TOKEN",
-			Usage:  "Token, used for request",
-		},
-	},
-	Action: takeApi(agentAction),
+		Action: cmd.TakeApi(agentAction),
+	}
+	cfg := config.NewAgent()
+	agent.Flags = append(agent.Flags, flags.GenerateFlags(cfg, flags.Opts{
+		EnvPrefix: EnvPrefix,
+	})...)
+	agent.Flags = append(agent.Flags, cmd.ApiFlags("BEARDED")...)
+	return agent
 }
 
-func agentAction(ctx *cli.Context, api *client.Client) {
-
-	var agentName string
-	if agentName = ctx.String("name"); agentName == "" {
-		hostname, err := utils.GetHostname()
+func agentAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
+	cfg := config.NewAgent()
+	if cfgPath := ctx.String("config"); cfgPath != "" {
+		logrus.Infof("Load config from %s", cfgPath)
+		err := load.FromFile(cfgPath, cfg)
 		if err != nil {
-			panic(err)
+			logrus.Fatalf("Couldn't load config: %s", err)
+			return
 		}
-		agentName = hostname
 	}
-	err := ServeAgent(agentName, api)
-	logrus.Error(err)
-}
 
-func ServeAgent(agentName string, api *client.Client) error {
-	dclient, err := docker.NewDocker()
+	logrus.Info("Load config from flags")
+	err := flags.ParseFlags(cfg, ctx, flags.Opts{
+		EnvPrefix: EnvPrefix,
+	})
 	if err != nil {
-		panic(err)
+		logrus.Fatal(err)
 	}
-	logrus.Infof("Agent name: %s", agentName)
-	server, err := agentServer.New(api, dclient, agentName)
-	if err != nil {
-		panic(err)
-	}
-	return server.Serve(context.Background())
-}
 
-func takeApi(fn func(*cli.Context, *client.Client)) func(*cli.Context) {
-	return func(ctx *cli.Context) {
-		api := client.NewClient(ctx.String("api-addr"), nil)
-		if ctx.GlobalBool("debug") {
-			api.Debug = true
-		}
-		api.Token = ctx.String("token")
-		fn(ctx, api)
-	}
+	logrus.Fatal(agentServer.ServeAgent(cfg, api))
 }

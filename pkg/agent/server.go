@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"golang.org/x/net/context"
+
 	"github.com/bearded-web/bearded/models/plan"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/agent/api"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/transport"
-	"golang.org/x/net/context"
 )
 
 type RemoteServer struct {

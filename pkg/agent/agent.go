@@ -18,6 +18,7 @@ import (
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
 	"github.com/bearded-web/bearded/pkg/client"
+	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/docker"
 	"github.com/bearded-web/bearded/pkg/transport/mango"
 	"github.com/bearded-web/bearded/pkg/utils"
@@ -393,4 +394,24 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 		return err
 	}
 	return nil
+}
+
+func ServeAgent(cfg *config.Agent, api *client.Client) error {
+	dclient, err := docker.NewDocker()
+	if err != nil {
+		return fmt.Errorf("Docker initialization error: %s", err.Error())
+	}
+	if cfg.Name == "" {
+		hostname, err := utils.GetHostname()
+		if err != nil {
+			return fmt.Errorf("Can't get hostname for agent: %s", err.Error())
+		}
+		cfg.Name = hostname
+	}
+	logrus.Infof("Agent name: %s", cfg.Name)
+	server, err := New(api, dclient, cfg.Name)
+	if err != nil {
+		return fmt.Errorf("Initialization error: %s", err.Error())
+	}
+	return server.Serve(context.Background())
 }

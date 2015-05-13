@@ -149,6 +149,12 @@ func (s *AgentService) create(req *restful.Request, resp *restful.Response) {
 	raw.Type = agent.System
 	raw.Status = agent.StatusRegistered
 
+	// automatically approve agent if it's created by internal agent user
+	u := filters.GetUser(req)
+	if u.Email == manager.AgentEmail {
+		raw.Status = agent.StatusApproved
+	}
+
 	obj, err := mgr.Agents.Create(raw)
 	if err != nil {
 		if mgr.IsDup(err) {

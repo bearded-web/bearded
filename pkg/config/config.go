@@ -6,7 +6,7 @@ type Dispatcher struct {
 	Debug bool `flag:"-"`
 
 	Frontend Frontend
-	Agent    Agent
+	Agent    InternalAgent
 	Swagger  Swagger
 	Mongo    Mongo
 	Email    Email
@@ -38,8 +38,13 @@ type Frontend struct {
 	Path    string `desc:"path to frontend to serve static"`
 }
 
-type Agent struct {
+type InternalAgent struct {
 	Enable bool `desc:"run agent inside the dispatcher" env:"-"`
+	Agent
+}
+
+type Agent struct {
+	Name string `desc:"Unique agent name, set to fqdn if empty"`
 }
 
 type Email struct {
@@ -103,4 +108,8 @@ func NewDispatcher() *Dispatcher {
 			Path: "./extra/templates",
 		},
 	}
+}
+
+func NewAgent() *Agent {
+	return &Agent{}
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	//	"github.com/codegangpsta/cli"
+	"github.com/bearded-web/bearded/cmd"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/utils/load"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
@@ -14,22 +15,22 @@ import (
 var Plugins = cli.Command{
 	Name:  "plugins",
 	Usage: "Helper to work with plugins",
-	Flags: ApiFlags,
+	Flags: cmd.ApiFlags("BEARDED"),
 	Subcommands: []cli.Command{
 		cli.Command{
 			Name:   "list",
 			Usage:  "Show all installed plugins",
-			Action: takeApi(pluginsListAction),
+			Action: cmd.TakeApi(pluginsListAction),
 		},
 		cli.Command{
 			Name:   "show",
 			Usage:  "Show plugin by id",
-			Action: takeApi(pluginsShowAction),
+			Action: cmd.TakeApi(pluginsShowAction),
 		},
 		cli.Command{
 			Name:   "load",
 			Usage:  "Load plugins from file",
-			Action: takeApi(pluginsLoadAction),
+			Action: cmd.TakeApi(pluginsLoadAction),
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "update",
@@ -50,7 +51,7 @@ var Plugins = cli.Command{
 
 // ========= Actions
 
-func pluginsListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func pluginsListAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	plugins, err := api.Plugins.List(timeout(), nil)
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -62,7 +63,7 @@ func pluginsListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	}
 }
 
-func pluginsShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func pluginsShowAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set plugin id argument: plugins show [id]\n")
 		os.Exit(1)
@@ -85,7 +86,7 @@ func pluginsShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	return
 }
 
-func pluginsLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func pluginsLoadAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set filename argument: f.e plugins load ./extra/data/plugins.json\n")
 		os.Exit(1)

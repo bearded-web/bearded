@@ -8,6 +8,7 @@ import (
 	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
 
+	"github.com/bearded-web/bearded/cmd"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/utils/load"
 )
@@ -15,22 +16,22 @@ import (
 var Plans = cli.Command{
 	Name:  "plans",
 	Usage: "Helper to work with plans",
-	Flags: ApiFlags,
+	Flags: cmd.ApiFlags("BEARDED"),
 	Subcommands: []cli.Command{
 		cli.Command{
 			Name:   "list",
 			Usage:  "Show all installed plans",
-			Action: takeApi(plansListAction),
+			Action: cmd.TakeApi(plansListAction),
 		},
 		cli.Command{
 			Name:   "show",
 			Usage:  "Show plan by id",
-			Action: takeApi(plansShowAction),
+			Action: cmd.TakeApi(plansShowAction),
 		},
 		cli.Command{
 			Name:   "load",
 			Usage:  "Load plans from file",
-			Action: takeApi(plansLoadAction),
+			Action: cmd.TakeApi(plansLoadAction),
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "update",
@@ -47,7 +48,7 @@ var Plans = cli.Command{
 
 // ========= Actions
 
-func plansListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func plansListAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 
 	plans, err := api.Plans.List(timeout(), nil)
 	if err != nil {
@@ -60,7 +61,7 @@ func plansListAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	}
 }
 
-func plansShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func plansShowAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set plan id argument: plans show [id]\n")
 		os.Exit(1)
@@ -83,7 +84,7 @@ func plansShowAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
 	return
 }
 
-func plansLoadAction(ctx *cli.Context, api *client.Client, timeout Timeout) {
+func plansLoadAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	if len(ctx.Args()) == 0 {
 		fmt.Printf("You should set filename argument: f.e plans load ./extra/data/plans.json\n")
 		os.Exit(1)

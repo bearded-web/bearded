@@ -5,23 +5,22 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/bearded-web/bearded/cmd/agent"
+	"github.com/bearded-web/bearded/pkg/agent"
 	"github.com/bearded-web/bearded/pkg/client"
-	"github.com/bearded-web/bearded/pkg/utils"
+	"github.com/bearded-web/bearded/pkg/config"
 )
 
 // Run agent inside current process
 // Start httptest local server
-func RunInternalAgent(app http.Handler, token string) error {
+func RunInternalAgent(app http.Handler, token string, cfg *config.Agent) error {
 	ts := httptest.NewServer(app)
-	hostname, err := utils.GetHostname()
-	if err != nil {
-		return err
-	}
 	api := client.NewClient(fmt.Sprintf("%s/api/", ts.URL), nil)
 	api.Token = token
+	if cfg.Name == "" {
+		cfg.Name = "internal"
+	}
 	go func() {
-		agent.ServeAgent(hostname, api)
+		agent.ServeAgent(cfg, api)
 	}()
 	return nil
 }
