@@ -69,8 +69,12 @@ type CookieOpts struct {
 	HttpOnly bool
 }
 
-func SessionCookieFilter(cookieName string, opts *CookieOpts, keyPairs ...[]byte) restful.FilterFunction {
-	codecs := securecookie.CodecsFromPairs(keyPairs...)
+func SessionCookieFilter(cookieName string, opts *CookieOpts, keyPairs ...string) restful.FilterFunction {
+	keyPairsBytes := [][]byte{}
+	for _, key := range keyPairs {
+		keyPairsBytes = append(keyPairsBytes, []byte(key))
+	}
+	codecs := securecookie.CodecsFromPairs(keyPairsBytes...)
 
 	return func(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 

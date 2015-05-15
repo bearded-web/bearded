@@ -104,7 +104,7 @@ func getManager(cfg config.Mongo) (*manager.Manager, error) {
 	return mgr, nil
 }
 
-func getRestContainer(cfg *config.Dispatcher) *restful.Container {
+func getRestContainer(cfg config.Api) *restful.Container {
 	// Create container and initialize services
 	wsContainer := restful.NewContainer()
 	wsContainer.Router(restful.CurlyRouter{}) // CurlyRouter is the faster routing alternative for restful
@@ -113,12 +113,10 @@ func getRestContainer(cfg *config.Dispatcher) *restful.Container {
 	cookieOpts := &filters.CookieOpts{
 		Path:     "/api/",
 		HttpOnly: true,
-		//		Secure: true,
+		Secure:   cfg.Cookie.Secure,
 	}
 	// TODO (m0sth8): extract keys to configuration file
-	hashKey := []byte("12345678901234567890123456789012")
-	encKey := []byte("12345678901234567890123456789012")
-	wsContainer.Filter(filters.SessionCookieFilter("bearded-sss", cookieOpts, hashKey, encKey))
+	wsContainer.Filter(filters.SessionCookieFilter(cfg.Cookie.Name, cookieOpts, cfg.Cookie.KeyPairs...))
 
 	// Disable recovering in restful cause we recover all panics in negroni
 	wsContainer.DoNotRecover(true)
@@ -193,7 +191,7 @@ func Serve(cfg *config.Dispatcher) error {
 
 	}
 
-	wsContainer := getRestContainer(cfg)
+	wsContainer := getRestContainer(cfg.Api)
 	// Initialize and register services in container
 	err = initServices(wsContainer, cfg, mgr, mailer, tmpl)
 	if err != nil {

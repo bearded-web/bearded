@@ -7,6 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emicklei/go-restful"
+	c "github.com/smartystreets/goconvey/convey"
+	"golang.org/x/net/context"
+	"gopkg.in/mgo.v2/bson"
+
 	"github.com/bearded-web/bearded/models/token"
 	"github.com/bearded-web/bearded/models/user"
 	"github.com/bearded-web/bearded/pkg/client"
@@ -17,10 +22,6 @@ import (
 	"github.com/bearded-web/bearded/pkg/scheduler"
 	"github.com/bearded-web/bearded/pkg/tests"
 	"github.com/bearded-web/bearded/services"
-	"github.com/emicklei/go-restful"
-	c "github.com/smartystreets/goconvey/convey"
-	"golang.org/x/net/context"
-	"gopkg.in/mgo.v2/bson"
 )
 
 var (

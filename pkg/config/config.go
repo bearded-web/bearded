@@ -32,6 +32,13 @@ type Api struct {
 	Raven  string `desc:"sentry addr for frontend logging"`
 	GA     string `desc:"google analytics id"`
 	Signup Signup
+	Cookie Cookie
+}
+
+type Cookie struct {
+	Name     string   `desc:"name for secure cookie"`
+	KeyPairs []string `desc:"key pairs for cookie"` // read more http://www.gorillatoolkit.org/pkg/securecookie
+	Secure   bool     `desc:"set cookie only for https"`
 }
 
 type Signup struct {
@@ -92,6 +99,10 @@ func NewDispatcher() *Dispatcher {
 			ResetPasswordSecret:   utils.RandomString(32),
 			ResetPasswordDuration: 86400,
 			SystemEmail:           "admin@localhost",
+			Cookie: Cookie{
+				Name:     "bearded-sss",
+				KeyPairs: []string{utils.RandomString(16), utils.RandomString(16)},
+			},
 		},
 		Swagger: Swagger{
 			ApiPath:  "/apidocs.json",
