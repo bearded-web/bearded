@@ -10,7 +10,12 @@ type GA struct {
 	Id     string `json:"id"`
 }
 
+type Signup struct {
+	Disable bool `json:"disable"`
+}
+
 type ConfigEntity struct {
-	Raven Raven `json:"raven"`
-	GA    GA    `json:"ga"`
+	Raven  Raven  `json:"raven"`
+	GA     GA     `json:"ga"`
+	Signup Signup `json:"signup"`
 }

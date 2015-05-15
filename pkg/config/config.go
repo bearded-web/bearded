@@ -29,8 +29,13 @@ type Api struct {
 
 	SystemEmail string `desc:"for sending system emails, like password reseting"`
 
-	Raven string `desc:"sentry addr for frontend logging"`
-	GA    string `desc:"google analytics id"`
+	Raven  string `desc:"sentry addr for frontend logging"`
+	GA     string `desc:"google analytics id"`
+	Signup Signup
+}
+
+type Signup struct {
+	Disable bool `desc:"disable signup"`
 }
 
 type Frontend struct {

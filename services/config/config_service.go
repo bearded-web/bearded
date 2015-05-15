@@ -40,7 +40,11 @@ func (s *ConfigService) Register(container *restful.Container) {
 
 func (s *ConfigService) get(_ *restful.Request, resp *restful.Response) {
 	cfg := s.ApiCfg()
-	ent := &ConfigEntity{}
+	ent := &ConfigEntity{
+		Signup: Signup{
+			Disable: cfg.Signup.Disable,
+		},
+	}
 	if cfg.Raven != "" {
 		ent.Raven.Enable = true
 		ent.Raven.Address = cfg.Raven
