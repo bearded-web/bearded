@@ -118,7 +118,6 @@ func (s *MeService) changePassword(req *restful.Request, resp *restful.Response)
 
 	if len(raw.Token) > 0 {
 		// TODO (m0sth8: take variables from config
-		secret := []byte("12345678910")
 
 		getUser := func(email string) ([]byte, error) {
 			if email != u.Email {
@@ -127,7 +126,9 @@ func (s *MeService) changePassword(req *restful.Request, resp *restful.Response)
 			return []byte(u.Password), nil
 		}
 
-		_, err := reset.VerifyToken(raw.Token, getUser, secret)
+		cfg := s.ApiCfg()
+
+		_, err := reset.VerifyToken(raw.Token, getUser, []byte(cfg.ResetPasswordSecret))
 		if err != nil {
 			if err == reset.ErrExpiredToken {
 				resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Token expired, try again"))
