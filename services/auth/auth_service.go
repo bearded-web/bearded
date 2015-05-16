@@ -275,9 +275,10 @@ func (s *AuthService) resetPassword(req *restful.Request, resp *restful.Response
 		reqUrl.RawQuery = reqUrlVal.Encode()
 		wr := msg.GetBodyWriter("text/html")
 		data := map[string]string{
-			"ReqUrl":     fmt.Sprintf("%s%s", cfg.Host, reqUrl.String()),
-			"Nickname":   u.Nickname,
-			"SystemMail": cfg.SystemEmail,
+			"ReqUrl":       fmt.Sprintf("%s%s", cfg.Host, reqUrl.String()),
+			"Nickname":     u.Nickname,
+			"SystemEmail":  cfg.SystemEmail,
+			"ContactEmail": cfg.ContactEmail,
 		}
 		if err := s.Template.Render(wr, "email/reset-password", data); err != nil {
 			logrus.Error(err)

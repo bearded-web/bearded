@@ -27,7 +27,8 @@ type Api struct {
 	ResetPasswordSecret   string `flag:"-" desc:"secret required for reset token generation"`
 	ResetPasswordDuration int    `desc:"lifetime for reset token in seconds"`
 
-	SystemEmail string `desc:"for sending system emails, like password reseting"`
+	SystemEmail  string `desc:"for sending system emails, like password reseting"`
+	ContactEmail string `desc:"for show in templates, like contact with us"`
 
 	Raven  string `desc:"sentry addr for frontend logging"`
 	GA     string `desc:"google analytics id"`
@@ -99,6 +100,7 @@ func NewDispatcher() *Dispatcher {
 			ResetPasswordSecret:   utils.RandomString(32),
 			ResetPasswordDuration: 86400,
 			SystemEmail:           "admin@localhost",
+			ContactEmail:          "admin@localhost",
 			Cookie: Cookie{
 				Name:     "bearded-sss",
 				KeyPairs: []string{utils.RandomString(16), utils.RandomString(16)},
