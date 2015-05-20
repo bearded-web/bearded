@@ -22,11 +22,13 @@ const ParamId = "issueId"
 
 type IssueService struct {
 	*services.BaseService
+	sorter *fltr.Sorter
 }
 
 func New(base *services.BaseService) *IssueService {
 	return &IssueService{
 		BaseService: base,
+		sorter:      fltr.NewSorter("created", "updated"),
 	}
 }
 
@@ -53,6 +55,9 @@ func (s *IssueService) Register(container *restful.Container) {
 	r.Doc("list")
 	r.Operation("list")
 	s.SetParams(r, fltr.GetParams(ws, manager.IssueFltr{}))
+	r.Param(s.sorter.Param())
+	r.Param(s.Paginator.SkipParam())
+	r.Param(s.Paginator.LimitParam())
 	r.Writes(issue.TargetIssueList{})
 	r.Do(services.Returns(http.StatusOK))
 	ws.Route(r)
@@ -231,15 +236,27 @@ func (s *IssueService) list(req *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	results, count, err := mgr.Issues.FilterByQuery(query)
+	skip, limit := s.Paginator.Parse(req)
+
+	opt := manager.Opts{
+		Sort:  s.sorter.Parse(req),
+		Limit: limit,
+		Skip:  skip,
+	}
+	logrus.Infof("sort by %v", opt.Sort)
+	results, count, err := mgr.Issues.FilterByQuery(query, opt)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
-
+	previous, next := s.Paginator.Urls(req, skip, limit, count)
 	result := &issue.TargetIssueList{
-		Meta:    pagination.Meta{Count: count},
+		Meta: pagination.Meta{
+			Count:    count,
+			Previous: previous,
+			Next:     next,
+		},
 		Results: results,
 	}
 	resp.WriteEntity(result)

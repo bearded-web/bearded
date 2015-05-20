@@ -49,6 +49,9 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
 
 	// services
 	base := services.New(mgr, passCtx, sch, mailer, cfg.Api)
+	if cfg.Api.Host != "" {
+		base.Paginator.Host = cfg.Api.Host
+	}
 	base.Template = tmpl
 	all := []services.ServiceInterface{
 		auth.New(base),
