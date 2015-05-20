@@ -4,6 +4,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/email"
 	"github.com/bearded-web/bearded/pkg/manager"
+	"github.com/bearded-web/bearded/pkg/pagination"
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
 	"github.com/bearded-web/bearded/pkg/template"
@@ -17,6 +18,7 @@ type BaseService struct {
 	mailer    email.Mailer
 	apiCfg    config.Api
 	Template  template.Renderer
+	Paginator *pagination.Paginator
 }
 
 func New(mgr *manager.Manager, passCtx *passlib.Context,
@@ -28,6 +30,7 @@ func New(mgr *manager.Manager, passCtx *passlib.Context,
 		scheduler: sch,
 		mailer:    mailer,
 		apiCfg:    cfg,
+		Paginator: pagination.New(),
 	}
 }
 

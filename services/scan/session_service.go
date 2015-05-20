@@ -308,7 +308,31 @@ func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess
 		_, err := mgr.Issues.Create(targetIssue)
 		if err != nil {
 			if mgr.IsDup(err) {
-				// TODO(m0sth8): add new report activity to existed issue
+				if targetIssue.UniqId != "" {
+					targetIssue, err = mgr.Issues.GetByUniqId(sc.Target, targetIssue.UniqId)
+					if err != nil {
+						logrus.Error(stackerr.Wrap(err))
+					}
+					if targetIssue.False {
+						continue
+					}
+					updateSummary := false
+					targetIssue.AddReportActivity(rep.Id, sc.Id, sess.Id)
+					if targetIssue.Resolved {
+						targetIssue.Resolved = false
+						updateSummary = true
+					}
+					err := mgr.Issues.Update(targetIssue)
+					if err != nil {
+						logrus.Error(stackerr.Wrap(err))
+					}
+					if updateSummary {
+						err := mgr.Targets.UpdateSummaryById(sc.Target)
+						if err != nil {
+							logrus.Error(stackerr.Wrap(err))
+						}
+					}
+				}
 				continue
 			} else {
 				return stackerr.Wrap(err)

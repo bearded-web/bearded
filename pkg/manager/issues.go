@@ -63,6 +63,11 @@ func (m *IssueManager) GetById(id bson.ObjectId) (*issue.TargetIssue, error) {
 	return u, m.manager.GetById(m.col, id, &u)
 }
 
+func (m *IssueManager) GetByUniqId(target bson.ObjectId, uniqId string) (*issue.TargetIssue, error) {
+	u := &issue.TargetIssue{}
+	return u, m.manager.GetBy(m.col, &bson.M{"target": target, "uniqId": uniqId}, &u)
+}
+
 func (m *IssueManager) FilterBy(f *IssueFltr, opts ...Opts) ([]*issue.TargetIssue, int, error) {
 	query := fltr.GetQuery(f)
 	return m.FilterByQuery(query, opts...)
