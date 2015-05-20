@@ -111,3 +111,11 @@ func (m *TargetManager) UpdateSummary(obj *target.Target) error {
 	// TODO(m0sth8): update only summary field
 	return m.Update(obj)
 }
+
+func (m *TargetManager) UpdateSummaryById(id bson.ObjectId) error {
+	obj, err := m.GetById(id)
+	if err != nil {
+		return err
+	}
+	return m.UpdateSummary(obj)
+}

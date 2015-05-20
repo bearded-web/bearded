@@ -243,7 +243,6 @@ func (s *IssueService) list(req *restful.Request, resp *restful.Response) {
 		Limit: limit,
 		Skip:  skip,
 	}
-	logrus.Infof("sort by %v", opt.Sort)
 	results, count, err := mgr.Issues.FilterByQuery(query, opt)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
