@@ -90,12 +90,15 @@ func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config,
 		}
 		cprint("Created")
 
-		defer func() {
+		removeContainer := func() {
+			cprint("Remove container")
 			d.Client.RemoveContainer(dockerclient.RemoveContainerOptions{
 				ID: container.ID,
 			})
 			cprint("Removed")
-		}()
+		}
+
+		defer removeContainer()
 
 		// Start the container
 		err = d.Client.StartContainer(container.ID, opts.HostConfig)
@@ -105,10 +108,13 @@ func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config,
 			return
 		}
 		cprint("Started")
-		defer func() {
-			d.Client.StopContainer(container.ID, 5)
+
+		stopContainer := func() {
+			cprint("Stop container")
+			d.Client.StopContainer(container.ID, 2)
 			cprint("Stopped")
-		}()
+		}
+		defer stopContainer()
 		container, err = d.Client.InspectContainer(container.ID)
 		if err != nil {
 			logrus.Errorf("Failed: %v", err)
@@ -153,8 +159,10 @@ func (d *Docker) RunImage(ctx context.Context, config *dockerclient.Config,
 		}(respCh)
 		select {
 		case <-ctx.Done():
-			cprint("Context done")
+			cprint("Context done, stop and remove container")
 			resp.Err = ctx.Err()
+			stopContainer()
+			removeContainer()
 		case tmpResp := <-respCh:
 			resp.Err = tmpResp.Err
 			resp.Log = tmpResp.Log

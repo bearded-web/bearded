@@ -7,6 +7,7 @@ type Dispatcher struct {
 
 	Frontend Frontend
 	Agent    InternalAgent
+	Worker   InternalWorker
 	Swagger  Swagger
 	Mongo    Mongo
 	Email    Email
@@ -58,6 +59,21 @@ type InternalAgent struct {
 
 type Agent struct {
 	Name string `desc:"Unique agent name, set to fqdn if empty"`
+}
+
+type Worker struct {
+	Broker          string
+	ResultBackend   string
+	ResultsExpireIn int
+	Exchange        string
+	ExchangeType    string
+	DefaultQueue    string
+	BindingKey      string
+}
+
+type InternalWorker struct {
+	Enable bool `desc:"run worker inside the dispatcher" env:"-"`
+	Worker
 }
 
 type Email struct {

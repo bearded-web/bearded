@@ -2,16 +2,19 @@ package agent
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	//	"github.com/codegangpsta/cli"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/cmd"
 	agentServer "github.com/bearded-web/bearded/pkg/agent"
 	"github.com/bearded-web/bearded/pkg/client"
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/config/flags"
+	"github.com/bearded-web/bearded/pkg/utils"
 	"github.com/bearded-web/bearded/pkg/utils/load"
 )
 
@@ -38,9 +41,9 @@ func New() cli.Command {
 	return agent
 }
 
-func agentAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
+func agentAction(cliCtx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	cfg := config.NewAgent()
-	if cfgPath := ctx.String("config"); cfgPath != "" {
+	if cfgPath := cliCtx.String("config"); cfgPath != "" {
 		logrus.Infof("Load config from %s", cfgPath)
 		err := load.FromFile(cfgPath, cfg)
 		if err != nil {
@@ -50,12 +53,34 @@ func agentAction(ctx *cli.Context, api *client.Client, timeout cmd.Timeout) {
 	}
 
 	logrus.Info("Load config from flags")
-	err := flags.ParseFlags(cfg, ctx, flags.Opts{
+	err := flags.ParseFlags(cfg, cliCtx, flags.Opts{
 		EnvPrefix: EnvPrefix,
 	})
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	logrus.Fatal(agentServer.ServeAgent(cfg, api))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	aErr := make(chan error)
+	go func(ch chan<- error) {
+		ch <- agentServer.ServeAgent(ctx, cfg, api)
+	}(aErr)
+
+	select {
+	case <-utils.NotifyInterrupt():
+		logrus.Infof("Interrupting by signal")
+		cancel()
+		select {
+		case err = <-aErr:
+		case <-time.After(time.Second * 20):
+			err = fmt.Errorf("Timeout exceeded")
+		}
+	case err = <-aErr:
+	}
+
+	if err != nil {
+		logrus.Fatal(err)
+	}
 }

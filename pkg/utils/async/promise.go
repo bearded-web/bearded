@@ -1,4 +1,4 @@
-package utils
+package async
 
 // Promise is a basic promise implementation: it wraps calls a function in a goroutine,
 // and returns a channel which will later return the function's return value.

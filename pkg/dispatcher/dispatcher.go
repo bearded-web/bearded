@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emicklei/go-restful"
+	"golang.org/x/net/context"
 	"gopkg.in/mgo.v2"
 
 	"github.com/bearded-web/bearded/pkg/config"
@@ -18,6 +20,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/passlib"
 	"github.com/bearded-web/bearded/pkg/scheduler"
 	"github.com/bearded-web/bearded/pkg/template"
+	"github.com/bearded-web/bearded/pkg/utils/async"
 	"github.com/bearded-web/bearded/services"
 	"github.com/bearded-web/bearded/services/agent"
 	"github.com/bearded-web/bearded/services/auth"
@@ -147,20 +150,21 @@ func getNegroniApp(cfg *config.Dispatcher) *negroni.Negroni {
 	return app
 }
 
-func runInternalAgent(mgr *manager.Manager, app *negroni.Negroni, cfg config.InternalAgent) {
+func runInternalAgent(ctx context.Context, mgr *manager.Manager,
+	app *negroni.Negroni, cfg config.InternalAgent) <-chan error {
+
 	if !cfg.Enable {
-		return
+		return nil
 	}
 	if tkn, err := getAgentToken(mgr); err != nil {
 		logrus.Errorf("Can't get agent token: %s", err)
+		return nil
 	} else {
-		if err := RunInternalAgent(app, tkn, &cfg.Agent); err != nil {
-			logrus.Errorf("Can't run agent: %s", err)
-		}
+		return RunInternalAgent(ctx, app, tkn, &cfg.Agent)
 	}
 }
 
-func Serve(cfg *config.Dispatcher) error {
+func Serve(ctx context.Context, cfg *config.Dispatcher) error {
 	if cfg.Debug {
 		logrus.Info("Debug mode is enabled")
 	}
@@ -206,11 +210,34 @@ func Serve(cfg *config.Dispatcher) error {
 	app := getNegroniApp(cfg)
 	app.UseHandler(wsContainer) // set wsContainer as main handler
 
-	runInternalAgent(mgr, app, cfg.Agent)
+	agentErr := runInternalAgent(ctx, mgr, app, cfg.Agent)
 
 	// Start negroni middleware with our restful container
-	bindAddr := cfg.Api.BindAddr
-	server := &http.Server{Addr: bindAddr, Handler: app}
-	logrus.Infof("Listening on %s", bindAddr)
-	return server.ListenAndServe()
+	sErr := async.Promise(func() error {
+		bindAddr := cfg.Api.BindAddr
+		server := &http.Server{Addr: bindAddr, Handler: app}
+		logrus.Infof("Listening on %s", bindAddr)
+		return server.ListenAndServe()
+	})
+
+	// waiting for finish signal
+	select {
+	case <-ctx.Done():
+		logrus.Info("Context is done")
+	case err = <-sErr:
+	}
+
+	if agentErr != nil {
+		logrus.Info("Waiting for agent to stop")
+		select {
+		case err := <-agentErr:
+			if err != nil {
+				logrus.Error(err)
+			}
+		case <-time.After(time.Second * 15):
+			logrus.Warn("Can't stop agent because of timeout")
+		}
+	}
+	// TODO (m0sth8): waiting for http server to stop
+	return err
 }

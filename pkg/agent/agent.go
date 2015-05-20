@@ -12,6 +12,7 @@ import (
 	"github.com/facebookgo/stackerr"
 	dockerclient "github.com/fsouza/go-dockerclient"
 	"golang.org/x/net/context"
+	"gopkg.in/fatih/set.v0"
 
 	"github.com/bearded-web/bearded/models/agent"
 	"github.com/bearded-web/bearded/models/plugin"
@@ -22,6 +23,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/docker"
 	"github.com/bearded-web/bearded/pkg/transport/mango"
 	"github.com/bearded-web/bearded/pkg/utils"
+	"github.com/bearded-web/bearded/pkg/utils/async"
 	"github.com/bearded-web/bearded/vendor/homedir"
 )
 
@@ -30,6 +32,8 @@ type Agent struct {
 	api     *client.Client
 	name    string
 	dclient *docker.Docker
+
+	jobs *set.Set
 }
 
 func New(api *client.Client, dclient *docker.Docker, name string) (*Agent, error) {
@@ -37,6 +41,7 @@ func New(api *client.Client, dclient *docker.Docker, name string) (*Agent, error
 		api:     api,
 		name:    name,
 		dclient: dclient,
+		jobs:    set.New(),
 	}
 	return a, nil
 }
@@ -60,14 +65,14 @@ loop:
 		switch agnt.Status {
 		case agent.StatusUndefined:
 			err := a.Register(ctx, agnt)
-			if err != nil {
+			if err != nil && !utils.IsCanceled(err) {
 				logrus.Errorf("Registration error: %v", err)
 				timeout = 5
 			}
 			logrus.Infof("Agent Id: %s", client.FromId(agnt.Id))
 		case agent.StatusRegistered:
 			err := a.Retrieve(ctx, agnt)
-			if err != nil {
+			if err != nil && !utils.IsCanceled(err) {
 				logrus.Errorf("Retrieve error: %v", err)
 				timeout = 5
 			}
@@ -76,7 +81,7 @@ loop:
 			}
 		case agent.StatusApproved:
 			err := a.GetJobs(ctx, agnt)
-			if err != nil {
+			if err != nil && !utils.IsCanceled(err) {
 				logrus.Errorf("GetJobs error: %v", err)
 				timeout = 5
 			}
@@ -100,6 +105,15 @@ loop:
 
 		}
 	}
+	<-async.Promise(func() error {
+		for {
+			if a.jobs.IsEmpty() {
+				break
+			}
+			time.Sleep(time.Millisecond * 10)
+		}
+		return nil
+	})
 	return resultErr
 }
 
@@ -164,11 +178,12 @@ func (a *Agent) HandleJob(ctx context.Context, job *agent.Job) error {
 	logrus.Debugf("Job: %s", job)
 	if job.Cmd == agent.CmdScan {
 		go func() {
-			scanCtx, cancel := context.WithCancel(ctx)
-			defer cancel()
-			if err := a.HandleScan(scanCtx, job.Scan); err != nil {
-				logrus.Error(stackerr.Wrap(err))
-			}
+			asnc := async.New(ctx, func(ctx context.Context) error {
+				return a.HandleScan(ctx, job.Scan)
+			})
+			a.jobs.Add(asnc)
+			<-asnc.Result()
+			a.jobs.Remove(asnc)
 		}()
 	}
 	return nil
@@ -188,7 +203,11 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	}
 
 	setFailed := func(err error) error {
-		logrus.Info("set session to failed state, due to %s", err)
+		if utils.IsCanceled(err) {
+			logrus.Infof("set session to failed state, due to %s", err)
+		} else {
+			logrus.Info("set session to failed state, due to cancel")
+		}
 		sess.Status = scan.StatusFailed
 		if sess, err = a.api.Scans.SessionUpdate(ctx, sess); err != nil {
 			return err
@@ -284,6 +303,12 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	var container *dockerclient.Container
 	select {
 	case <-ctx.Done():
+		select {
+		case <-ch:
+			// wait while container to be stopped and killed
+		case <-time.After(time.Second * 5):
+			logrus.Warn("Wait container: timeout exceeded")
+		}
 		return setFailed(ctx.Err())
 	case res := <-ch:
 		// container info
@@ -332,6 +357,12 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	// running
 	select {
 	case <-ctx.Done():
+		select {
+		case <-ch:
+		// wait while container be stopped and killed
+		case <-time.After(time.Second * 5):
+			logrus.Warn("Wait container: timeout exceeded")
+		}
 		return setFailed(ctx.Err())
 	case res = <-ch:
 		//		if closed {
@@ -396,7 +427,7 @@ func (a *Agent) HandleScan(ctx context.Context, sess *scan.Session) error {
 	return nil
 }
 
-func ServeAgent(cfg *config.Agent, api *client.Client) error {
+func ServeAgent(ctx context.Context, cfg *config.Agent, api *client.Client) error {
 	dclient, err := docker.NewDocker()
 	if err != nil {
 		return fmt.Errorf("Docker initialization error: %s", err.Error())
@@ -413,5 +444,5 @@ func ServeAgent(cfg *config.Agent, api *client.Client) error {
 	if err != nil {
 		return fmt.Errorf("Initialization error: %s", err.Error())
 	}
-	return server.Serve(context.Background())
+	return server.Serve(ctx)
 }

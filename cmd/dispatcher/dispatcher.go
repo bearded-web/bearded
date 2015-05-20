@@ -1,12 +1,18 @@
 package dispatcher
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/m0sth8/cli" // use fork until subcommands will be fixed
+	"golang.org/x/net/context"
 
 	"github.com/bearded-web/bearded/pkg/config"
 	"github.com/bearded-web/bearded/pkg/config/flags"
 	"github.com/bearded-web/bearded/pkg/dispatcher"
+	"github.com/bearded-web/bearded/pkg/utils"
+	"github.com/bearded-web/bearded/pkg/utils/async"
 	"github.com/bearded-web/bearded/pkg/utils/load"
 )
 
@@ -35,9 +41,9 @@ func New() cli.Command {
 	return cmd
 }
 
-func dispatcherAction(ctx *cli.Context) {
+func dispatcherAction(cliCtx *cli.Context) {
 	cfg := config.NewDispatcher()
-	if cfgPath := ctx.String("config"); cfgPath != "" {
+	if cfgPath := cliCtx.String("config"); cfgPath != "" {
 		logrus.Infof("Load config from %s", cfgPath)
 		err := load.FromFile(cfgPath, cfg)
 		if err != nil {
@@ -47,14 +53,33 @@ func dispatcherAction(ctx *cli.Context) {
 	}
 
 	logrus.Info("Load config from flags")
-	err := flags.ParseFlags(cfg, ctx, flags.Opts{
+	err := flags.ParseFlags(cfg, cliCtx, flags.Opts{
 		EnvPrefix: "BEARDED",
 	})
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	if cfg.Debug = ctx.GlobalBool("debug"); cfg.Debug {
+	if cfg.Debug = cliCtx.GlobalBool("debug"); cfg.Debug {
 		logrus.Info("Debug mode is enabled")
 	}
-	logrus.Fatal(dispatcher.Serve(cfg))
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	dErr := async.Promise(func() error { return dispatcher.Serve(ctx, cfg) })
+
+	select {
+	case <-utils.NotifyInterrupt():
+		logrus.Info("Interrupting by signal")
+		cancel()
+		select {
+		case err = <-dErr:
+		case <-time.After(time.Second * 20):
+			err = fmt.Errorf("Timeout exceeded")
+		}
+	case err = <-dErr:
+	}
+
+	if err != nil {
+		logrus.Fatal(err)
+	}
 }
