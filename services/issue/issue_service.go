@@ -7,6 +7,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
+	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/validator.v2"
 
 	"github.com/bearded-web/bearded/models/comment"
@@ -55,6 +56,7 @@ func (s *IssueService) Register(container *restful.Container) {
 	r.Doc("list")
 	r.Operation("list")
 	s.SetParams(r, fltr.GetParams(ws, manager.IssueFltr{}))
+	r.Param(ws.QueryParameter("search", "search by summary and description"))
 	r.Param(s.sorter.Param())
 	r.Param(s.Paginator.SkipParam())
 	r.Param(s.Paginator.LimitParam())
@@ -235,6 +237,12 @@ func (s *IssueService) list(req *restful.Request, resp *restful.Response) {
 
 	mgr := s.Manager()
 	defer mgr.Close()
+
+	if search := req.QueryParameter("search"); search != "" {
+		if mgr.Cfg.TextSearchEnable {
+			query["$text"] = &bson.M{"$search": search}
+		}
+	}
 
 	skip, limit := s.Paginator.Parse(req)
 

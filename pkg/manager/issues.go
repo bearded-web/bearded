@@ -20,6 +20,7 @@ type IssueManager struct {
 
 type IssueFltr struct {
 	Updated   time.Time      `fltr:"updated,gte,gt,lte,lt"`
+	VulnType  int            `fltr:"vulnType"`
 	Created   time.Time      `fltr:"created,gte,gt,lte,lt"`
 	Target    bson.ObjectId  `fltr:"target,in"`
 	Project   bson.ObjectId  `fltr:"project"`
@@ -51,6 +52,19 @@ func (s *IssueManager) Init() error {
 			return err
 		}
 	}
+	if s.manager.Cfg.TextSearchEnable {
+		logrus.Infof("Create text indexes for issue")
+		err := s.col.EnsureIndex(mgo.Index{
+			Key:             []string{"$text:summary", "$text:desc"},
+			Weights:         map[string]int{"summary": 10, "desc": 1},
+			Background:      true,
+			DefaultLanguage: "english",
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

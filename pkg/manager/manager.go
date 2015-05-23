@@ -7,12 +7,24 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+type ManagerConfig struct {
+	TextSearchEnable bool
+}
+
+// query options
+type Opts struct {
+	Limit int
+	Skip  int
+	Sort  []string
+}
+
 type ManagerInterface interface {
 	Init() error
 }
 
 type Manager struct {
-	db *mgo.Database
+	db  *mgo.Database
+	Cfg ManagerConfig
 
 	Users    *UserManager
 	Plugins  *PluginManager
@@ -35,10 +47,13 @@ type Manager struct {
 
 // Manager contains all available managers for different models
 // and hidden all db related operations
-func New(db *mgo.Database) *Manager {
+func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 	m := &Manager{
 		db:       db,
 		managers: []ManagerInterface{},
+	}
+	if len(cfg) > 0 {
+		m.Cfg = cfg[0]
 	}
 
 	// initialize different managers
@@ -89,7 +104,7 @@ func (m *Manager) Init() error {
 // Get copy of manager with copied session, don't forget to call Close after
 func (m *Manager) Copy() *Manager {
 	sess := m.db.Session.Copy()
-	copy := New(m.db.With(sess))
+	copy := New(m.db.With(sess), m.Cfg)
 	// TODO (m0sth8): implement copy through the interface
 	m.Permission.Copy(copy.Permission)
 	return copy
@@ -168,12 +183,6 @@ func (m *Manager) GetBy(col *mgo.Collection, query *bson.M, result interface{}, 
 
 func (m *Manager) NewId() bson.ObjectId {
 	return bson.NewObjectId()
-}
-
-type Opts struct {
-	Limit int
-	Skip  int
-	Sort  []string
 }
 
 func (m *Manager) FilterBy(col *mgo.Collection, query *bson.M, results interface{}, opts ...Opts) (int, error) {

@@ -101,6 +101,9 @@ type Mongo struct {
 	// Read more: http://docs.mongodb.org/manual/reference/connection-string/
 	Addr     string `desc:"[mongodb://][user:pass@]host1[:port1][,host2[:port2],...][/database][?options]"`
 	Database string `desc:"database name"`
+
+	// to remove text search index in mongodb, you must do it manually
+	TextSearchEnable bool `desc:"enable search with mongo test search index"`
 }
 
 //type Log struct {

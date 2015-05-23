@@ -102,7 +102,10 @@ func getManager(cfg config.Mongo) (*manager.Manager, error) {
 	}
 	logrus.Infof("Successfull")
 	logrus.Infof("Set mongo database %s", cfg.Database)
-	mgr := manager.New(session.DB(cfg.Database))
+	mgrCfg := manager.ManagerConfig{
+		TextSearchEnable: cfg.TextSearchEnable,
+	}
+	mgr := manager.New(session.DB(cfg.Database), mgrCfg)
 	// Initialize db indexes
 	if err := mgr.Init(); err != nil {
 		return nil, fmt.Errorf("Cannot initilize models: %s", err.Error())
