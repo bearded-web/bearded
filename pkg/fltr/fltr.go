@@ -108,7 +108,7 @@ func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 			desc = ""
 		}
 		dataType := "string"
-		switch field.Kind() {
+		switch getFieldKind(field) {
 		case reflect.Int:
 			dataType = "integer"
 		case reflect.Float64:
@@ -118,8 +118,7 @@ func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 		case reflect.Bool:
 			dataType = "boolean"
 		}
-
-		param := ws.QueryParameter(name, desc)
+		param := ws.QueryParameter(name, desc).DataType(dataType)
 		if hasTag(tags, "required") {
 			param.Required(true)
 		}
@@ -137,6 +136,14 @@ func GetParams(ws *restful.WebService, raw interface{}) []*restful.Parameter {
 	}
 
 	return params
+}
+
+func getFieldKind(field *structs.Field) reflect.Kind {
+	kind := field.Kind()
+	if kind != reflect.Ptr {
+		return kind
+	}
+	return reflect.ValueOf(field.Value()).Type().Elem().Kind()
 }
 
 func getModifiers(tags []string) []string {
@@ -224,7 +231,7 @@ fields:
 }
 
 func parseValue(field *structs.Field, val string) (interface{}, error) {
-	switch field.Kind() {
+	switch getFieldKind(field) {
 	case reflect.Int:
 		v, err := strconv.Atoi(val)
 		if err != nil {

@@ -33,11 +33,11 @@ func New() *Paginator {
 }
 
 func (p *Paginator) LimitParam() *restful.Parameter {
-	return restful.QueryParameter(p.LimitName, "limit objects")
+	return restful.QueryParameter(p.LimitName, "limit objects").DataType("integer")
 }
 
 func (p *Paginator) SkipParam() *restful.Parameter {
-	return restful.QueryParameter(p.SkipName, "skip n objects")
+	return restful.QueryParameter(p.SkipName, "skip n objects").DataType("integer")
 }
 
 func (p *Paginator) Parse(req *restful.Request) (skip, limit int) {
