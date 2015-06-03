@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/asaskevich/govalidator"
 	"github.com/emicklei/go-restful"
 	"github.com/facebookgo/stackerr"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/bearded-web/bearded/pkg/fltr"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/pkg/pagination"
+	"github.com/bearded-web/bearded/pkg/validate"
 	"github.com/bearded-web/bearded/services"
 )
 
@@ -62,7 +64,7 @@ func (s *UserService) Register(container *restful.Container) {
 	r.Doc("create")
 	r.Operation("create")
 	r.Writes(user.User{}) // on the response
-	r.Reads(user.User{})
+	r.Reads(userEntity{})
 	r.Do(services.Returns(http.StatusCreated))
 	r.Do(services.ReturnsE(http.StatusConflict))
 	addDefaults(r)
@@ -134,8 +136,7 @@ func (s *UserService) list(req *restful.Request, resp *restful.Response) {
 
 func (s *UserService) create(req *restful.Request, resp *restful.Response) {
 	// TODO (m0sth8): Check permissions
-	raw := &user.User{}
-
+	raw := &userEntity{}
 	if err := req.ReadEntity(raw); err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusBadRequest, services.WrongEntityErr)
@@ -147,10 +148,34 @@ func (s *UserService) create(req *restful.Request, resp *restful.Response) {
 
 	u := filters.GetUser(req)
 	if !mgr.Permission.IsAdmin(u) {
-		raw.Admin = false
+		logrus.Warnf("User %s try to create user without admin permission", u)
+		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
+		return
 	}
 
-	obj, err := mgr.Users.Create(raw)
+	// check email
+	if valid, err := govalidator.ValidateStruct(raw); !valid {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))
+		return
+	}
+	// check password
+	if valid, reason := validate.Password(raw.Password); !valid {
+		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq("Password %s", reason))
+		return
+	}
+	// hash password
+	pass, err := s.PassCtx().Encrypt(raw.Password)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.AppErr)
+		return
+	}
+
+	obj, err := mgr.Users.Create(&user.User{
+		Nickname: raw.Nickname,
+		Email:    raw.Email,
+		Password: pass,
+	})
 	if err != nil {
 		if mgr.IsDup(err) {
 			resp.WriteServiceError(
