@@ -17,11 +17,13 @@ import (
 
 type UserService struct {
 	*services.BaseService
+	sorter *fltr.Sorter
 }
 
 func New(base *services.BaseService) *UserService {
 	return &UserService{
 		BaseService: base,
+		sorter:      fltr.NewSorter("created", "updated", "email"),
 	}
 }
 
@@ -48,6 +50,9 @@ func (s *UserService) Register(container *restful.Container) {
 	r.Operation("list")
 	r.Writes(user.UserList{})
 	s.SetParams(r, fltr.GetParams(ws, manager.UserFltr{}))
+	r.Param(s.sorter.Param())
+	r.Param(s.Paginator.SkipParam())
+	r.Param(s.Paginator.LimitParam())
 	r.Do(services.Returns(http.StatusOK))
 	r.Do(services.ReturnsE(http.StatusBadRequest))
 	addDefaults(r)
@@ -106,15 +111,22 @@ func (s *UserService) list(req *restful.Request, resp *restful.Response) {
 	mgr := s.Manager()
 	defer mgr.Close()
 
-	results, count, err := mgr.Users.FilterByQuery(query)
+	skip, limit := s.Paginator.Parse(req)
+	opt := manager.Opts{
+		Sort:  s.sorter.Parse(req),
+		Limit: limit,
+		Skip:  skip,
+	}
+	results, count, err := mgr.Users.FilterByQuery(query, opt)
 	if err != nil {
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
 		return
 	}
 
+	previous, next := s.Paginator.Urls(req, skip, limit, count)
 	result := &user.UserList{
-		Meta:    pagination.Meta{Count: count},
+		Meta:    pagination.Meta{Count: count, Previous: previous, Next: next},
 		Results: results,
 	}
 	resp.WriteEntity(result)
@@ -132,6 +144,11 @@ func (s *UserService) create(req *restful.Request, resp *restful.Response) {
 
 	mgr := s.Manager()
 	defer mgr.Close()
+
+	u := filters.GetUser(req)
+	if !mgr.Permission.IsAdmin(u) {
+		raw.Admin = false
+	}
 
 	obj, err := mgr.Users.Create(raw)
 	if err != nil {
@@ -201,6 +218,13 @@ func (s *UserService) setPassword(req *restful.Request, resp *restful.Response) 
 		}
 		logrus.Error(stackerr.Wrap(err))
 		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
+	currentUser := filters.GetUser(req)
+	if !mgr.Permission.IsAdmin(currentUser) || currentUser.Id != u.Id {
+		logrus.Warnf("User %s try to set password for user %s", currentUser, u)
+		resp.WriteServiceError(http.StatusForbidden, services.AuthForbidErr)
 		return
 	}
 

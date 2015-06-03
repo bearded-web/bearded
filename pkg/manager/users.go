@@ -104,16 +104,16 @@ func (m *UserManager) All() ([]*user.User, int, error) {
 	return results, count, nil
 }
 
-func (m *UserManager) FilterBy(f *UserFltr) ([]*user.User, int, error) {
+func (m *UserManager) FilterBy(f *UserFltr, opts ...Opts) ([]*user.User, int, error) {
 	query := fltr.GetQuery(f)
 	results := []*user.User{}
-	count, err := m.manager.FilterBy(m.col, &query, &results)
+	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
 	return results, count, err
 }
 
-func (m *UserManager) FilterByQuery(query bson.M) ([]*user.User, int, error) {
+func (m *UserManager) FilterByQuery(query bson.M, opts ...Opts) ([]*user.User, int, error) {
 	results := []*user.User{}
-	count, err := m.manager.FilterBy(m.col, &query, &results)
+	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
 	return results, count, err
 }
 
