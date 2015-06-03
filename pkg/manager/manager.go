@@ -38,6 +38,7 @@ type Manager struct {
 	Files    *FileManager
 	Comments *CommentManager
 	Issues   *IssueManager
+	Techs    *TechManager
 	Tokens   *TokenManager
 
 	Permission *PermissionManager
@@ -69,6 +70,7 @@ func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 	m.Files = &FileManager{manager: m, grid: db.GridFS("fs")}
 	m.Comments = &CommentManager{manager: m, col: db.C("comments")}
 	m.Issues = &IssueManager{manager: m, col: db.C("issues")}
+	m.Techs = &TechManager{manager: m, col: db.C("techs")}
 	m.Tokens = &TokenManager{manager: m, col: db.C("tokens")}
 	m.Permission = &PermissionManager{manager: m}
 

@@ -12,6 +12,7 @@ import (
 	"github.com/bearded-web/bearded/models/issue"
 	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/models/tech"
 	"github.com/bearded-web/bearded/pkg/manager"
 	"github.com/bearded-web/bearded/services"
 )
@@ -280,6 +281,15 @@ func (s *ScanService) sessionReportCreate(req *restful.Request, resp *restful.Re
 		return
 	}
 
+	// create target techs from report
+	// TODO (m0sth8): exclude to another process (maybe push to queue)
+	err = s.createTargetTechs(rep, sc, sess)
+	if err != nil {
+		logrus.Error(stackerr.Wrap(err))
+		resp.WriteServiceError(http.StatusInternalServerError, services.DbErr)
+		return
+	}
+
 	resp.WriteHeader(http.StatusCreated)
 	resp.WriteEntity(rep)
 }
@@ -352,6 +362,34 @@ func (s *ScanService) createTargetIssues(rep *report.Report, sc *scan.Scan, sess
 		}
 	}
 
+	return nil
+}
+
+func (s *ScanService) createTargetTechs(rep *report.Report, sc *scan.Scan, sess *scan.Session) error {
+	techs := rep.GetAllTechs()
+	if len(techs) == 0 {
+		return nil
+	}
+
+	mgr := s.Manager()
+	defer mgr.Close()
+
+	for _, techObj := range techs {
+		targetTech := &tech.TargetTech{
+			Target:  sc.Target,
+			Project: sc.Project,
+			Tech:    *techObj,
+		}
+		targetTech.AddReportActivity(rep.Id, sc.Id, sess.Id)
+		_, err := mgr.Techs.Create(targetTech)
+		if err != nil {
+			if mgr.IsDup(err) {
+				// TODO (m0sth8): should we make a report activity?
+			} else {
+				return stackerr.Wrap(err)
+			}
+		}
+	}
 	return nil
 }
 

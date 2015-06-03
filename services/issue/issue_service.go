@@ -229,6 +229,7 @@ func (s *IssueService) create(req *restful.Request, resp *restful.Response) {
 }
 
 func (s *IssueService) list(req *restful.Request, resp *restful.Response) {
+	// TODO (m0sth8): show issues only if user has permissions
 	query, err := fltr.FromRequest(req, manager.IssueFltr{})
 	if err != nil {
 		resp.WriteServiceError(http.StatusBadRequest, services.NewBadReq(err.Error()))

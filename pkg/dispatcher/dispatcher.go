@@ -34,6 +34,7 @@ import (
 	"github.com/bearded-web/bearded/services/project"
 	"github.com/bearded-web/bearded/services/scan"
 	"github.com/bearded-web/bearded/services/target"
+	"github.com/bearded-web/bearded/services/tech"
 	"github.com/bearded-web/bearded/services/token"
 	"github.com/bearded-web/bearded/services/user"
 	"github.com/bearded-web/bearded/services/vulndb"
@@ -69,6 +70,7 @@ func initServices(wsContainer *restful.Container, cfg *config.Dispatcher,
 		vulndb.New(base),
 		configService.New(base),
 		token.New(base),
+		tech.New(base),
 	}
 
 	// initialize services

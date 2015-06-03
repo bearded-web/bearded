@@ -68,3 +68,17 @@ func (r *Report) GetAllIssues() []*issue.Issue {
 	}
 	return issues
 }
+
+// get all techs from the report and underlying multi reports
+func (r *Report) GetAllTechs() []*tech.Tech {
+	var techs []*tech.Tech
+	switch r.Type {
+	case TypeMulti:
+		for _, subReport := range r.Multi {
+			techs = append(techs, subReport.GetAllTechs()...)
+		}
+	case TypeTechs:
+		techs = append(techs, r.Techs...)
+	}
+	return techs
+}
