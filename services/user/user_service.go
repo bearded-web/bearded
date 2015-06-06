@@ -25,7 +25,7 @@ type UserService struct {
 func New(base *services.BaseService) *UserService {
 	return &UserService{
 		BaseService: base,
-		sorter:      fltr.NewSorter("created", "updated", "email"),
+		sorter:      fltr.NewSorter("created", "updated", "email", "nickname"),
 	}
 }
 

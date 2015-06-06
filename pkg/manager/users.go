@@ -37,7 +37,7 @@ func (m *UserManager) Init() error {
 	if err != nil {
 		return err
 	}
-	for _, index := range []string{"email", "created"} {
+	for _, index := range []string{"email", "created", "nickname"} {
 		err := m.col.EnsureIndex(mgo.Index{
 			Key:        []string{index},
 			Background: true,
