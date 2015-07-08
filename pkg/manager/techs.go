@@ -19,12 +19,11 @@ type TechManager struct {
 }
 
 type TechFltr struct {
-	Updated   time.Time     `fltr:"updated,gte,gt,lte,lt"`
-	Created   time.Time     `fltr:"created,gte,gt,lte,lt"`
-	Target    bson.ObjectId `fltr:"target,in"`
-	Project   bson.ObjectId `fltr:"project"`
-	Confirmed *bool         `fltr:"confirmed"`
-	False     *bool         `fltr:"false"`
+	Updated time.Time       `fltr:"updated,gte,gt,lte,lt"`
+	Created time.Time       `fltr:"created,gte,gt,lte,lt"`
+	Target  bson.ObjectId   `fltr:"target,in"`
+	Project bson.ObjectId   `fltr:"project"`
+	Status  tech.StatusType `fltr:"status,in,nin"`
 }
 
 func (s *TechManager) Init() error {
@@ -39,7 +38,7 @@ func (s *TechManager) Init() error {
 	}
 
 	// TODO (m0sth8): check what indexes are really used
-	for _, index := range []string{"created", "updated", "target", "project"} {
+	for _, index := range []string{"created", "updated", "target", "project", "status"} {
 		err := s.col.EnsureIndex(mgo.Index{
 			Key:        []string{index},
 			Background: true,
@@ -93,6 +92,9 @@ func (m *TechManager) Create(raw *tech.TargetTech) (*tech.TargetTech, error) {
 	raw.Id = bson.NewObjectId()
 	raw.Created = time.Now().UTC()
 	raw.Updated = raw.Created
+	if raw.Status == "" {
+		raw.Status = tech.StatusUnknown
+	}
 	if err := m.col.Insert(raw); err != nil {
 		return nil, err
 	}

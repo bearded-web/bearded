@@ -4,11 +4,6 @@ import (
 	"github.com/bearded-web/bearded/models/tech"
 )
 
-type StatusEntity struct {
-	Confirmed *bool `json:"confirmed,omitempty"`
-	False     *bool `json:"false,omitempty"`
-}
-
 type TechEntity struct {
 	Categories *[]tech.Category `json:"categories,omitempty"`
 	Name       *string          `json:"name"`
@@ -18,10 +13,10 @@ type TechEntity struct {
 }
 
 type TargetTechEntity struct {
-	Target string `json:"target,omitempty" creating:"nonzero,bsonId"`
+	Target string          `json:"target,omitempty" creating:"nonzero,bsonId"`
+	Status tech.StatusType `json:"status,omitempty"`
 
-	StatusEntity `json:",inline"`
-	TechEntity   `json:",inline"`
+	TechEntity `json:",inline"`
 }
 
 // Update all fields for dst with entity data if they present
@@ -41,10 +36,10 @@ func updateTargetTech(raw *TargetTechEntity, dst *tech.TargetTech) {
 	if raw.Categories != nil {
 		dst.Categories = *raw.Categories
 	}
-	if raw.Confirmed != nil {
-		dst.Confirmed = *raw.Confirmed
-	}
-	if raw.False != nil {
-		dst.False = *raw.False
+	if raw.Status != "" && (raw.Status == tech.StatusCorrect ||
+		raw.Status == tech.StatusIncorrect ||
+		raw.Status == tech.StatusUnknown) {
+
+		dst.Status = raw.Status
 	}
 }

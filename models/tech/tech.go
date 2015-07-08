@@ -16,11 +16,6 @@ type Tech struct {
 	Url        string     `json:"url" description:"url to technology"`
 }
 
-type Status struct {
-	Confirmed bool `json:"confirmed"`
-	False     bool `json:"false"`
-}
-
 type TargetTech struct {
 	Id         bson.ObjectId `json:"id,omitempty" bson:"_id"`
 	Target     bson.ObjectId `json:"target"`
@@ -28,9 +23,9 @@ type TargetTech struct {
 	Created    time.Time     `json:"created,omitempty" description:"when issue is created"`
 	Updated    time.Time     `json:"updated,omitempty" description:"when issue is updated"`
 	Activities []*Activity   `json:"activities,omitempty"`
+	Status     StatusType    `json:"status"`
 
-	Tech   `json:",inline"`
-	Status `json:",inline"`
+	Tech `json:",inline"`
 }
 
 type Report struct {

@@ -30,3 +30,30 @@ func (t ActivityType) Enum() []interface{} {
 func (t ActivityType) Convert(text string) (interface{}, error) {
 	return ActivityType(text), nil
 }
+
+type StatusType string
+
+const (
+	StatusUnknown   = StatusType("unknown")
+	StatusCorrect   = StatusType("correct")
+	StatusIncorrect = StatusType("incorrect")
+)
+
+var statuses = []interface{}{
+	StatusUnknown,
+	StatusCorrect,
+	StatusIncorrect,
+}
+
+// It's a hack to show custom type as string in swagger
+func (t StatusType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(t))
+}
+
+func (t StatusType) Enum() []interface{} {
+	return statuses
+}
+
+func (t StatusType) Convert(text string) (interface{}, error) {
+	return StatusType(text), nil
+}
