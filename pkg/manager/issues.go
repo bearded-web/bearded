@@ -19,16 +19,17 @@ type IssueManager struct {
 }
 
 type IssueFltr struct {
-	Updated   time.Time      `fltr:"updated,gte,gt,lte,lt"`
-	VulnType  int            `fltr:"vulnType"`
-	Created   time.Time      `fltr:"created,gte,gt,lte,lt"`
-	Target    bson.ObjectId  `fltr:"target,in"`
-	Project   bson.ObjectId  `fltr:"project"`
-	Confirmed *bool          `fltr:"confirmed"`
-	Muted     *bool          `fltr:"muted"`
-	Resolved  *bool          `fltr:"resolved"`
-	False     *bool          `fltr:"false"`
-	Severity  issue.Severity `fltr:"severity,in"`
+	Updated    time.Time      `fltr:"updated,gte,gt,lte,lt"`
+	VulnType   int            `fltr:"vulnType"`
+	Created    time.Time      `fltr:"created,gte,gt,lte,lt"`
+	ResolvedAt time.Time      `fltr:"resolvedAt,gte,gt,lte,lt,in"`
+	Target     bson.ObjectId  `fltr:"target,in"`
+	Project    bson.ObjectId  `fltr:"project"`
+	Confirmed  *bool          `fltr:"confirmed"`
+	Muted      *bool          `fltr:"muted"`
+	Resolved   *bool          `fltr:"resolved"`
+	False      *bool          `fltr:"false"`
+	Severity   issue.Severity `fltr:"severity,in"`
 }
 
 func (s *IssueManager) Init() error {
@@ -43,7 +44,7 @@ func (s *IssueManager) Init() error {
 	}
 
 	// TODO (m0sth8): check what indexes are really used
-	for _, index := range []string{"created", "updated", "target", "project"} {
+	for _, index := range []string{"created", "updated", "target", "project", "resolvedAt"} {
 		err := s.col.EnsureIndex(mgo.Index{
 			Key:        []string{index},
 			Background: true,

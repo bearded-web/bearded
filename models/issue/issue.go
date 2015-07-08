@@ -82,6 +82,7 @@ type TargetIssue struct {
 	Project    bson.ObjectId `json:"project"`
 	Created    time.Time     `json:"created,omitempty" description:"when issue is created"`
 	Updated    time.Time     `json:"updated,omitempty" description:"when issue is updated"`
+	ResolvedAt time.Time	 `json:"resolvedAt,omitempty" bson:"resolvedAt" description:"resolved time"`
 	Activities []*Activity   `json:"activities,omitempty"`
 
 	// usually this field is taken from the last report

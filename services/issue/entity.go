@@ -2,6 +2,7 @@ package issue
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/bearded-web/bearded/models/issue"
 )
@@ -144,6 +145,11 @@ func updateTargetIssue(raw *TargetIssueEntity, dst *issue.TargetIssue) bool {
 	if raw.Resolved != nil {
 		rebuildSummary = true
 		dst.Resolved = *raw.Resolved
+		if *raw.Resolved {
+			dst.ResolvedAt = time.Now()
+		} else {
+			dst.ResolvedAt = time.Time{}
+		}
 	}
 	if raw.Muted != nil {
 		rebuildSummary = true
