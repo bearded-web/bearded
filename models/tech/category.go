@@ -1,6 +1,10 @@
 package tech
 
-import "github.com/bearded-web/bearded/pkg/pagination"
+import (
+	"encoding/json"
+
+	"github.com/bearded-web/bearded/pkg/pagination"
+)
 
 // TODO (m0sth8): generate from the file for all sdk
 
@@ -110,6 +114,15 @@ var Categories = []Category{
 	NetworkStorage,
 	FeedReaders,
 	DocumentManagementSystems,
+}
+
+// It's a hack to show custom type as string in swagger
+func (t Category) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(t))
+}
+
+func (t Category) Convert(text string) (interface{}, error) {
+	return Category(text), nil
 }
 
 type CategoryList struct {

@@ -5,11 +5,11 @@ import (
 )
 
 type TechEntity struct {
-	Categories *[]tech.Category `json:"categories,omitempty"`
-	Name       *string          `json:"name"`
-	Version    *string          `json:"version"`
-	Confidence *int             `json:"confidence"`
-	Url        *string          `json:"url" description:"url to technology"`
+	Categories *[]string `json:"categories,omitempty"`
+	Name       *string   `json:"name,omitempty"`
+	Version    *string   `json:"version,omitempty"`
+	Confidence *int      `json:"confidence,omitempty"`
+	Url        *string   `json:"url,omitempty" description:"url to technology"`
 }
 
 type TargetTechEntity struct {
@@ -34,7 +34,10 @@ func updateTargetTech(raw *TargetTechEntity, dst *tech.TargetTech) {
 		dst.Confidence = *raw.Confidence
 	}
 	if raw.Categories != nil {
-		dst.Categories = *raw.Categories
+		dst.Categories = []tech.Category{}
+		for _, cat := range *raw.Categories {
+			dst.Categories = append(dst.Categories, tech.Category(cat))
+		}
 	}
 	if raw.Status != "" && (raw.Status == tech.StatusCorrect ||
 		raw.Status == tech.StatusIncorrect ||
