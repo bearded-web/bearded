@@ -25,7 +25,7 @@ type TargetTech struct {
 	Activities []*Activity   `json:"activities,omitempty"`
 	Status     StatusType    `json:"status"`
 
-	Tech `json:",inline"`
+	Tech `json:",inline" bson:",inline"`
 }
 
 type Report struct {
