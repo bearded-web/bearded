@@ -8,6 +8,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/models/target"
+	"github.com/bearded-web/bearded/models/tech"
 	"github.com/bearded-web/bearded/pkg/pagination"
 )
 
@@ -42,9 +44,10 @@ type FeedItem struct {
 	Project bson.ObjectId `json:"project" bson:"project" description:"project for this feed item"`
 
 	// data for scan types
-	ScanId bson.ObjectId `json:"-" bson:"scanid,omitempty"`
-	// scan field enriched from scanId
-	Scan *scan.Scan `json:"scan,omitempty" bson:"-" description:"scan shows only for type: scan"`
+	ScanId        bson.ObjectId         `json:"-" bson:"scanid,omitempty"`
+	Scan          *scan.Scan            `json:"scan,omitempty" description:"scan shows only for type: scan"`
+	SummaryReport *target.SummaryReport `json:"summaryReport,omitempty" bson:"summaryReport" description:"shows only for type: scan"`
+	Techs         []*tech.Tech          `json:"techs,omitempty" bson:"techs" description:"shows only for type: scan"`
 }
 
 type Feed struct {

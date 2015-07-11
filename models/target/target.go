@@ -11,7 +11,7 @@ import (
 )
 
 type SummaryReport struct {
-	Issues map[issue.Severity]int `json:"issues"`
+	Issues map[issue.Severity]int `json:"issues" bson:"issues"`
 }
 
 type Target struct {

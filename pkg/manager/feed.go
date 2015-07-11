@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -8,7 +9,11 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/bearded-web/bearded/models/feed"
+	"github.com/bearded-web/bearded/models/issue"
+	"github.com/bearded-web/bearded/models/report"
 	"github.com/bearded-web/bearded/models/scan"
+	"github.com/bearded-web/bearded/models/target"
+	"github.com/bearded-web/bearded/models/tech"
 	"github.com/bearded-web/bearded/pkg/fltr"
 )
 
@@ -83,9 +88,9 @@ func (m *FeedManager) FilterBy(f *FeedItemFltr, opts ...Opts) ([]*feed.FeedItem,
 func (m *FeedManager) FilterByQuery(query bson.M, opts ...Opts) ([]*feed.FeedItem, int, error) {
 	results := []*feed.FeedItem{}
 	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
-	if err == nil && count > 0 {
-		results, err = m.EnrichMulti(results)
-	}
+	//	if err == nil && count > 0 {
+	//		results, err = m.EnrichMulti(results)
+	//	}
 	return results, count, err
 }
 
@@ -111,11 +116,14 @@ func (m *FeedManager) Remove(obj *feed.FeedItem) error {
 
 func (m *FeedManager) AddScan(sc *scan.Scan) (*feed.FeedItem, error) {
 	feedItem := feed.FeedItem{
-		Type:    feed.TypeScan,
-		Project: sc.Project,
-		Target:  sc.Target,
-		ScanId:  sc.Id,
-		Owner:   sc.Owner,
+		Type:          feed.TypeScan,
+		Project:       sc.Project,
+		Target:        sc.Target,
+		ScanId:        sc.Id,
+		Owner:         sc.Owner,
+		Scan:          sc,
+		SummaryReport: &target.SummaryReport{Issues: map[issue.Severity]int{}},
+		Techs:         []*tech.Tech{},
 	}
 	return m.Create(&feedItem)
 }
@@ -128,6 +136,37 @@ func (m *FeedManager) UpdateScan(sc *scan.Scan) error {
 		"scanid":  sc.Id,
 	}
 	now := time.Now().UTC()
+	update := bson.M{"$set": bson.M{"updated": now, "scan": sc}}
+	return m.col.Update(query, update)
+}
+
+func (m *FeedManager) UpdateScanReport(sc *scan.Scan, rep *report.Report) error {
+	query := bson.M{
+		"type":    feed.TypeScan,
+		"project": sc.Project,
+		"target":  sc.Target,
+		"scanid":  sc.Id,
+	}
+	now := time.Now().UTC()
 	update := bson.M{"$set": bson.M{"updated": now}}
+
+	// update summary info from report
+	issues := rep.GetAllIssues()
+	if len(issues) > 0 {
+		summary := map[issue.Severity]int{}
+		for _, issueObj := range issues {
+			summary[issueObj.Severity] = summary[issueObj.Severity] + 1
+		}
+		inc := bson.M{}
+		for sev, count := range summary {
+			inc[fmt.Sprintf("summaryReport.issues.%s", sev)] = count
+		}
+		update["$inc"] = inc
+	}
+	// update tech info from report
+	techs := rep.GetAllTechs()
+	if len(techs) > 0 {
+		update["$addToSet"] = bson.M{"techs": bson.M{"$each": techs}}
+	}
 	return m.col.Update(query, update)
 }

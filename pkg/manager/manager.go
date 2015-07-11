@@ -72,6 +72,7 @@ func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 	m.Issues = &IssueManager{manager: m, col: db.C("issues")}
 	m.Techs = &TechManager{manager: m, col: db.C("techs")}
 	m.Tokens = &TokenManager{manager: m, col: db.C("tokens")}
+
 	m.Permission = &PermissionManager{manager: m}
 
 	m.managers = append(m.managers,
@@ -87,6 +88,7 @@ func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 		m.Files,
 		m.Comments,
 		m.Issues,
+		m.Techs,
 		m.Tokens,
 	)
 

@@ -89,20 +89,9 @@ func (m *TargetManager) Remove(obj *target.Target) error {
 }
 
 func (m *TargetManager) UpdateSummary(obj *target.Target) error {
-	fltr := &IssueFltr{
-		Target:   obj.Id,
-		False:    utils.BoolP(false),
-		Resolved: utils.BoolP(false),
-		Muted:    utils.BoolP(false),
-	}
-	// TODO(m0sth8): get only severity/count through aggregation
-	issues, _, err := m.manager.Issues.FilterBy(fltr)
+	summary, err := m.GetSummaryIssues(obj.Id)
 	if err != nil {
 		return err
-	}
-	summary := map[issue.Severity]int{}
-	for _, issue := range issues {
-		summary[issue.Severity] = summary[issue.Severity] + 1
 	}
 	if obj.SummaryReport == nil {
 		obj.SummaryReport = &target.SummaryReport{}
@@ -110,6 +99,25 @@ func (m *TargetManager) UpdateSummary(obj *target.Target) error {
 	obj.SummaryReport.Issues = summary
 	// TODO(m0sth8): update only summary field
 	return m.Update(obj)
+}
+
+func (m *TargetManager) GetSummaryIssues(targetId bson.ObjectId) (map[issue.Severity]int, error) {
+	fltr := &IssueFltr{
+		Target:   targetId,
+		False:    utils.BoolP(false),
+		Resolved: utils.BoolP(false),
+		Muted:    utils.BoolP(false),
+	}
+	// TODO(m0sth8): get only severity/count through aggregation
+	issues, _, err := m.manager.Issues.FilterBy(fltr)
+	if err != nil {
+		return nil, err
+	}
+	summary := map[issue.Severity]int{}
+	for _, issue := range issues {
+		summary[issue.Severity] = summary[issue.Severity] + 1
+	}
+	return summary, nil
 }
 
 func (m *TargetManager) UpdateSummaryById(id bson.ObjectId) error {
