@@ -42,6 +42,7 @@ type Manager struct {
 	Tokens   *TokenManager
 
 	Permission *PermissionManager
+	Vulndb     *VulndbManager
 
 	managers []ManagerInterface
 }
@@ -74,6 +75,7 @@ func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 	m.Tokens = &TokenManager{manager: m, col: db.C("tokens")}
 
 	m.Permission = &PermissionManager{manager: m}
+	m.Vulndb = &VulndbManager{manager: m}
 
 	m.managers = append(m.managers,
 		m.Users,
@@ -90,6 +92,9 @@ func New(db *mgo.Database, cfg ...ManagerConfig) *Manager {
 		m.Issues,
 		m.Techs,
 		m.Tokens,
+
+		m.Permission,
+		m.Vulndb,
 	)
 
 	return m
@@ -111,6 +116,7 @@ func (m *Manager) Copy() *Manager {
 	copy := New(m.db.With(sess), m.Cfg)
 	// TODO (m0sth8): implement copy through the interface
 	m.Permission.Copy(copy.Permission)
+	m.Vulndb.Copy(copy.Vulndb)
 	return copy
 }
 
