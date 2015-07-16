@@ -59,9 +59,9 @@ func (m *TargetManager) FilterBy(f *FeedItemFltr) ([]*target.Target, int, error)
 	return m.FilterByQuery(query)
 }
 
-func (m *TargetManager) FilterByQuery(query bson.M) ([]*target.Target, int, error) {
+func (m *TargetManager) FilterByQuery(query bson.M, opts ...Opts) ([]*target.Target, int, error) {
 	results := []*target.Target{}
-	count, err := m.manager.FilterBy(m.col, &query, &results)
+	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
 	return results, count, err
 }
 
