@@ -62,9 +62,9 @@ func (m *ProjectManager) FilterBy(f *ProjectFltr) ([]*project.Project, int, erro
 	return m.FilterByQuery(query)
 }
 
-func (m *ProjectManager) FilterByQuery(query bson.M) ([]*project.Project, int, error) {
+func (m *ProjectManager) FilterByQuery(query bson.M, opts ...Opts) ([]*project.Project, int, error) {
 	results := []*project.Project{}
-	count, err := m.manager.FilterBy(m.col, &query, &results)
+	count, err := m.manager.FilterBy(m.col, &query, &results, opts...)
 	return results, count, err
 }
 
